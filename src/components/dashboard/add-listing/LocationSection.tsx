@@ -3,7 +3,6 @@ import { MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { cityService } from '@/services/city.service';
-import countryRegions from 'country-region-data';
 
 export default function LocationSection() {
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } = useFormikContext<any>();

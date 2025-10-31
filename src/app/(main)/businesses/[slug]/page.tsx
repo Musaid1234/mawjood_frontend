@@ -15,6 +15,7 @@ import {
   ReviewsSection,
   SimilarBusinesses,
 } from '@/components/business';
+import Link from 'next/link';
 
 interface Service {
   id: string;
@@ -105,12 +106,12 @@ export default function BusinessDetailPage() {
           <p className="text-gray-600 mb-6">
             {error || "The business you're looking for doesn't exist or has been removed."}
           </p>
-          <a
+          <Link
             href="/"
             className="inline-block px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg font-semibold transition-colors"
           >
             Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     );

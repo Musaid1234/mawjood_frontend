@@ -1,15 +1,15 @@
 import { Metadata } from 'next';
 import { businessService } from '@/services/business.service';
-import { notFound } from 'next/navigation';
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
   children: React.ReactNode;
 }
 
 export async function generateMetadata({ params }: Omit<Props, 'children'>): Promise<Metadata> {
+  const { slug } = await params;
   try {
-    const business = await businessService.getBusinessBySlug(params.slug);
+    const business = await businessService.getBusinessBySlug(slug);
 
     const title = business.metaTitle || `${business.name} - ${business.city.name} | Mawjood`;
     const description = business.metaDescription || business.description || 
@@ -67,6 +67,7 @@ export async function generateMetadata({ params }: Omit<Props, 'children'>): Pro
   }
 }
 
-export default function BusinessDetailLayout({ children }: Props) {
+export default async function BusinessDetailLayout({ children, params }: Props) {
+  await params;
   return <>{children}</>;
 }
