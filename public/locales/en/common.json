@@ -1,0 +1,148 @@
+{
+  "nav": {
+    "mawjood": "Mawjood",
+    "home": "Home",
+    "about": "About",
+    "blog": "Blog",
+    "addListing": "Add a Listing",
+    "login": "Login",
+    "signup": "Sign Up",
+    "businesses": "Businesses",
+    "categories": "Categories",
+    "careers": "Careers",
+    "cities": "Cities",
+    "blogs": "Blogs",
+    "register": "Register",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "banner": {
+    "title": "Download Mawjood App",
+    "subtitle": "Find the best businesses in your city with our powerful mobile app. Available on iOS and Android.",
+    "downloadOn": "Download on the",
+    "appStore": "App Store",
+    "getItOn": "GET IT ON",
+    "googlePlay": "Google Play",
+    "available": "Available",
+    "activeUsers": "Active Users",
+    "rating": "App Rating",
+    "cities": "Cities Covered"
+  },
+  "hero": {
+    "title": "Search across '4.7 Crore+' Businesses",
+    "searchPlaceholder": "Search for Restaurants near me",
+    "locationPlaceholder": "Riyadh, Jeddah",
+    "downloadApp": "Download App",
+    "businesses": "Businesses",
+    "cities": "Cities",
+    "reviews": "Reviews",
+    "packersMovers": "PACKERS & MOVERS",
+    "getBestDeal": "GET DEAL",
+    "repairsServices": "B2B REPAIRS & SERVICES",
+    "repairsDescription": "AC, Geyser, RO, Washing Machine",
+    "bookNow": "BOOK NOW",
+    "realEstate": "REAL ESTATE",
+    "realEstateDescription": "Property Buying & Rental",
+    "explore": "EXPLORE",
+    "doctors": "DOCTORS",
+    "doctorsDescription": "Book Appointment"
+  },
+  "footer": {
+    "companyName": "Mawjood",
+    "tagline": "Saudi’s No. 1 Local Business Directory",
+    "aboutUs": "About Us",
+    "careers": "Careers",
+    "terms": "Terms & Conditions",
+    "privacy": "Privacy Policy",
+    "support": "Support",
+    "forBusinesses": "For Businesses",
+    "addBusiness": "Add Business",
+    "advertise": "Advertise",
+    "whatsNew": "What's New",
+    "forBrands": "Mawjood for Brands",
+    "popularCategories": "Popular Categories",
+    "restaurants": "Restaurants",
+    "hotels": "Hotels",
+    "beautySpas": "Beauty Spas",
+    "homeDecor": "Home Decor",
+    "copyright": "© 2024 Mawjood. All rights reserved.",
+    "bottomTagline": "One-Stop for All Local Businesses, Services & Stores Nearby Across Saudi Arabia"
+  },
+  "categories": {
+    "title": "Browse Categories",
+    "subtitle": "Discover businesses in your area across various categories",
+    "allCategories": "All Categories",
+    "errorTitle": "Failed to Load Categories",
+    "retry": "Try Again",
+    "noCategories": "No categories available"
+  },
+  "featuredServices": {
+    "homeServices": {
+      "title": "Home Services",
+      "cleaning": "Cleaning Services",
+      "plumbing": "Plumbing",
+      "painting": "Painting"
+    },
+    "beautySpa": {
+      "title": "Beauty & Spa",
+      "beautyParlours": "Beauty Parlours",
+      "spaMassages": "Spa & Massages",
+      "salons": "Salons"
+    },
+    "repairsServices": {
+      "title": "Repairs & Services",
+      "acService": "AC Service",
+      "carService": "Car Service",
+      "bikeService": "Bike Service"
+    },
+    "dailyNeeds": {
+      "title": "Daily Needs",
+      "movies": "Movies",
+      "grocery": "Grocery",
+      "electricians": "Electricians"
+    }
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "phone": "Phone Number",
+    "password": "Password",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "forgotPassword": "Forgot Password?",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "loginWithOTP": "Login with OTP",
+    "sendOTP": "Send OTP",
+    "verifyOTP": "Verify OTP",
+    "enterOTP": "Enter OTP"
+  },
+  "business": {
+    "search": "Search businesses...",
+    "addBusiness": "Add Business",
+    "viewDetails": "View Details",
+    "contactBusiness": "Contact Business",
+    "writeReview": "Write a Review",
+    "reviews": "Reviews",
+    "services": "Services",
+    "workingHours": "Working Hours",
+    "location": "Location",
+    "rating": "Rating"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "sortBy": "Sort By",
+    "noResults": "No results found",
+    "viewAll": "View All",
+    "readMore": "Read More"
+  }
+}

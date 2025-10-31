@@ -1,0 +1,148 @@
+{
+  "nav": {
+    "mawjood": "موجود",
+    "home": "الرئيسية",
+    "about": "حول",
+    "blog": "المدونة",
+    "addListing": "إضافة قائمة",
+    "login": "تسجيل الدخول",
+    "signup": "إنشاء حساب",
+    "businesses": "الأعمال",
+    "categories": "الفئات",
+    "careers": "وظائف",
+    "cities": "المدن",
+    "blogs": "المدونات",
+    "register": "التسجيل",
+    "profile": "الملف الشخصي",
+    "logout": "تسجيل الخروج"
+  },
+  "banner": {
+    "title": "حمل تطبيق موجود",
+    "subtitle": "اكتشف أفضل الأعمال في مدينتك مع تطبيقنا المحمول القوي. متوفر على iOS و Android.",
+    "downloadOn": "حمل من",
+    "appStore": "App Store",
+    "getItOn": "احصل عليه من",
+    "googlePlay": "Google Play",
+    "available": "متوفر",
+    "activeUsers": "مستخدم نشط",
+    "rating": "تقييم التطبيق",
+    "cities": "مدينة مغطاة"
+  },
+  "hero": {
+    "title": "ابحث عبر '4.7 كرور+' من الأعمال",
+    "searchPlaceholder": "ابحث عن المطاعم بالقرب مني",
+    "locationPlaceholder": "الرياض، جدة",
+    "downloadApp": "حمل التطبيق",
+    "businesses": "الأعمال",
+    "cities": "المدن",
+    "reviews": "المراجعات",
+    "packersMovers": "شركات النقل والتعبئة",
+    "getBestDeal": "احصل على صفقة",
+    "repairsServices": "خدمات الإصلاح B2B",
+    "repairsDescription": "تكييف، سخان، فلتر، غسالة",
+    "bookNow": "احجز الآن",
+    "realEstate": "العقارات",
+    "realEstateDescription": "شراء وتأجير العقارات",
+    "explore": "استكشف",
+    "doctors": "الأطباء",
+    "doctorsDescription": "احجز موعد"
+  },
+  "footer": {
+    "companyName": "موجود",
+    "tagline": "الدليل التجاري المحلي رقم 1 في السعودية",
+    "aboutUs": "من نحن",
+    "careers": "الوظائف",
+    "terms": "الشروط والأحكام",
+    "privacy": "سياسة الخصوصية",
+    "support": "الدعم",
+    "forBusinesses": "للأعمال",
+    "addBusiness": "إضافة عمل",
+    "advertise": "الإعلان",
+    "whatsNew": "ما الجديد",
+    "forBrands": "موجود للعلامات التجارية",
+    "popularCategories": "الفئات الشائعة",
+    "restaurants": "المطاعم",
+    "hotels": "الفنادق",
+    "beautySpas": "مراكز التجميل",
+    "homeDecor": "ديكور المنزل",
+    "copyright": "© 2024 موجود. جميع الحقوق محفوظة.",
+    "bottomTagline": "وجهتك الشاملة لجميع الأنشطة والخدمات والمتاجر المحلية في جميع أنحاء السعودية"
+  },
+  "categories": {
+    "title": "تصفح الفئات",
+    "subtitle": "اكتشف الأعمال في منطقتك عبر فئات مختلفة",
+    "allCategories": "جميع الفئات",
+    "errorTitle": "فشل في تحميل الفئات",
+    "retry": "حاول مرة أخرى",
+    "noCategories": "لا توجد فئات متاحة"
+  },
+  "featuredServices": {
+    "homeServices": {
+      "title": "خدمات منزلية",
+      "cleaning": "خدمات التنظيف",
+      "plumbing": "سباكة",
+      "painting": "دهان"
+    },
+    "beautySpa": {
+      "title": "التجميل والسبا",
+      "beautyParlours": "صالونات التجميل",
+      "spaMassages": "سبا وتدليك",
+      "salons": "صالونات"
+    },
+    "repairsServices": {
+      "title": "الإصلاحات والخدمات",
+      "acService": "خدمة المكيفات",
+      "carService": "خدمة السيارات",
+      "bikeService": "خدمة الدراجات"
+    },
+    "dailyNeeds": {
+      "title": "الاحتياجات اليومية",
+      "movies": "أفلام",
+      "grocery": "بقالة",
+      "electricians": "كهربائيون"
+    }
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "password": "كلمة المرور",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "dontHaveAccount": "ليس لديك حساب؟",
+    "alreadyHaveAccount": "لديك حساب بالفعل؟",
+    "signIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب",
+    "loginWithOTP": "تسجيل الدخول برمز OTP",
+    "sendOTP": "إرسال الرمز",
+    "verifyOTP": "تحقق من الرمز",
+    "enterOTP": "أدخل الرمز"
+  },
+  "business": {
+    "search": "ابحث عن الأعمال...",
+    "addBusiness": "إضافة عمل",
+    "viewDetails": "عرض التفاصيل",
+    "contactBusiness": "اتصل بالعمل",
+    "writeReview": "اكتب مراجعة",
+    "reviews": "المراجعات",
+    "services": "الخدمات",
+    "workingHours": "ساعات العمل",
+    "location": "الموقع",
+    "rating": "التقييم"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "search": "بحث",
+    "filter": "تصفية",
+    "sortBy": "ترتيب حسب",
+    "noResults": "لم يتم العثور على نتائج",
+    "viewAll": "عرض الكل",
+    "readMore": "اقرأ المزيد"
+  }
+}
