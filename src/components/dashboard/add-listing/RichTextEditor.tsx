@@ -1,6 +1,6 @@
 'use client';
 
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, Extension } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect } from 'react';
@@ -11,6 +11,27 @@ interface RichTextEditorProps {
   placeholder?: string;
   error?: string;
 }
+
+const InsertParagraphAfterHeading = Extension.create({
+  name: 'insertParagraphAfterHeading',
+  addKeyboardShortcuts() {
+    return {
+      Enter: () => {
+        const { editor } = this;
+        if (editor.isActive('heading')) {
+          editor
+            .chain()
+            .focus()
+            .exitCode()               // exit current block
+            .insertContent('<p></p>')  // insert a new paragraph
+            .run();
+          return true;
+        }
+        return false;
+      },
+    };
+  },
+});
 
 export default function RichTextEditor({
   content,
@@ -29,6 +50,7 @@ export default function RichTextEditor({
       Placeholder.configure({
         placeholder,
       }),
+      InsertParagraphAfterHeading,
     ],
     content,
     editorProps: {
@@ -49,11 +71,9 @@ export default function RichTextEditor({
 
   return (
     <div>
-      <div
-        className={`border rounded-lg ${
-          error ? 'border-red-500' : 'border-gray-300 focus-within:ring-2 focus-within:ring-[#1c4233] focus-within:border-transparent'
-        }`}
-      >
+      <div className={`border rounded-lg ${
+        error ? 'border-red-500' : 'border-gray-300 focus-within:ring-2 focus-within:ring-[#1c4233] focus-within:border-transparent'
+      }`}>
         {/* Toolbar */}
         <div className="flex items-center gap-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-lg flex-wrap">
           <button
@@ -81,6 +101,7 @@ export default function RichTextEditor({
             H3
           </button>
           <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
           <button
             type="button"
             onClick={() => editor?.chain().focus().toggleBold().run()}
@@ -113,7 +134,9 @@ export default function RichTextEditor({
           >
             {'</>'}
           </button>
+
           <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
           <button
             type="button"
             onClick={() => editor?.chain().focus().toggleBulletList().run()}
@@ -138,15 +161,18 @@ export default function RichTextEditor({
           >
             "
           </button>
+
           <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
           <button
             type="button"
-            onClick={() => editor?.chain().focus().setHorizontalRule().run()}
-            title="Horizontal Line"
-            className="p-2 rounded hover:bg-gray-200"
+            onClick={() => editor?.chain().focus().setParagraph().run()}
+            className={`p-2 rounded hover:bg-gray-200 ${editor?.isActive('paragraph') ? 'bg-gray-200' : ''}`}
+            title="Paragraph"
           >
-            ―
+            P
           </button>
+
           <button
             type="button"
             onClick={() => editor?.chain().focus().undo().run()}
@@ -167,9 +193,10 @@ export default function RichTextEditor({
           </button>
         </div>
 
-        {/* Editor */}
+        {/* Editor Content */}
         <EditorContent editor={editor} />
       </div>
+
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
   );

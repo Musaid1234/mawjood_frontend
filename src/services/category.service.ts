@@ -20,7 +20,15 @@ export interface Category {
 export interface CategoryResponse {
   success: boolean;
   message: string;
-  data: Category[];
+  data: {
+    categories: Category[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  };
 }
 
 export interface SingleCategoryResponse {
@@ -43,9 +51,11 @@ export const categoryService = {
   /**
    * Fetch all categories
    */
-  async fetchCategories(): Promise<CategoryResponse> {
+  async fetchCategories(page: number = 1, limit: number = 20): Promise<CategoryResponse> {
     try {
-      const response = await axiosInstance.get<CategoryResponse>(API_ENDPOINTS.CATEGORIES.GET_ALL);
+      const response = await axiosInstance.get<CategoryResponse>(
+        `${API_ENDPOINTS.CATEGORIES.GET_ALL}?page=${page}&limit=${limit}`
+      );
       return response.data;
     } catch (error) {
       return handleError(error);

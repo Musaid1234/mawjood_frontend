@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Heart, Phone, MapPin, Star } from 'lucide-react';
 import { Business } from '@/services/business.service';
 import { useState } from 'react';
+import { useFavorites } from '@/hooks/useFavorites';
 
 interface BusinessListCardProps {
   business: Business;
@@ -10,9 +11,10 @@ interface BusinessListCardProps {
   isFavorite?: boolean;
 }
 
-export default function BusinessListCard({ business, onToggleFavorite, isFavorite }: BusinessListCardProps) {
+export default function BusinessListCard({ business, onToggleFavorite }: BusinessListCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
+  const { isFavorite, toggleFavorite, isLoading } = useFavorites();
+
   const allImages = [
     business.logo,
     business.coverImage,
@@ -54,9 +56,8 @@ export default function BusinessListCard({ business, onToggleFavorite, isFavorit
 
               {/* Top Left Badges */}
               <div className="absolute top-3 left-3 flex gap-2 z-10">
-                <span className={`text-white text-xs font-bold px-3 py-1 rounded ${
-                  isOpen ? 'bg-green-500' : 'bg-red-500'
-                }`}>
+                <span className={`text-white text-xs font-bold px-3 py-1 rounded ${isOpen ? 'bg-green-500' : 'bg-red-500'
+                  }`}>
                   {isOpen ? 'OPEN' : 'CLOSED'}
                 </span>
               </div>
@@ -116,15 +117,20 @@ export default function BusinessListCard({ business, onToggleFavorite, isFavorit
 
           {/* Favorite Button */}
           <button
-            onClick={() => onToggleFavorite?.(business.id)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleFavorite(business.id);
+            }}
+            disabled={isLoading}
             className="absolute top-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors z-10"
             aria-label="Add to favorites"
           >
-            <Heart
-              className={`w-5 h-5 ${
-                isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'
-              }`}
-            />
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-gray-300 border-t-primary rounded-full animate-spin" />
+            ) : (
+              <Heart className={`w-5 h-5 ${isFavorite(business.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+            )}
           </button>
         </div>
 
@@ -166,7 +172,7 @@ export default function BusinessListCard({ business, onToggleFavorite, isFavorit
                 </div>
               )}
               <span className="text-sm text-gray-600">{business.totalReviews || 0} Reviews</span>
-              
+
               {/* Badges */}
               <div className="flex items-center gap-2">
                 <span className="bg-yellow-100 border border-yellow-300 text-yellow-800 text-xs font-semibold px-2 py-1 rounded">
@@ -202,7 +208,7 @@ export default function BusinessListCard({ business, onToggleFavorite, isFavorit
                 {business.phone}
               </a>
             )}
-            
+
             {business.whatsapp && (
               <button
                 onClick={(e) => {
@@ -218,7 +224,7 @@ export default function BusinessListCard({ business, onToggleFavorite, isFavorit
                 WhatsApp
               </button>
             )}
-            
+
             <Link
               href={`/businesses/${business.slug}`}
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded flex items-center justify-center gap-2 transition-colors"

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, Phone, MapPin, Star } from 'lucide-react';
 import { Business } from '@/services/business.service';
+import { useFavorites } from '@/hooks/useFavorites';
 
 interface BusinessCardProps {
   business: Business;
@@ -9,9 +10,10 @@ interface BusinessCardProps {
   isFavorite?: boolean;
 }
 
-export default function BusinessCard({ business, onToggleFavorite, isFavorite }: BusinessCardProps) {
+export default function BusinessCard({ business, onToggleFavorite }: BusinessCardProps) {
   const isOpen = business.status === 'ACTIVE';
   const priceLevel = business.averageRating >= 4.5 ? '$$$' : business.averageRating >= 3.5 ? '$$' : '$';
+  const { isFavorite, toggleFavorite, isLoading } = useFavorites();
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
@@ -29,24 +31,28 @@ export default function BusinessCard({ business, onToggleFavorite, isFavorite }:
 
         {/* Top Left Badges */}
         <div className="absolute top-3 left-3 flex gap-2">
-          <span className={`text-white text-xs font-bold px-3 py-1 rounded ${
-            isOpen ? 'bg-green-500' : 'bg-red-500'
-          }`}>
+          <span className={`text-white text-xs font-bold px-3 py-1 rounded ${isOpen ? 'bg-green-500' : 'bg-red-500'
+            }`}>
             {isOpen ? 'OPEN' : 'CLOSED'}
           </span>
         </div>
 
         {/* Favorite Button */}
         <button
-          onClick={() => onToggleFavorite?.(business.id)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFavorite(business.id);
+          }}
+          disabled={isLoading}
           className="absolute top-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
           aria-label="Add to favorites"
         >
-          <Heart
-            className={`w-5 h-5 ${
-              isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'
-            }`}
-          />
+          {isLoading ? (
+            <div className="w-5 h-5 border-2 border-gray-300 border-t-primary rounded-full animate-spin" />
+          ) : (
+            <Heart className={`w-5 h-5 ${isFavorite(business.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+          )}
         </button>
 
         {/* Owner Avatar */}

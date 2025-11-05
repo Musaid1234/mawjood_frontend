@@ -1,4 +1,5 @@
-import { API_BASE_URL, API_ENDPOINTS } from '@/config/api.config';
+import axiosInstance from '@/lib/axios';
+import { AxiosError } from 'axios';
 
 export interface BlogAuthor {
   id: string;
@@ -13,14 +14,48 @@ export interface Blog {
   title: string;
   content: string;
   image?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  tags?: string[] | null;
+  published?: boolean;
   createdAt: string;
+  updatedAt?: string;
   author: BlogAuthor;
 }
 
-export interface BlogListResponse {
+export interface ApiResponse<T> {
   success: boolean;
   message: string;
-  data: {
+  data: T;
+}
+
+// Error handler
+const handleError = (error: unknown): never => {
+  if (error instanceof AxiosError) {
+    const message = error.response?.data?.message || error.message || 'An error occurred';
+    throw new Error(message);
+  }
+  throw error;
+};
+
+export const blogService = {
+  // Public: Get published blogs
+  async getBlogs(limit: number = 3, page: number = 1): Promise<Blog[]> {
+    try {
+      const response = await axiosInstance.get<ApiResponse<{
+        blogs: Blog[];
+        pagination: any;
+      }>>('/api/blogs', {
+        params: { limit: Math.min(limit, 3), page },
+      });
+      return (response.data.data.blogs || []).slice(0, 3);
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  // Public: Get blogs with pagination
+  async getBlogsWithPagination(limit: number = 12, page: number = 1): Promise<{
     blogs: Blog[];
     pagination: {
       total: number;
@@ -28,50 +63,97 @@ export interface BlogListResponse {
       limit: number;
       totalPages: number;
     };
-  };
-}
-
-export const blogService = {
-  async getBlogs(limit: number = 3, page: number = 1): Promise<Blog[]> {
-    const params = new URLSearchParams();
-    params.set('limit', String(Math.min(limit, 3))); // cap at 3
-    params.set('page', String(page));
-
-    const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.BLOGS.GET_ALL}?${params.toString()}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch blogs: ${res.status}`);
+  }> {
+    try {
+      const response = await axiosInstance.get<ApiResponse<{
+        blogs: Blog[];
+        pagination: any;
+      }>>('/api/blogs', {
+        params: { limit, page },
+      });
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
     }
-
-    const json: BlogListResponse = await res.json();
-    if (!json.success) {
-      throw new Error(json.message || 'Failed to fetch blogs');
-    }
-
-    // Always return max 3
-    return (json.data.blogs || []).slice(0, 3);
   },
 
+  // Public: Get blog by slug
   async getBySlug(slug: string): Promise<Blog> {
-    const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.BLOGS.GET_BY_SLUG(slug)}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch blog: ${res.status}`);
+    try {
+      const response = await axiosInstance.get<ApiResponse<Blog>>(`/api/blogs/slug/${slug}`);
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
     }
+  },
 
-    const json = await res.json();
-    if (!json.success) {
-      throw new Error(json.message || 'Failed to fetch blog');
+  // Admin: Get all blogs (including unpublished)
+  async getAllBlogsAdmin(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<ApiResponse<{
+    blogs: Blog[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }>> {
+    try {
+      const response = await axiosInstance.get('/api/blogs/admin/all', { params });
+      return response.data;
+    } catch (error) {
+      return handleError(error);
     }
+  },
 
-    return json.data as Blog;
+  // Admin: Get blog by ID
+  async getBlogById(id: string): Promise<Blog> {
+    try {
+      const response = await axiosInstance.get<ApiResponse<Blog>>(`/api/blogs/${id}`);
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  // Admin: Create blog
+  async createBlog(blogData: FormData): Promise<Blog> {
+    try {
+      const response = await axiosInstance.post<ApiResponse<Blog>>('/api/blogs', blogData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  // Admin: Update blog
+  async updateBlog(id: string, blogData: FormData): Promise<Blog> {
+    try {
+      const response = await axiosInstance.put<ApiResponse<Blog>>(`/api/blogs/${id}`, blogData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  // Admin: Delete blog
+  async deleteBlog(id: string): Promise<void> {
+    try {
+      await axiosInstance.delete(`/api/blogs/${id}`);
+    } catch (error) {
+      return handleError(error);
+    }
   },
 };
+

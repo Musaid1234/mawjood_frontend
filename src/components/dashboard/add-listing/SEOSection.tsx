@@ -80,7 +80,7 @@ export default function SEOSection() {
 
           {/* Keywords Suggestion */}
           {/* <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-me dium text-gray-700 mb-2">
               Suggested Keywords
             </label>
             <div className="flex flex-wrap gap-2 p-4 bg-gray-50 rounded-lg">

@@ -1,0 +1,80 @@
+'use client';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Users } from 'lucide-react';
+import Link from 'next/link';
+import { formatDistanceToNow } from 'date-fns';
+
+interface RecentUsersListProps {
+  users: Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    role: string;
+    status: string;
+    createdAt: string;
+  }>;
+}
+
+const getRoleBadgeColor = (role: string) => {
+  switch (role) {
+    case 'ADMIN':
+      return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+    case 'BUSINESS_OWNER':
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+  }
+};
+
+export default function RecentUsersList({ users }: RecentUsersListProps) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-[#1c4233]" />
+          Recent Users
+        </CardTitle>
+        <Link href="/admin/users" className="text-sm text-[#1c4233] hover:underline font-medium">
+          View All →
+        </Link>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {users.map((user) => (
+            <div
+              key={user.id}
+              className="flex items-start justify-between p-4 rounded-lg border hover:border-[#1c4233] hover:bg-green-50/50 dark:hover:bg-gray-800 transition-all group"
+            >
+              <div className="flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Link
+                    href={`/admin/users/${user.id}`}
+                    className="font-semibold text-gray-900 dark:text-gray-100 hover:text-[#1c4233] transition-colors"
+                  >
+                    {user.firstName} {user.lastName}
+                  </Link>
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full font-medium ${getRoleBadgeColor(
+                      user.role
+                    )}`}
+                  >
+                    {user.role.replace('_', ' ')}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">✉️ {user.email}</p>
+                <p className="text-xs text-gray-500 mt-1">📱 {user.phone}</p>
+              </div>
+              <span className="text-xs text-[#1c4233] font-medium whitespace-nowrap bg-green-50 dark:bg-green-950 px-2 py-1 rounded-md">
+                {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}
+              </span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+

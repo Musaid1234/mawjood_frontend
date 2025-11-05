@@ -7,11 +7,12 @@ import Image from 'next/image';
 import { Heart, Phone, MapPin, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { businessService, Business } from '@/services/business.service';
 import { useCityStore } from '@/store/cityStore';
+import { useFavorites } from '@/hooks/useFavorites';
 
 export default function FeaturedListings() {
     const { selectedCity } = useCityStore();
     const [currentSlide, setCurrentSlide] = useState(0);
-    const [favorites, setFavorites] = useState<Set<string>>(new Set());
+    const { isFavorite, toggleFavorite, isLoading: favLoading } = useFavorites();
 
     // Fetch featured businesses using React Query
     const { data: businesses, isLoading, error } = useQuery({
@@ -31,18 +32,6 @@ export default function FeaturedListings() {
 
     const prevSlide = () => {
         setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
-    };
-
-    const toggleFavorite = (businessId: string) => {
-        setFavorites((prev) => {
-            const newFavorites = new Set(prev);
-            if (newFavorites.has(businessId)) {
-                newFavorites.delete(businessId);
-            } else {
-                newFavorites.add(businessId);
-            }
-            return newFavorites;
-        });
     };
 
     const getVisibleBusinesses = () => {
@@ -116,15 +105,20 @@ export default function FeaturedListings() {
                                     {/* Favorite Button */}
                                     <button
                                         onClick={() => toggleFavorite(business.id)}
-                                        className="absolute top-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                        disabled={favLoading}  // ADD THIS
+                                        className="absolute top-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"  // ADD disabled styles
                                         aria-label="Add to favorites"
                                     >
-                                        <Heart
-                                            className={`w-5 h-5 ${favorites.has(business.id)
-                                                ? 'fill-red-500 text-red-500'
-                                                : 'text-gray-600'
-                                                }`}
-                                        />
+                                        {favLoading ? (  // ADD THIS
+                                            <div className="w-5 h-5 border-2 border-gray-300 border-t-primary rounded-full animate-spin" />
+                                        ) : (
+                                            <Heart
+                                                className={`w-5 h-5 ${isFavorite(business.id)  // CHANGE THIS - use isFavorite() function
+                                                    ? 'fill-red-500 text-red-500'
+                                                    : 'text-gray-600'
+                                                    }`}
+                                            />
+                                        )}
                                     </button>
 
                                     {business.user && (

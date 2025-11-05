@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// src/middleware.ts (already correct)
 export function middleware(request: NextRequest) {
     const token = request.cookies.get('auth-token')?.value;
     const isDashboard = request.nextUrl.pathname.startsWith('/dashboard');
+    const isAdmin = request.nextUrl.pathname.startsWith('/admin');
   
-    if (isDashboard && !token) {
+    if ((isDashboard || isAdmin) && !token) {
       return NextResponse.redirect(new URL('/', request.url));
     }
   
@@ -14,5 +14,5 @@ export function middleware(request: NextRequest) {
   }
   
   export const config = {
-    matcher: ['/dashboard/:path*'],
+    matcher: ['/dashboard/:path*', '/admin/:path*'],
   };

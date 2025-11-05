@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Business } from '@/services/business.service';
+import { useFavorites } from '@/hooks/useFavorites';
 
 interface Props {
   business: Business;
@@ -11,7 +12,8 @@ interface Props {
 
 export default function BusinessListingCard({ business }: Props) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
+  const { isFavorite, toggleFavorite, isLoading } = useFavorites();
+
   // Prepare images array (logo, coverImage, and other images)
   const allImages = [
     business.logo,

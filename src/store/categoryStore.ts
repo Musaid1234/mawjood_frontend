@@ -54,7 +54,7 @@ export const useCategoryStore = create<CategoryState>()(
           const response = await categoryService.fetchCategories();
 
           set({
-            categories: response.data || [],
+            categories: response.data.categories as Category[] || [],
             loading: false,
             hasLoaded: true,
             error: null,

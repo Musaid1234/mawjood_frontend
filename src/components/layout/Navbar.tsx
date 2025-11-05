@@ -38,13 +38,13 @@ export default function Navbar() {
     if (isAuthenticated) {
       if (user?.role === 'USER') {
         setSignupRole('BUSINESS_OWNER');
-        setShowSignupModal(true);
+        setShowLoginModal(true);
       } else {
         window.location.href = '/dashboard/add-listing';
       }
     } else {
       setSignupRole('BUSINESS_OWNER');
-      setShowSignupModal(true);
+      setShowLoginModal(true);
     }
   };
 
@@ -57,7 +57,8 @@ export default function Navbar() {
     { href: '/about', key: 'about' },
     { href: '/blog', key: 'blog' },
     { href: '/businesses', key: 'businesses' },
-    { href: '/careers', key: 'careers' },
+    // { href: '/pricing', key: 'pricing' },
+    { href: '/contact', key: 'contact' },
   ];
 
   return (
@@ -150,6 +151,13 @@ export default function Navbar() {
                           {user.role}
                         </span>
                       </div>
+
+                                            {/* Admin Dashboard - Only for ADMIN */}
+                                            {user.role === 'ADMIN' && (
+                        <Link href="/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                          Admin Dashboard
+                        </Link>
+                      )}
 
                       {/* Only show Dashboard for BUSINESS_OWNER and ADMIN */}
                       {(user.role === 'BUSINESS_OWNER' || user.role === 'ADMIN') && (
@@ -262,6 +270,13 @@ export default function Navbar() {
                         <p className="text-sm font-semibold">{user.firstName} {user.lastName}</p>
                         <p className="text-xs text-gray-500">{user.email}</p>
                       </div>
+
+                                            {/* Admin Dashboard - Only for ADMIN */}
+                      {user.role === 'ADMIN' && (
+                        <Link href="/admin" className="block px-3 py-2 text-base font-medium text-gray-700">
+                          Admin Dashboard
+                        </Link>
+                      )}
 
                       {/* Only show Dashboard for BUSINESS_OWNER and ADMIN */}
                       {(user.role === 'BUSINESS_OWNER' || user.role === 'ADMIN') && (

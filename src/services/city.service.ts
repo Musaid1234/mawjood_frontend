@@ -1,74 +1,106 @@
+import axiosInstance from '@/lib/axios';
+import { AxiosError } from 'axios';
+
+export interface Region {
+  id: string;
+  name: string;
+  slug: string;
+  cities?: City[];
+}
+
 export interface City {
-    id: string;
-    name: string;
-    slug: string;
-    regionId: string;
-    region?: {
-      id: string;
-      name: string;
-      slug: string;
-    };
+  id: string;
+  name: string;
+  slug: string;
+  regionId: string;
+  region?: Region;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+// Error handler
+const handleError = (error: unknown): never => {
+  if (error instanceof AxiosError) {
+    const message = error.response?.data?.message || error.message || 'An error occurred';
+    throw new Error(message);
   }
-  
-  export interface CityResponse {
-    success: boolean;
-    message: string;
-    data: City[];
-  }
-  
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-  
-  export const cityService = {
-    async fetchCities(): Promise<City[]> {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/cities`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          cache: 'no-store',
-        });
-  
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-  
-        const data: CityResponse = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.message || 'Failed to fetch cities');
-        }
-  
-        return data.data;
-      } catch (error) {
-        console.error('Error fetching cities:', error);
-        throw error;
-      }
-    },
-  
-    async fetchCityBySlug(slug: string): Promise<City | null> {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/cities/slug/${slug}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-  
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-  
-        const data = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.message || 'Failed to fetch city');
-        }
-  
-        return data.data;
-      } catch (error) {
-        console.error('Error fetching city:', error);
-        throw error;
-      }
+  throw error;
+};
+
+export const cityService = {
+  // Cities
+  async fetchCities(): Promise<City[]> {
+    try {
+      const response = await axiosInstance.get<ApiResponse<City[]>>('/api/cities');
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
     }
-  };
+  },
+
+  async fetchCityBySlug(slug: string): Promise<City | null> {
+    try {
+      const response = await axiosInstance.get<ApiResponse<City>>(`/api/cities/slug/${slug}`);
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async createCity(cityData: { name: string; slug: string; regionId: string }): Promise<City> {
+    try {
+      const response = await axiosInstance.post<ApiResponse<City>>('/api/cities', cityData);
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async updateCity(id: string, cityData: { name: string; slug: string; regionId: string }): Promise<City> {
+    try {
+      const response = await axiosInstance.put<ApiResponse<City>>(`/api/cities/${id}`, cityData);
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async deleteCity(id: string): Promise<void> {
+    try {
+      await axiosInstance.delete(`/api/cities/${id}`);
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  // Regions
+  async fetchRegions(): Promise<Region[]> {
+    try {
+      const response = await axiosInstance.get<ApiResponse<Region[]>>('/api/cities/regions');
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async createRegion(regionData: { name: string; slug: string }): Promise<Region> {
+    try {
+      const response = await axiosInstance.post<ApiResponse<Region>>('/api/cities/regions', regionData);
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async deleteRegion(id: string): Promise<void> {
+    try {
+      await axiosInstance.delete(`/api/cities/regions/${id}`);
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+};

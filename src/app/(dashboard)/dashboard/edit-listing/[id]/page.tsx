@@ -4,7 +4,7 @@ import { Formik, Form, useFormikContext } from 'formik';
 import * as Yup from 'yup';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { businessService } from '@/services/business.service';
-import { categoryService } from '@/services/category.service';
+import { Category, categoryService } from '@/services/category.service';
 import { toast } from 'sonner';
 import { useRouter, useParams } from 'next/navigation';
 import { 
@@ -206,7 +206,7 @@ export default function EditListingPage() {
         {({ values, isSubmitting }) => (
           <Form className="space-y-6">
             {/* Inject categories into form context */}
-            <CategoryInjector categories={categoriesData?.data || []} />
+            <CategoryInjector categories={categoriesData?.data.categories as Category[] || []} />
 
             <BasicInfoSection />
             <ContactSection />

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { businessService } from '@/services/business.service';
 import { useCityStore } from '@/store/cityStore';
-import { categoryService } from '@/services/category.service';
+import { Category, categoryService } from '@/services/category.service';
 import BusinessCard from '@/components/business/BusinessCard';
 import BusinessListCard from '@/components/business/BusinessListCard';
 import { LayoutGrid, List } from 'lucide-react';
@@ -77,7 +77,7 @@ export default function BusinessesPage() {
                 className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               >
                 <option value="">CATEGORIES</option>
-                {categoriesData?.data.map((cat) => (
+                {categoriesData?.data.categories.map((cat: Category) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>

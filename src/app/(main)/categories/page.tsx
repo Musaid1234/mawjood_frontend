@@ -5,19 +5,26 @@ import { categoryService, Category } from '@/services/category.service';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function CategoriesPage() {
   const { t } = useTranslation('common');
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const response = await categoryService.fetchCategories();
-        setCategories(response.data);
+        const response = await categoryService.fetchCategories(currentPage, limit);
+        setCategories(response.data.categories);
+        setTotalPages(response.data.pagination.totalPages);
+        setTotal(response.data.pagination.total);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
       } finally {
@@ -26,7 +33,7 @@ export default function CategoriesPage() {
     };
 
     fetchCategories();
-  }, []);
+  }, [currentPage]);
 
   const filteredCategories = categories.filter(cat =>
     cat.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -52,7 +59,7 @@ export default function CategoriesPage() {
             All Categories
           </h1>
           <p className="text-lg text-gray-600">
-            Browse all business categories
+            Browse all business categories ({total} total)
           </p>
         </div>
 
@@ -73,7 +80,7 @@ export default function CategoriesPage() {
         </div>
 
         {/* Categories Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-8">
           {filteredCategories.map((category) => (
             <Link
               key={category.id}
@@ -113,9 +120,62 @@ export default function CategoriesPage() {
         </div>
 
         {/* No results */}
-        {filteredCategories.length === 0 && (
+        {filteredCategories.length === 0 && !loading && (
           <div className="text-center py-16">
             <p className="text-gray-500 text-lg">No categories found</p>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-8">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" /> Previous
+            </button>
+            
+            <div className="flex gap-2">
+              {[...Array(totalPages)].map((_, i) => {
+                const pageNum = i + 1;
+                // Show first page, last page, current page, and pages around current
+                if (
+                  pageNum === 1 ||
+                  pageNum === totalPages ||
+                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-4 py-2 rounded-lg ${
+                        currentPage === pageNum
+                          ? 'bg-primary text-white'
+                          : 'border hover:bg-gray-100'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                } else if (
+                  pageNum === currentPage - 2 ||
+                  pageNum === currentPage + 2
+                ) {
+                  return <span key={pageNum} className="px-2">...</span>;
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            >
+              Next <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
           </div>
         )}
       </div>

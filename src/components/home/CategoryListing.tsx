@@ -43,7 +43,7 @@ export function CategoryCard({ category, onClick }: CategoryCardProps) {
                 unoptimized={true}
               />
             ) : (
-              <span className="text-3xl"></span>
+              <span className="text-3xl">📁</span>
             )}
           </div>
         </div>
@@ -78,7 +78,7 @@ export default function CategoryListing() {
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-9 gap-6">
-            {Array.from({ length: 18 }).map((_, index) => (
+            {Array.from({ length: 17 }).map((_, index) => (
               <CategorySkeleton key={index} />
             ))}
           </div>
@@ -121,7 +121,7 @@ export default function CategoryListing() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-9 gap-6">
-          {categories.map((category) => (
+          {categories.slice(0, 17).map((category) => (
             <CategoryCard key={category.id} category={category} />
           ))}
           
