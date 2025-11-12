@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -245,13 +246,13 @@ export default function SignupModal({
             />
             <label htmlFor="terms" className="text-sm text-gray-600">
               I agree to{' '}
-              <a href="/terms" className="text-primary hover:underline">
+              <Link href="/terms" className="text-primary hover:underline">
                 Terms and Conditions
-              </a>{' '}
+              </Link>{' '}
               and{' '}
-              <a href="/privacy" className="text-primary hover:underline">
+              <Link href="/privacy" className="text-primary hover:underline">
                 Privacy Policy
-              </a>
+              </Link>
             </label>
           </div>
 
