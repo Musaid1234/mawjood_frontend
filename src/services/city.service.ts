@@ -1,10 +1,20 @@
 import axiosInstance from '@/lib/axios';
 import { AxiosError } from 'axios';
 
+export interface Country {
+  id: string;
+  name: string;
+  slug: string;
+  code?: string | null;
+  regions?: Region[];
+}
+
 export interface Region {
   id: string;
   name: string;
   slug: string;
+  countryId: string;
+  country?: Country;
   cities?: City[];
 }
 
@@ -22,7 +32,12 @@ export interface ApiResponse<T> {
   data: T;
 }
 
-// Error handler
+export interface UnifiedLocationSearchResult {
+  countries: Country[];
+  regions: Region[];
+  cities: City[];
+}
+
 const handleError = (error: unknown): never => {
   if (error instanceof AxiosError) {
     const message = error.response?.data?.message || error.message || 'An error occurred';
@@ -32,10 +47,48 @@ const handleError = (error: unknown): never => {
 };
 
 export const cityService = {
-  // Cities
   async fetchCities(): Promise<City[]> {
     try {
       const response = await axiosInstance.get<ApiResponse<City[]>>('/api/cities');
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async fetchCountries(): Promise<Country[]> {
+    try {
+      const response = await axiosInstance.get<ApiResponse<Country[]>>('/api/cities/countries');
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async createCountry(countryData: { name: string; slug: string; code?: string }): Promise<Country> {
+    try {
+      const response = await axiosInstance.post<ApiResponse<Country>>('/api/cities/countries', countryData);
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async deleteCountry(id: string): Promise<void> {
+    try {
+      await axiosInstance.delete(`/api/cities/countries/${id}`);
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async unifiedSearch(query?: string): Promise<UnifiedLocationSearchResult> {
+    try {
+      const endpoint = query && query.trim().length > 0
+        ? `/api/cities/search/unified?query=${encodeURIComponent(query)}`
+        : '/api/cities/search/unified';
+
+      const response = await axiosInstance.get<ApiResponse<UnifiedLocationSearchResult>>(endpoint);
       return response.data.data;
     } catch (error) {
       return handleError(error);
@@ -77,7 +130,6 @@ export const cityService = {
     }
   },
 
-  // Regions
   async fetchRegions(): Promise<Region[]> {
     try {
       const response = await axiosInstance.get<ApiResponse<Region[]>>('/api/cities/regions');
@@ -87,7 +139,7 @@ export const cityService = {
     }
   },
 
-  async createRegion(regionData: { name: string; slug: string }): Promise<Region> {
+  async createRegion(regionData: { name: string; slug: string; countryId: string }): Promise<Region> {
     try {
       const response = await axiosInstance.post<ApiResponse<Region>>('/api/cities/regions', regionData);
       return response.data.data;

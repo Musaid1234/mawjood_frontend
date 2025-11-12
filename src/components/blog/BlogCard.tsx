@@ -39,6 +39,20 @@ export default function BlogCard({ blog }: BlogCardProps) {
           <span>{format(new Date(blog.createdAt), 'MMM d, yyyy')}</span>
         </div>
 
+        {blog.categories && blog.categories.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {blog.categories.slice(0, 3).map((category) => (
+              <Link
+                key={category.id}
+                href={`/blog/category/${category.slug}`}
+                className="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary font-medium hover:bg-primary/20 transition-colors"
+              >
+                {category.name}
+              </Link>
+            ))}
+          </div>
+        )}
+
         <Link
           href={`/blog/${blog.slug}`}
           className="text-lg font-semibold text-gray-900 group-hover:text-primary transition-colors line-clamp-2 mb-3"

@@ -7,10 +7,12 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import LoginModal from '@/components/auth/LoginModal';
 import SignupModal from '@/components/auth/SignupModal';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 export default function Navbar() {
   const { t, i18n } = useTranslation('common');
   const { user, isAuthenticated, logout, checkAuth } = useAuthStore();
+  const { data: siteSettings } = useSiteSettings();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
@@ -53,6 +55,11 @@ export default function Navbar() {
     setShowUserMenu(false);
   };
 
+  const navbarSettings = siteSettings?.navbar;
+  const logoSrc = navbarSettings?.logoUrl || '/logo/logo2.png';
+  const brandName = navbarSettings?.brandName || t('nav.mawjood');
+  const brandTagline = navbarSettings?.tagline;
+
   const navLinks = [
     { href: '/about', key: 'about' },
     { href: '/blog', key: 'blog' },
@@ -70,15 +77,22 @@ export default function Navbar() {
             <div className="flex-shrink-0">
               <Link href="/" className="flex items-center">
                 <Image
-                  src="/logo/logo2.png"
+                  src={logoSrc}
                   alt="Mawjood Logo"
                   width={40}
                   height={40}
                   className="h-10 w-auto"
                 />
-                <h1 className='text-primary hover:text-primary block text-base font-bold ml-2'>
-                  {t('nav.mawjood')}
-                </h1>
+                <div className="ml-2">
+                  <h1 className="text-primary hover:text-primary block text-base font-bold leading-tight">
+                    {brandName}
+                  </h1>
+                  {brandTagline && (
+                    <span className="block text-[10px] text-gray-500 leading-tight">
+                      {brandTagline}
+                    </span>
+                  )}
+                </div>
               </Link>
             </div>
 

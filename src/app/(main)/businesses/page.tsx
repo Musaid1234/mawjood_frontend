@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { businessService } from '@/services/business.service';
 import { useCityStore } from '@/store/cityStore';
@@ -8,34 +8,96 @@ import { Category, categoryService } from '@/services/category.service';
 import BusinessCard from '@/components/business/BusinessCard';
 import BusinessListCard from '@/components/business/BusinessListCard';
 import { LayoutGrid, List } from 'lucide-react';
+import CategoryDropdown from '@/components/dashboard/add-listing/CategoryDropdown';
+
+type FiltersState = {
+  categoryId: string;
+  rating: string;
+  sortBy: string;
+  search: string;
+};
+
+const SORT_OPTIONS = [
+  { value: 'popular', label: 'Popular (Profile Views)' },
+  { value: 'rating_high', label: 'Rating: High to Low' },
+  { value: 'rating_low', label: 'Rating: Low to High' },
+  { value: 'newest', label: 'Newest' },
+  { value: 'oldest', label: 'Oldest' },
+  { value: 'verified', label: 'Verified First' },
+  { value: 'not_verified', label: 'Not Verified First' },
+  { value: 'name_asc', label: 'Alphabetical (A-Z)' },
+  { value: 'name_desc', label: 'Alphabetical (Z-A)' },
+];
+
+const sortCategoriesAlphabetically = (items: Category[]): Category[] =>
+  [...items]
+    .map((item) => ({
+      ...item,
+      subcategories: item.subcategories
+        ? sortCategoriesAlphabetically(item.subcategories)
+        : [],
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
 export default function BusinessesPage() {
-  const { selectedCity } = useCityStore();
+  const { selectedCity, selectedLocation } = useCityStore();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<FiltersState>({
     categoryId: '',
     rating: '',
-    priceLevel: '',
-    sortBy: 'newest',
+    sortBy: 'popular',
+    search: '',
   });
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const updateFilters = (updates: Partial<FiltersState>) => {
+    setFilters((prev) => ({ ...prev, ...updates }));
+    setCurrentPage(1);
+  };
+
+  useEffect(() => {
+    setSearchTerm(filters.search);
+  }, [filters.search]);
+
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    updateFilters({ search: searchTerm.trim() });
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    updateFilters({ search: '' });
+  };
 
   // Fetch categories
-  const { data: categoriesData } = useQuery({
+  const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoryService.fetchCategories(),
   });
 
+  const sortedCategories = useMemo(() => {
+    if (!categoriesData?.data?.categories) return [];
+    return sortCategoriesAlphabetically(categoriesData.data.categories);
+  }, [categoriesData?.data?.categories]);
+
   // Fetch businesses
+  const locationFilterId = selectedLocation?.id ?? selectedCity?.id;
+  const locationFilterType = selectedLocation?.type ?? 'city';
+
   const { data, isLoading } = useQuery({
-    queryKey: ['businesses', currentPage, selectedCity?.id, filters],
+    queryKey: ['businesses', currentPage, locationFilterId, locationFilterType, filters],
     queryFn: () =>
       businessService.searchBusinesses({
         page: currentPage,
         limit: 12,
-        cityId: selectedCity?.id,
+        locationId: locationFilterId,
+        locationType: locationFilterType,
         categoryIds: filters.categoryId ? [filters.categoryId] : undefined,
+        search: filters.search.trim().length ? filters.search.trim() : undefined,
+        sortBy: filters.sortBy,
+        rating: filters.rating ? Number(filters.rating) : undefined,
       }),
   });
 
@@ -54,69 +116,106 @@ export default function BusinessesPage() {
   const totalResults = data?.pagination?.total || 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            All Businesses {selectedCity && `in ${selectedCity.name}`}
+            All Businesses{' '}
+            {(selectedLocation || selectedCity) && `in ${(selectedLocation ?? selectedCity)?.name}`}
           </h1>
           <p className="text-gray-600">
             Discover the best local businesses
           </p>
+          {data?.locationContext?.fallbackApplied && data.locationContext.applied && (
+            <p className="text-sm text-gray-500 mt-2">
+              Showing businesses from {data.locationContext.applied.name} due to limited results in the selected
+              area.
+            </p>
+          )}
         </div>
 
         {/* Filters Bar */}
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            {/* Filter Buttons */}
-            <div className="flex flex-wrap gap-3">
-              <select
-                value={filters.categoryId}
-                onChange={(e) => setFilters({ ...filters, categoryId: e.target.value })}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+        <div className="bg-white rounded-xl p-4 mb-6 space-y-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="flex w-full lg:max-w-md gap-2"
+            >
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search businesses or services"
+                style={{ paddingTop: '0.875rem', paddingBottom: '0.875rem' }}
+                className="flex-1 px-4  border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+              {filters.search && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="px-3 py-2 text-sm text-gray-500 hover:text-primary transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+              <button
+                type="submit"
+                className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
               >
-                <option value="">CATEGORIES</option>
-                {categoriesData?.data.categories.map((cat: Category) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
+                Search
+              </button>
+            </form>
 
-              <select
+            <div className="flex flex-wrap gap-3 items-start">
+              <div className="w-full sm:w-64">
+                {categoriesLoading ? (
+                  <div className="h-12 rounded-lg bg-gray-100 animate-pulse" />
+                ) : (
+                  <>
+                    <CategoryDropdown
+                      categories={sortedCategories}
+                      value={filters.categoryId}
+                      onChange={(categoryId) => updateFilters({ categoryId })}
+                    />
+                    {filters.categoryId && (
+                      <button
+                        type="button"
+                        onClick={() => updateFilters({ categoryId: '' })}
+                        className="mt-2 text-xs text-primary hover:text-primary/80 transition-colors"
+                      >
+                        Clear category
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* <select
                 value={filters.rating}
-                onChange={(e) => setFilters({ ...filters, rating: e.target.value })}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                onChange={(event) => updateFilters({ rating: event.target.value })}
+                style={{ paddingTop: '0.875rem', paddingBottom: '0.875rem' }}
+                className="px-4 border border-gray-300 rounded-lg text-sm bg-white text-gray-500 focus:ring-2 focus:ring-primary focus:border-transparent"
               >
-                <option value="">RATING FILTER</option>
+                <option value="">Rating Filter</option>
                 <option value="5">5 Stars</option>
                 <option value="4">4+ Stars</option>
                 <option value="3">3+ Stars</option>
-              </select>
+              </select> */}
 
               <select
-                value={filters.priceLevel}
-                onChange={(e) => setFilters({ ...filters, priceLevel: e.target.value })}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                value={filters.sortBy}
+                onChange={(event) => updateFilters({ sortBy: event.target.value })}
+                style={{ paddingTop: '0.875rem', paddingBottom: '0.875rem' }}
+                className="px-4 border border-gray-300 rounded-lg text-sm bg-white text-gray-500 focus:ring-2 focus:ring-primary focus:border-transparent"
               >
-                <option value="">PRICE FILTER</option>
-                <option value="$">$ - Budget</option>
-                <option value="$$">$$ - Moderate</option>
-                <option value="$$$">$$$ - Premium</option>
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
-
-              <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
-                DISTANCE
-              </button>
-
-              <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
-                MORE FILTER
-              </button>
-            </div>
-
-            {/* View Toggle */}
-            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+              <div style={{ padding: '0.40rem' }} className="flex items-center gap-2 bg-gray-100 rounded-lg self-start sm:self-auto">
               <button
                 onClick={() => setViewMode('list')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -140,24 +239,8 @@ export default function BusinessesPage() {
                 Grid
               </button>
             </div>
+            </div>
           </div>
-        </div>
-
-        {/* Results Info & Sort */}
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-gray-700 font-medium">
-            {totalResults} Listings Found
-          </p>
-          <select
-            value={filters.sortBy}
-            onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            <option value="newest">SHORT LISTINGS: Newest</option>
-            <option value="rating">Highest Rated</option>
-            <option value="reviews">Most Reviews</option>
-            <option value="az">A to Z</option>
-          </select>
         </div>
 
         {/* Loading State */}

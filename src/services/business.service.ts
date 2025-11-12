@@ -1,5 +1,7 @@
 import axiosInstance from "@/lib/axios";
 
+export type LocationType = 'city' | 'region' | 'country';
+
 export interface Business {
   crNumber: string;
   services: Service[];
@@ -17,7 +19,7 @@ export interface Business {
   longitude?: number;
   logo?: string;
   coverImage?: string;
-  images: string[];
+  images?: string[] | null;
   metaTitle?: string | null;
   metaDescription?: string | null;
   averageRating: number;
@@ -53,8 +55,14 @@ export interface Business {
       avatar?: string | null;
     };
   }>;
-  distance?: number;
+  distance?: number | null;
+  viewCount?: number;
   keywords?: string[] | null;
+  currentSubscriptionId?: string | null;
+  subscriptionStartedAt?: string | null;
+  subscriptionExpiresAt?: string | null;
+  canCreateAdvertisements?: boolean;
+  promotedUntil?: string | null;
 }
 
 export interface CreateBusinessData {
@@ -86,12 +94,14 @@ export interface BusinessSearchParams {
   search?: string;
   categoryId?: string;
   categoryIds?: string[];
-  cityId?: string;
+  locationId?: string;
+  locationType?: LocationType;
+  cityId?: string; // Deprecated: use locationId instead
   latitude?: number;
   longitude?: number;
   radius?: number;
   sortBy?: string;
-  order?: 'asc' | 'desc';
+  rating?: number;
 }
 
 export interface BusinessResponse {
@@ -105,7 +115,22 @@ export interface BusinessResponse {
       limit: number;
       totalPages: number;
     };
+    locationContext?: LocationContext;
   };
+}
+
+export interface LocationContext {
+  requested: {
+    id: string;
+    type: LocationType;
+    name: string;
+  };
+  applied: {
+    id: string;
+    type: LocationType;
+    name: string;
+  } | null;
+  fallbackApplied: boolean;
 }
 
 // Add these interfaces after BusinessResponse
@@ -140,7 +165,9 @@ export interface UnifiedSearchResponse {
 
 export interface FeaturedBusinessParams {
   limit?: number;
-  cityId?: string;
+  locationId?: string;
+  locationType?: LocationType;
+  cityId?: string; // Deprecated: use locationId instead
 }
 
 // Extended Business types for detail page
@@ -203,12 +230,20 @@ export const businessService = {
       if (params.categoryIds && params.categoryIds.length > 0) {
         queryParams.set('categoryIds', params.categoryIds.join(','));
       }
-      if (params.cityId) queryParams.set('cityId', params.cityId);
+      const locationId = params.locationId ?? params.cityId;
+      if (locationId) {
+        queryParams.set('locationId', locationId);
+      }
+      if (params.locationType) {
+        queryParams.set('locationType', params.locationType);
+      }
       if (params.latitude) queryParams.set('latitude', params.latitude.toString());
       if (params.longitude) queryParams.set('longitude', params.longitude.toString());
       if (params.radius) queryParams.set('radius', params.radius.toString());
       if (params.sortBy) queryParams.set('sortBy', params.sortBy);
-      if (params.order) queryParams.set('order', params.order);
+      if (typeof params.rating === 'number' && !Number.isNaN(params.rating)) {
+        queryParams.set('rating', params.rating.toString());
+      }
 
       const response = await fetch(`${API_BASE_URL}/api/businesses?${queryParams.toString()}`, {
         method: 'GET',
@@ -289,11 +324,19 @@ export const businessService = {
     }
   },
 
-  async getFeaturedBusinesses(params?: FeaturedBusinessParams): Promise<Business[]> {
+  async getFeaturedBusinesses(
+    params?: FeaturedBusinessParams
+  ): Promise<{ businesses: Business[]; locationContext?: LocationContext }> {
     try {
       const queryParams = new URLSearchParams();
       if (params?.limit) queryParams.set('limit', params.limit.toString());
-      if (params?.cityId) queryParams.set('cityId', params.cityId);
+      const locationId = params?.locationId ?? params?.cityId;
+      if (locationId) {
+        queryParams.set('locationId', locationId);
+      }
+      if (params?.locationType) {
+        queryParams.set('locationType', params.locationType);
+      }
   
       const response = await fetch(`${API_BASE_URL}/api/businesses/featured?${queryParams.toString()}`, {
         method: 'GET',
@@ -305,7 +348,14 @@ export const businessService = {
       const data = await response.json();
       if (!data.success) throw new Error(data.message || 'Failed to fetch featured businesses');
   
-      return data.data;
+      if (Array.isArray(data.data)) {
+        return { businesses: data.data };
+      }
+
+      return {
+        businesses: data.data?.businesses ?? [],
+        locationContext: data.data?.locationContext,
+      };
     } catch (error) {
       console.error('Error fetching featured businesses:', error);
       throw error;

@@ -1,6 +1,5 @@
 'use client'
 import { useTranslation } from 'react-i18next';
-import Image from 'next/image';
 import AppDownloadBanner from '@/components/home/AppDownloadBanner';
 import HeroSection from '@/components/home/HeroSection';
 import CategoryListing from '@/components/home/CategoryListing';
@@ -8,6 +7,7 @@ import FeaturedServices from '@/components/home/FeaturedServices';
 import FeaturedListings from '@/components/home/FeaturedListings';
 import Reviews from '@/components/home/Reviews';
 import Blogs from '@/components/home/Blogs';
+import QuickLinks from '@/components/home/QuickLinks';
 
 export default function Home() {
     const { t, i18n } = useTranslation('common');
@@ -20,6 +20,7 @@ export default function Home() {
       <FeaturedListings />
       <Reviews />
       <Blogs />
+      <QuickLinks />
       <AppDownloadBanner />
     </div>
   );

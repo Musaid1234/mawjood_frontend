@@ -1,7 +1,131 @@
+'use client';
+
 import Link from 'next/link';
 import { Building2, Users, Award, Target, Heart, TrendingUp, Shield, Zap } from 'lucide-react';
+import { useMemo } from 'react';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { AboutSettings } from '@/services/settings.service';
+
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  building: Building2,
+  users: Users,
+  award: Award,
+  target: Target,
+  heart: Heart,
+  trending: TrendingUp,
+  trendingup: TrendingUp,
+  shield: Shield,
+  zap: Zap,
+};
+
+type AboutContent = {
+  hero: {
+    title: string;
+    subtitle: string;
+    stats: { icon?: string; label: string }[];
+  };
+  mission: { title: string; description: string };
+  vision: { title: string; description: string };
+  story: { title: string; paragraphs: string[] };
+  values: { icon?: string; title: string; description: string }[];
+  stats: { label: string; value: string }[];
+};
+
+const DEFAULT_ABOUT: AboutContent = {
+  hero: {
+    title: 'Welcome to Mawjood',
+    subtitle: 'Your trusted platform connecting businesses and customers across Saudi Arabia',
+    stats: [
+      { icon: 'building', label: '1000+ Businesses' },
+      { icon: 'users', label: '50,000+ Users' },
+      { icon: 'award', label: 'Verified & Trusted' },
+    ],
+  },
+  mission: {
+    title: 'Our Mission',
+    description:
+      'To empower local businesses in Saudi Arabia by providing them with a powerful digital platform to reach more customers, grow their presence, and thrive in the digital economy. We believe every business deserves the opportunity to succeed online.',
+  },
+  vision: {
+    title: 'Our Vision',
+    description:
+      'To become the leading business discovery platform in Saudi Arabia, where every local business is visible, accessible, and celebrated. We envision a future where finding trusted services and businesses is effortless for every Saudi resident.',
+  },
+  story: {
+    title: 'Our Story',
+    paragraphs: [
+      'Mawjood was born from a simple observation: finding reliable local businesses in Saudi Arabia was harder than it should be. In 2024, we set out to change that by creating a platform that brings businesses and customers together seamlessly.',
+      'What started as a small directory has grown into a comprehensive platform serving thousands of businesses across major Saudi cities. From restaurants and shops to professional services and entertainment venues, Mawjood has become the go-to platform for discovering local businesses.',
+      "Today, we're proud to support Saudi Arabia's Vision 2030 by digitizing local commerce and helping businesses of all sizes reach their full potential in the digital age.",
+    ],
+  },
+  values: [
+    {
+      icon: 'shield',
+      title: 'Trust & Safety',
+      description: 'We verify every business to ensure our users connect with legitimate, trustworthy services.',
+    },
+    {
+      icon: 'zap',
+      title: 'Innovation',
+      description: 'We continuously improve our platform with cutting-edge features and user-friendly design.',
+    },
+    {
+      icon: 'users',
+      title: 'Community First',
+      description: 'We prioritize the needs of our local communities and support Saudi businesses at every stage.',
+    },
+    {
+      icon: 'heart',
+      title: 'Passion',
+      description: "We're passionate about helping businesses succeed and making life easier for our users.",
+    },
+  ],
+  stats: [
+    { label: 'Active Businesses', value: '1,000+' },
+    { label: 'Happy Users', value: '50,000+' },
+    { label: 'Cities Covered', value: '45+' },
+    { label: 'Monthly Searches', value: '100,000+' },
+  ],
+};
 
 export default function AboutPage() {
+  const { data: siteSettings } = useSiteSettings();
+  const aboutSettings = siteSettings?.about;
+
+  const aboutContent = useMemo<AboutContent>(() => {
+    if (!aboutSettings) {
+      return DEFAULT_ABOUT;
+    }
+
+    return {
+      hero: {
+        title: aboutSettings.hero?.title ?? DEFAULT_ABOUT.hero.title,
+        subtitle: aboutSettings.hero?.subtitle ?? DEFAULT_ABOUT.hero.subtitle,
+        stats: aboutSettings.hero?.stats?.length ? aboutSettings.hero.stats : DEFAULT_ABOUT.hero.stats,
+      },
+      mission: {
+        title: aboutSettings.mission?.title ?? DEFAULT_ABOUT.mission.title,
+        description: aboutSettings.mission?.description ?? DEFAULT_ABOUT.mission.description,
+      },
+      vision: {
+        title: aboutSettings.vision?.title ?? DEFAULT_ABOUT.vision.title,
+        description: aboutSettings.vision?.description ?? DEFAULT_ABOUT.vision.description,
+      },
+      story: {
+        title: aboutSettings.story?.title ?? DEFAULT_ABOUT.story.title,
+        paragraphs: aboutSettings.story?.paragraphs?.length
+          ? aboutSettings.story.paragraphs
+          : DEFAULT_ABOUT.story.paragraphs,
+      },
+      values: aboutSettings.values?.length ? aboutSettings.values : DEFAULT_ABOUT.values,
+      stats: aboutSettings.stats?.length ? aboutSettings.stats : DEFAULT_ABOUT.stats,
+    };
+  }, [aboutSettings]);
+
+  const MissionIcon = ICON_MAP.target;
+  const VisionIcon = ICON_MAP.trendingup ?? TrendingUp;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Hero Section */}
@@ -10,26 +134,23 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-5xl font-bold mb-6 animate-fade-in">
-              Welcome to Mawjood
+              {aboutContent.hero.title}
             </h1>
             <p className="text-xl text-white/90 mb-8">
-              Your trusted platform connecting businesses and customers across Saudi Arabia
+              {aboutContent.hero.subtitle}
             </p>
-            <div className="flex items-center justify-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5" />
-                <span>1000+ Businesses</span>
-              </div>
-              <div className="w-1 h-4 bg-white/30"></div>
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                <span>50,000+ Users</span>
-              </div>
-              <div className="w-1 h-4 bg-white/30"></div>
-              <div className="flex items-center gap-2">
-                <Award className="w-5 h-5" />
-                <span>Verified & Trusted</span>
-              </div>
+            <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
+              {aboutContent.hero.stats.map((stat, index) => {
+                const Icon = ICON_MAP[stat.icon?.toLowerCase?.() ?? ''] ?? Building2;
+                const isLast = index === aboutContent.hero.stats.length - 1;
+                return (
+                  <div key={`${stat.label}-${index}`} className="flex items-center gap-2">
+                    <Icon className="w-5 h-5" />
+                    <span>{stat.label}</span>
+                    {!isLast && <div className="hidden md:block w-1 h-4 bg-white/30" />}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -42,26 +163,22 @@ export default function AboutPage() {
             {/* Mission */}
             <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                <Target className="w-8 h-8 text-primary" />
+                <MissionIcon className="w-8 h-8 text-primary" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Mission</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">{aboutContent.mission.title}</h2>
               <p className="text-gray-600 leading-relaxed">
-                To empower local businesses in Saudi Arabia by providing them with a powerful digital platform 
-                to reach more customers, grow their presence, and thrive in the digital economy. We believe 
-                every business deserves the opportunity to succeed online.
+                {aboutContent.mission.description}
               </p>
             </div>
 
             {/* Vision */}
             <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                <TrendingUp className="w-8 h-8 text-primary" />
+                <VisionIcon className="w-8 h-8 text-primary" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Vision</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">{aboutContent.vision.title}</h2>
               <p className="text-gray-600 leading-relaxed">
-                To become the leading business discovery platform in Saudi Arabia, where every local business 
-                is visible, accessible, and celebrated. We envision a future where finding trusted services 
-                and businesses is effortless for every Saudi resident.
+                {aboutContent.vision.description}
               </p>
             </div>
           </div>
@@ -72,24 +189,15 @@ export default function AboutPage() {
       <section className="py-20 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Story</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">{aboutContent.story.title}</h2>
             <div className="w-24 h-1 bg-primary mx-auto"></div>
           </div>
           <div className="prose prose-lg max-w-none text-gray-600">
-            <p className="text-lg leading-relaxed mb-6">
-              Mawjood was born from a simple observation: finding reliable local businesses in Saudi Arabia 
-              was harder than it should be. In 2024, we set out to change that by creating a platform that 
-              brings businesses and customers together seamlessly.
-            </p>
-            <p className="text-lg leading-relaxed mb-6">
-              What started as a small directory has grown into a comprehensive platform serving thousands 
-              of businesses across major Saudi cities. From restaurants and shops to professional services 
-              and entertainment venues, Mawjood has become the go-to platform for discovering local businesses.
-            </p>
-            <p className="text-lg leading-relaxed">
-              Today, we're proud to support Saudi Arabia's Vision 2030 by digitizing local commerce and 
-              helping businesses of all sizes reach their full potential in the digital age.
-            </p>
+            {aboutContent.story.paragraphs.map((paragraph, index) => (
+              <p key={index} className={`text-lg leading-relaxed ${index !== aboutContent.story.paragraphs.length - 1 ? 'mb-6' : ''}`}>
+                {paragraph}
+              </p>
+            ))}
           </div>
         </div>
       </section>
@@ -103,49 +211,20 @@ export default function AboutPage() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Value 1 */}
-            <div className="text-center">
-              <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-transform">
-                <Shield className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Trust & Safety</h3>
-              <p className="text-gray-600">
-                We verify every business to ensure our users connect with legitimate, trustworthy services.
-              </p>
-            </div>
-
-            {/* Value 2 */}
-            <div className="text-center">
-              <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-transform">
-                <Zap className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Innovation</h3>
-              <p className="text-gray-600">
-                We continuously improve our platform with cutting-edge features and user-friendly design.
-              </p>
-            </div>
-
-            {/* Value 3 */}
-            <div className="text-center">
-              <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-transform">
-                <Users className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Community First</h3>
-              <p className="text-gray-600">
-                We prioritize the needs of our local communities and support Saudi businesses at every stage.
-              </p>
-            </div>
-
-            {/* Value 4 */}
-            <div className="text-center">
-              <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-transform">
-                <Heart className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Passion</h3>
-              <p className="text-gray-600">
-                We're passionate about helping businesses succeed and making life easier for our users.
-              </p>
-            </div>
+            {aboutContent.values.map((value, index) => {
+              const Icon = ICON_MAP[value.icon?.toLowerCase?.() ?? ''] ?? Shield;
+              return (
+                <div key={`${value.title}-${index}`} className="text-center">
+                  <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-transform">
+                    <Icon className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{value.title}</h3>
+                  <p className="text-gray-600">
+                    {value.description}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -159,22 +238,12 @@ export default function AboutPage() {
           </div>
 
           <div className="grid md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-5xl font-bold mb-2">1,000+</div>
-              <div className="text-white/80 text-lg">Active Businesses</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-bold mb-2">50,000+</div>
-              <div className="text-white/80 text-lg">Happy Users</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-bold mb-2">45+</div>
-              <div className="text-white/80 text-lg">Cities Covered</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-bold mb-2">100,000+</div>
-              <div className="text-white/80 text-lg">Monthly Searches</div>
-            </div>
+            {aboutContent.stats.map((stat, index) => (
+              <div key={`${stat.label}-${index}`} className="text-center">
+                <div className="text-5xl font-bold mb-2">{stat.value}</div>
+                <div className="text-white/80 text-lg">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

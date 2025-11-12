@@ -16,6 +16,7 @@ import {
   SimilarBusinesses,
 } from '@/components/business';
 import Link from 'next/link';
+import { buildOgImages, toAbsoluteUrl } from '@/config/seo.config';
 
 interface Service {
   id: string;
@@ -61,6 +62,71 @@ export default function BusinessDetailPage() {
       fetchData();
     }
   }, [slug]);
+
+  useEffect(() => {
+    if (!business) return;
+
+    const schemaId = `business-schema-${business.id}`;
+    const existing = document.querySelector(
+      `script[type="application/ld+json"][data-business-schema="${schemaId}"]`
+    );
+    if (existing) existing.remove();
+
+    const { absolute: ogImage } = buildOgImages(business.coverImage || business.logo);
+    const canonical = toAbsoluteUrl(`/businesses/${business.slug}`);
+
+    const structuredData = {
+      '@context': 'https://schema.org',
+      '@type': 'LocalBusiness',
+      name: business.name,
+      image: [ogImage],
+      url: canonical,
+      telephone: business.phone || undefined,
+      email: business.email || undefined,
+      description: business.description || undefined,
+      address: business.address
+        ? {
+            '@type': 'PostalAddress',
+            streetAddress: business.address,
+            addressLocality: business.city?.name,
+            addressCountry: 'SA',
+          }
+        : undefined,
+      geo:
+        business.latitude && business.longitude
+          ? {
+              '@type': 'GeoCoordinates',
+              latitude: business.latitude,
+              longitude: business.longitude,
+            }
+          : undefined,
+      aggregateRating:
+        business.averageRating > 0
+          ? {
+              '@type': 'AggregateRating',
+              ratingValue: business.averageRating,
+              reviewCount: business.totalReviews || 0,
+            }
+          : undefined,
+      sameAs: business.website ? [business.website] : undefined,
+    };
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.setAttribute('data-business-schema', schemaId);
+    script.textContent = JSON.stringify(structuredData, (_, value) =>
+      value === undefined ? undefined : value
+    );
+
+    document.head.appendChild(script);
+
+    return () => {
+      const node = document.querySelector(
+        `script[type="application/ld+json"][data-business-schema="${schemaId}"]`
+      );
+      if (node) node.remove();
+    };
+  }, [business]);
 
   // Loading State
   if (loading) {
@@ -159,11 +225,14 @@ export default function BusinessDetailPage() {
             />
 
             {/* Similar Businesses */}
-            <SimilarBusinesses
-              categoryId={business.category.id}
-              cityId={business.city.id}
-              currentBusinessId={business.id}
-            />
+            {business.city?.id && (
+              <SimilarBusinesses
+                categoryId={business.category.id}
+                locationId={business.city.id}
+                locationType="city"
+                currentBusinessId={business.id}
+              />
+            )}
           </div>
 
           {/* Right Column: Sidebar */}

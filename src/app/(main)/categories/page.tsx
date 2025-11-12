@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { categoryService, Category } from '@/services/category.service';
+import { useCityStore } from '@/store/cityStore';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
@@ -16,9 +17,10 @@ export default function CategoriesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 20;
+  const { selectedLocation, selectedCity, cities, fetchCities } = useCityStore();
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         const response = await categoryService.fetchCategories(currentPage, limit);
@@ -32,12 +34,25 @@ export default function CategoriesPage() {
       }
     };
 
-    fetchCategories();
+    fetchData();
   }, [currentPage]);
 
-  const filteredCategories = categories.filter(cat =>
+  useEffect(() => {
+    if (!cities.length) {
+      fetchCities();
+    }
+  }, [cities.length, fetchCities]);
+
+  const filteredCategories = categories.filter((cat) =>
     cat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const locationSlug =
+    selectedLocation?.slug ||
+    selectedCity?.slug ||
+    cities.find((city) => city.name.toLowerCase().includes('riyadh'))?.slug ||
+    cities[0]?.slug ||
+    'riyadh';
 
   if (loading) {
     return (
@@ -84,7 +99,7 @@ export default function CategoriesPage() {
           {filteredCategories.map((category) => (
             <Link
               key={category.id}
-              href={`/categories/${category.slug}`}
+              href={`/${locationSlug}/${category.slug}`}
               className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 transform hover:scale-105 group"
             >
               <div className="flex flex-col items-center text-center">

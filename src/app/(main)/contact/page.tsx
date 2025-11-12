@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { JSX, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { Mail, Phone, Globe, Facebook, Instagram, Twitter, Linkedin, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 // Fix for default marker icon in react-leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -16,6 +17,32 @@ L.Icon.Default.mergeOptions({
 });
 
 export default function ContactPage() {
+  const { data: siteSettings } = useSiteSettings();
+  const contactSettings = siteSettings?.contact;
+
+  const emails = contactSettings?.emails?.length
+    ? contactSettings.emails
+    : ['info@mawjood.sa', 'support@mawjood.sa'];
+
+  const phones = contactSettings?.phones?.length
+    ? contactSettings.phones
+    : ['+966 11 234 5678', '+966 50 987 6543'];
+
+  const socialLinks = contactSettings?.socialLinks?.length
+    ? contactSettings.socialLinks
+    : [
+        { name: 'Facebook', url: 'https://facebook.com' },
+        { name: 'Instagram', url: 'https://instagram.com' },
+        { name: 'Twitter', url: 'https://twitter.com' },
+        { name: 'LinkedIn', url: 'https://linkedin.com' },
+      ];
+
+  const officeLocation = {
+    lat: contactSettings?.location?.latitude ?? 24.7136,
+    lng: contactSettings?.location?.longitude ?? 46.6753,
+    address: contactSettings?.location?.address ?? 'King Fahd Road, Riyadh, Saudi Arabia',
+  };
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -25,11 +52,12 @@ export default function ContactPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Mawjood office location (example: Riyadh, Saudi Arabia)
-  const officeLocation = {
-    lat: 24.7136,
-    lng: 46.6753,
-    address: 'King Fahd Road, Riyadh, Saudi Arabia',
+  const SOCIAL_ICON_MAP: Record<string, JSX.Element> = {
+    Facebook: <Facebook className="w-5 h-5 text-white" />,
+    Instagram: <Instagram className="w-5 h-5 text-white" />,
+    Twitter: <Twitter className="w-5 h-5 text-white" />,
+    Linkedin: <Linkedin className="w-5 h-5 text-white" />,
+    LinkedIn: <Linkedin className="w-5 h-5 text-white" />,
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -82,12 +110,15 @@ export default function ContactPage() {
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-4">Drop a Mail</h3>
             <div className="space-y-2">
-              <a href="mailto:info@mawjood.sa" className="block text-gray-600 hover:text-primary transition-colors">
-                info@mawjood.sa
-              </a>
-              <a href="mailto:support@mawjood.sa" className="block text-gray-600 hover:text-primary transition-colors">
-                support@mawjood.sa
-              </a>
+              {emails.map((email) => (
+                <a
+                  key={email}
+                  href={`mailto:${email}`}
+                  className="block text-gray-600 hover:text-primary transition-colors"
+                >
+                  {email}
+                </a>
+              ))}
             </div>
           </div>
 
@@ -98,12 +129,15 @@ export default function ContactPage() {
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-4">Call Us</h3>
             <div className="space-y-2">
-              <a href="tel:+966112345678" className="block text-gray-600 hover:text-primary transition-colors">
-                +966 11 234 5678
-              </a>
-              <a href="tel:+966509876543" className="block text-gray-600 hover:text-primary transition-colors">
-                +966 50 987 6543
-              </a>
+              {phones.map((phone) => (
+                <a
+                  key={phone}
+                  href={`tel:${phone.replace(/\s+/g, '')}`}
+                  className="block text-gray-600 hover:text-primary transition-colors"
+                >
+                  {phone}
+                </a>
+              ))}
             </div>
           </div>
 
@@ -115,34 +149,18 @@ export default function ContactPage() {
             <h3 className="text-xl font-bold text-gray-900 mb-4">Connect with Social</h3>
             <p className="text-gray-600 mb-4">Let's Connect with Us via social media</p>
             <div className="flex items-center justify-center gap-3">
-              <a
-                href="#"
-                className="w-10 h-10 bg-gray-800 hover:bg-primary rounded-full flex items-center justify-center transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-5 h-5 text-white" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 bg-gray-800 hover:bg-primary rounded-full flex items-center justify-center transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-5 h-5 text-white" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 bg-gray-800 hover:bg-primary rounded-full flex items-center justify-center transition-colors"
-                aria-label="Twitter"
-              >
-                <Twitter className="w-5 h-5 text-white" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 bg-gray-800 hover:bg-primary rounded-full flex items-center justify-center transition-colors"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-5 h-5 text-white" />
-              </a>
+              {socialLinks.map((link) => (
+                <a
+                  key={link.name}
+                  href={link.url}
+                  className="w-10 h-10 bg-gray-800 hover:bg-primary rounded-full flex items-center justify-center transition-colors"
+                  aria-label={link.name}
+                  target={link.url.startsWith('http') ? '_blank' : undefined}
+                  rel={link.url.startsWith('http') ? 'noopener noreferrer' : undefined}
+                >
+                  {SOCIAL_ICON_MAP[link.name] ?? <Globe className="w-5 h-5 text-white" />}
+                </a>
+              ))}
             </div>
           </div>
         </div>

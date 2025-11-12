@@ -1,26 +1,45 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useCityStore } from '@/store/cityStore';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 interface ServiceItem {
   id: string;
   name: string;
   image: string;
-  link: string;
+  slug: string;
 }
 
 interface ServiceSection {
   id: string;
   title: string;
+  subtitle?: string;
   items: ServiceItem[];
 }
 
 export default function FeaturedServices() {
   const { t } = useTranslation('common');
+  const { data: siteSettings } = useSiteSettings();
+  const { selectedLocation, selectedCity, cities, fetchCities } = useCityStore();
 
-  const sections: ServiceSection[] = [
+  const locationSlug =
+    selectedLocation?.slug ||
+    selectedCity?.slug ||
+    cities.find((city) => city.name.toLowerCase().includes('riyadh'))?.slug ||
+    cities[0]?.slug ||
+    'riyadh';
+
+  useEffect(() => {
+    if (!cities.length) {
+      fetchCities();
+    }
+  }, [cities.length, fetchCities]);
+
+  const defaultSections: ServiceSection[] = [
     {
       id: 'home-services',
       title: t('featuredServices.homeServices.title') || 'Home Services',
@@ -28,20 +47,20 @@ export default function FeaturedServices() {
         {
           id: 'cleaning',
           name: t('featuredServices.homeServices.cleaning') || 'Cleaning Services',
-          image: 'https://images.pexels.com/photos/4108715/pexels-photo-4108715.jpeg?auto=compress&cs=tinysrgb&w=400', // Add your image path
-          link: '/categories/cleaning-services',
+          image: 'https://images.pexels.com/photos/4108715/pexels-photo-4108715.jpeg?auto=compress&cs=tinysrgb&w=400',
+          slug: 'cleaning-services',
         },
         {
           id: 'plumbing',
           name: t('featuredServices.homeServices.plumbing') || 'Plumbing',
-          image: 'https://media.istockphoto.com/id/183953925/photo/young-plumber-fixing-a-sink-in-bathroom.jpg?s=612x612&w=0&k=20&c=Ps2U_U4_Z60mIZsuem-BoaHLlCjsT8wYWiXNWR-TCDA=', // Add your image path
-          link: '/categories/plumbing',
+          image: 'https://media.istockphoto.com/id/183953925/photo/young-plumber-fixing-a-sink-in-bathroom.jpg?s=612x612&w=0&k=20&c=Ps2U_U4_Z60mIZsuem-BoaHLlCjsT8wYWiXNWR-TCDA=',
+          slug: 'plumbing',
         },
         {
           id: 'painting',
           name: t('featuredServices.homeServices.painting') || 'Painting',
-          image: 'https://5.imimg.com/data5/SELLER/Default/2021/6/MY/NI/YW/52844401/wall-paintings.jpg', // Add your image path
-          link: '/categories/painting',
+          image: 'https://5.imimg.com/data5/SELLER/Default/2021/6/MY/NI/YW/52844401/wall-paintings.jpg',
+          slug: 'painting',
         },
       ],
     },
@@ -52,20 +71,20 @@ export default function FeaturedServices() {
         {
           id: 'beauty-parlours',
           name: t('featuredServices.beautySpa.beautyParlours') || 'Beauty Parlours',
-          image: 'https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=400', // Add your image path
-          link: '/categories/beauty-parlours',
+          image: 'https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=400',
+          slug: 'beauty-parlours',
         },
         {
           id: 'spa-massages',
           name: t('featuredServices.beautySpa.spaMassages') || 'Spa & Massages',
-          image: 'https://images.pexels.com/photos/3757952/pexels-photo-3757952.jpeg?auto=compress&cs=tinysrgb&w=400', // Add your image path
-          link: '/categories/spa-massages',
+          image: 'https://images.pexels.com/photos/3757952/pexels-photo-3757952.jpeg?auto=compress&cs=tinysrgb&w=400',
+          slug: 'spa-massages',
         },
         {
           id: 'salons',
           name: t('featuredServices.beautySpa.salons') || 'Salons',
-          image: 'https://images.pexels.com/photos/3993462/pexels-photo-3993462.jpeg?auto=compress&cs=tinysrgb&w=400', // Add your image path
-          link: '/categories/salons',
+          image: 'https://images.pexels.com/photos/3993462/pexels-photo-3993462.jpeg?auto=compress&cs=tinysrgb&w=400',
+          slug: 'salons',
         },
       ],
     },
@@ -76,20 +95,20 @@ export default function FeaturedServices() {
         {
           id: 'ac-service',
           name: t('featuredServices.repairsServices.acService') || 'AC Service',
-          image: 'https://www.rightcliq.in/blogs/images/blogs/ac-repair-service.jpg', // Add your image path
-          link: '/categories/ac-service',
+          image: 'https://www.rightcliq.in/blogs/images/blogs/ac-repair-service.jpg',
+          slug: 'ac-service',
         },
         {
           id: 'car-service',
           name: t('featuredServices.repairsServices.carService') || 'Car Service',
-          image: 'https://images.pexels.com/photos/3806288/pexels-photo-3806288.jpeg?auto=compress&cs=tinysrgb&w=400', // Add your image path
-          link: '/categories/car-service',
+          image: 'https://images.pexels.com/photos/3806288/pexels-photo-3806288.jpeg?auto=compress&cs=tinysrgb&w=400',
+          slug: 'car-service',
         },
         {
           id: 'bike-service',
           name: t('featuredServices.repairsServices.bikeService') || 'Bike Service',
-          image: 'https://media.istockphoto.com/id/1363985678/photo/a-man-in-the-garage-is-checking-a-motorcycle.jpg?s=612x612&w=0&k=20&c=FYGJvzMS87Doci4v-GBAxHPR0B6Fi4vfVkTQMAxqE3s=', // Add your image path
-          link: '/categories/bike-service',
+          image: 'https://media.istockphoto.com/id/1363985678/photo/a-man-in-the-garage-is-checking-a-motorcycle.jpg?s=612x612&w=0&k=20&c=FYGJvzMS87Doci4v-GBAxHPR0B6Fi4vfVkTQMAxqE3s=',
+          slug: 'bike-service',
         },
       ],
     },
@@ -100,24 +119,39 @@ export default function FeaturedServices() {
         {
           id: 'movies',
           name: t('featuredServices.dailyNeeds.movies') || 'Movies',
-          image: 'https://images.pexels.com/photos/7991579/pexels-photo-7991579.jpeg?auto=compress&cs=tinysrgb&w=400', // Add your image path
-          link: '/categories/movies',
+          image: 'https://images.pexels.com/photos/7991579/pexels-photo-7991579.jpeg?auto=compress&cs=tinysrgb&w=400',
+          slug: 'movies',
         },
         {
           id: 'grocery',
           name: t('featuredServices.dailyNeeds.grocery') || 'Grocery',
-          image: 'https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=400', // Add your image path
-          link: '/categories/grocery',
+          image: 'https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=400',
+          slug: 'grocery',
         },
         {
           id: 'electricians',
           name: t('featuredServices.dailyNeeds.electricians') || 'Electricians',
-          image: 'https://img.freepik.com/free-photo/man-electrical-technician-working-switchboard-with-fuses_169016-24062.jpg?semt=ais_hybrid&w=740&q=80   ', // Add your image path
-          link: '/categories/electricians',
+          image: 'https://img.freepik.com/free-photo/man-electrical-technician-working-switchboard-with-fuses_169016-24062.jpg?semt=ais_hybrid&w=740&q=80   ',
+          slug: 'electricians',
         },
       ],
     },
   ];
+
+  const settingsSections =
+    siteSettings?.featuredSections?.map((section) => ({
+      id: section.id,
+      title: section.title,
+      subtitle: section.subtitle,
+      items: section.items?.map((item) => ({
+        id: item.id,
+        name: item.name,
+        image: item.image ?? '',
+        slug: item.slug,
+      })) ?? [],
+    })) ?? null;
+
+  const sections = settingsSections?.length ? settingsSections : defaultSections;
 
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
@@ -125,22 +159,33 @@ export default function FeaturedServices() {
     {sections.map((section) => (
       <div key={section.id}>
         {/* Section Title */}
-        <div className="flex items-center justify-between mb-8">
-          <h3 className="text-2xl font-bold text-gray-800 tracking-tight">
-            {section.title}
-          </h3>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-8">
+          <div>
+            <h3 className="text-2xl font-bold text-gray-800 tracking-tight">
+              {section.title}
+            </h3>
+            {section.subtitle && (
+              <p className="text-sm text-gray-500 mt-1 max-w-xl">
+                {section.subtitle}
+              </p>
+            )}
+          </div>
           <Link
-            href={`/categories/${section.id}`}
-            className="text-primary font-medium hover:underline"
+            href={`/${locationSlug}/${section.id}`}
+            className="text-primary font-medium hover:underline whitespace-nowrap"
           >
             View More →
           </Link>
         </div>
 
         {/* Image Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="flex gap-6 overflow-x-auto pb-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6 md:overflow-visible">
           {section.items.map((item) => (
-            <Link key={item.id} href={item.link} className="group block relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500">
+            <Link
+              key={item.id}
+              href={`/${locationSlug}/${item.slug}`}
+              className="group block relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 flex-shrink-0 w-72 md:w-auto"
+            >
               {/* Image */}
               <div className="relative h-60 sm:h-64 md:h-72 w-full">
                 <Image

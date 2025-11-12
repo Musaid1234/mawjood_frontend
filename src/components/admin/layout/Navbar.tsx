@@ -211,7 +211,7 @@ export default function AdminNavbar() {
                 </Link>
 
                 <Link
-                  href="/admin/settings"
+                  href="/admin/settings/site"
                   className="flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 text-gray-700"
                   onClick={() => setShowProfileMenu(false)}
                 >

@@ -1,11 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDown, Search } from 'lucide-react';
-
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-}
+import { ChevronDown, Search, ChevronRight } from 'lucide-react';
+import { Category } from '@/services/category.service';
 
 interface CategoryDropdownProps {
   categories: Category[];
@@ -24,24 +19,146 @@ export default function CategoryDropdown({
 }: CategoryDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const selectedCategory = categories.find((cat) => cat.id === value);
+  // Find selected category (could be a subcategory)
+  const findSelectedCategory = (cats: Category[], id: string): Category | undefined => {
+    for (const cat of cats) {
+      if (cat.id === id) return cat;
+      if (cat.subcategories && cat.subcategories.length > 0) {
+        const found = findSelectedCategory(cat.subcategories, id);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  };
 
-  const filteredCategories = categories.filter((category) =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const selectedCategory = findSelectedCategory(categories, value);
+
+  // Filter categories based on search query
+  const filterCategories = (cats: Category[], query: string): Category[] => {
+    if (!query) return cats;
+    
+    return cats.filter((category) => {
+      const matchesName = category.name.toLowerCase().includes(query.toLowerCase());
+      const hasMatchingSubcategories = category.subcategories && category.subcategories.length > 0
+        ? filterCategories(category.subcategories, query).length > 0
+        : false;
+      return matchesName || hasMatchingSubcategories;
+    }).map((category) => {
+      if (category.subcategories && category.subcategories.length > 0) {
+        return {
+          ...category,
+          subcategories: filterCategories(category.subcategories, query),
+        };
+      }
+      return category;
+    });
+  };
+
+  const filteredCategories = searchQuery ? filterCategories(categories, searchQuery) : categories;
+
+  // Auto-expand categories that match search query
+  useEffect(() => {
+    if (searchQuery) {
+      const newExpanded = new Set<string>();
+      const expandMatchingParents = (cats: Category[]) => {
+        cats.forEach((cat) => {
+          if (cat.subcategories && cat.subcategories.length > 0) {
+            const hasMatchingSubcategories = filterCategories(cat.subcategories, searchQuery).length > 0;
+            if (hasMatchingSubcategories) {
+              newExpanded.add(cat.id);
+            }
+            expandMatchingParents(cat.subcategories);
+          }
+        });
+      };
+      expandMatchingParents(categories);
+      setExpandedCategories(newExpanded);
+    } else {
+      // Reset expanded state when search is cleared
+      setExpandedCategories(new Set());
+    }
+  }, [searchQuery, categories]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setSearchQuery('');
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const toggleCategory = (categoryId: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(categoryId)) {
+      newExpanded.delete(categoryId);
+    } else {
+      newExpanded.add(categoryId);
+    }
+    setExpandedCategories(newExpanded);
+  };
+
+  const handleCategorySelect = (categoryId: string) => {
+    onChange(categoryId);
+    setIsOpen(false);
+    setSearchQuery('');
+  };
+
+  const renderCategory = (category: Category, level: number = 0) => {
+    const hasSubcategories = category.subcategories && category.subcategories.length > 0;
+    const isExpanded = expandedCategories.has(category.id);
+    const isSelected = value === category.id;
+    const isParentCategory = hasSubcategories;
+
+    return (
+      <div key={category.id}>
+        <div className="flex items-center">
+          <button
+            type="button"
+            onClick={() => {
+              if (hasSubcategories) {
+                toggleCategory(category.id);
+              } else {
+                handleCategorySelect(category.id);
+              }
+            }}
+            className={`flex-1 px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+              isSelected ? 'bg-[#1c4233]/10 text-[#1c4233] font-medium' : 'text-gray-900'
+            } ${isParentCategory ? 'font-semibold' : ''}`}
+            style={{ paddingLeft: `${1 + level * 1.5}rem` }}
+          >
+            <div className="flex items-center gap-2">
+              {hasSubcategories && (
+                <ChevronRight
+                  className={`w-4 h-4 text-gray-400 transition-transform ${
+                    isExpanded ? 'rotate-90' : ''
+                  }`}
+                />
+              )}
+              <span>{category.name}</span>
+              {isParentCategory && (
+                <span className="text-xs text-gray-500 ml-2">
+                  ({category.subcategories?.length})
+                </span>
+              )}
+            </div>
+          </button>
+        </div>
+
+        {hasSubcategories && isExpanded && (
+          <div>
+            {category.subcategories.map((subcategory) => renderCategory(subcategory, level + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -82,22 +199,7 @@ export default function CategoryDropdown({
             {filteredCategories.length === 0 ? (
               <div className="px-4 py-3 text-sm text-gray-500 text-center">No categories found</div>
             ) : (
-              filteredCategories.map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  onClick={() => {
-                    onChange(category.id);
-                    setIsOpen(false);
-                    setSearchQuery('');
-                  }}
-                  className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                    value === category.id ? 'bg-[#1c4233]/10 text-[#1c4233] font-medium' : 'text-gray-900'
-                  }`}
-                >
-                  {category.name}
-                </button>
-              ))
+              filteredCategories.map((category) => renderCategory(category))
             )}
           </div>
         </div>

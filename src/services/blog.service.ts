@@ -1,11 +1,22 @@
 import axiosInstance from '@/lib/axios';
 import { AxiosError } from 'axios';
+import { API_ENDPOINTS } from '@/config/api.config';
 
 export interface BlogAuthor {
   id: string;
   firstName: string;
   lastName: string;
   avatar?: string | null;
+}
+
+export interface BlogCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  blogCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Blog {
@@ -21,6 +32,7 @@ export interface Blog {
   createdAt: string;
   updatedAt?: string;
   author: BlogAuthor;
+  categories?: BlogCategory[];
 }
 
 export interface ApiResponse<T> {
@@ -40,22 +52,35 @@ const handleError = (error: unknown): never => {
 
 export const blogService = {
   // Public: Get published blogs
-  async getBlogs(limit: number = 3, page: number = 1): Promise<Blog[]> {
+  async getBlogs(params?: {
+    limit?: number;
+    page?: number;
+    search?: string;
+    categorySlug?: string;
+    categoryId?: string;
+  }): Promise<Blog[]> {
     try {
+      const { limit = 3, page = 1, ...filters } = params ?? {};
       const response = await axiosInstance.get<ApiResponse<{
         blogs: Blog[];
         pagination: any;
-      }>>('/api/blogs', {
-        params: { limit: Math.min(limit, 3), page },
+      }>>(API_ENDPOINTS.BLOGS.GET_ALL, {
+        params: { limit, page, ...filters },
       });
-      return (response.data.data.blogs || []).slice(0, 3);
+      return response.data.data.blogs || [];
     } catch (error) {
       return handleError(error);
     }
   },
 
   // Public: Get blogs with pagination
-  async getBlogsWithPagination(limit: number = 12, page: number = 1): Promise<{
+  async getBlogsWithPagination(params?: {
+    limit?: number;
+    page?: number;
+    search?: string;
+    categorySlug?: string;
+    categoryId?: string;
+  }): Promise<{
     blogs: Blog[];
     pagination: {
       total: number;
@@ -65,11 +90,12 @@ export const blogService = {
     };
   }> {
     try {
+      const { limit = 12, page = 1, ...filters } = params ?? {};
       const response = await axiosInstance.get<ApiResponse<{
         blogs: Blog[];
         pagination: any;
-      }>>('/api/blogs', {
-        params: { limit, page },
+      }>>(API_ENDPOINTS.BLOGS.GET_ALL, {
+        params: { limit, page, ...filters },
       });
       return response.data.data;
     } catch (error) {
@@ -80,7 +106,7 @@ export const blogService = {
   // Public: Get blog by slug
   async getBySlug(slug: string): Promise<Blog> {
     try {
-      const response = await axiosInstance.get<ApiResponse<Blog>>(`/api/blogs/slug/${slug}`);
+      const response = await axiosInstance.get<ApiResponse<Blog>>(API_ENDPOINTS.BLOGS.GET_BY_SLUG(slug));
       return response.data.data;
     } catch (error) {
       return handleError(error);
@@ -112,7 +138,7 @@ export const blogService = {
   // Admin: Get blog by ID
   async getBlogById(id: string): Promise<Blog> {
     try {
-      const response = await axiosInstance.get<ApiResponse<Blog>>(`/api/blogs/${id}`);
+      const response = await axiosInstance.get<ApiResponse<Blog>>(API_ENDPOINTS.BLOGS.GET_BY_ID(id));
       return response.data.data;
     } catch (error) {
       return handleError(error);
@@ -122,7 +148,7 @@ export const blogService = {
   // Admin: Create blog
   async createBlog(blogData: FormData): Promise<Blog> {
     try {
-      const response = await axiosInstance.post<ApiResponse<Blog>>('/api/blogs', blogData, {
+      const response = await axiosInstance.post<ApiResponse<Blog>>(API_ENDPOINTS.BLOGS.CREATE, blogData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -136,7 +162,7 @@ export const blogService = {
   // Admin: Update blog
   async updateBlog(id: string, blogData: FormData): Promise<Blog> {
     try {
-      const response = await axiosInstance.put<ApiResponse<Blog>>(`/api/blogs/${id}`, blogData, {
+      const response = await axiosInstance.put<ApiResponse<Blog>>(API_ENDPOINTS.BLOGS.UPDATE(id), blogData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -150,7 +176,64 @@ export const blogService = {
   // Admin: Delete blog
   async deleteBlog(id: string): Promise<void> {
     try {
-      await axiosInstance.delete(`/api/blogs/${id}`);
+      await axiosInstance.delete(API_ENDPOINTS.BLOGS.DELETE(id));
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async getCategories(): Promise<BlogCategory[]> {
+    try {
+      const response = await axiosInstance.get<ApiResponse<{
+        categories: (BlogCategory & { blogCount?: number })[];
+      }>>(API_ENDPOINTS.BLOG_CATEGORIES.GET_ALL);
+      return response.data.data.categories || [];
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async getCategoryBySlug(slug: string): Promise<BlogCategory> {
+    try {
+      const response = await axiosInstance.get<ApiResponse<BlogCategory>>(
+        API_ENDPOINTS.BLOG_CATEGORIES.GET_BY_SLUG(slug)
+      );
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async createCategory(payload: { name: string; slug?: string; description?: string }): Promise<BlogCategory> {
+    try {
+      const response = await axiosInstance.post<ApiResponse<BlogCategory>>(
+        API_ENDPOINTS.BLOG_CATEGORIES.CREATE,
+        payload
+      );
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async updateCategory(
+    id: string,
+    payload: { name?: string; slug?: string; description?: string }
+  ): Promise<BlogCategory> {
+    try {
+      const response = await axiosInstance.patch<ApiResponse<BlogCategory>>(
+        API_ENDPOINTS.BLOG_CATEGORIES.UPDATE(id),
+        payload
+      );
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async deleteCategory(id: string): Promise<void> {
+    try {
+      await axiosInstance.delete(API_ENDPOINTS.BLOG_CATEGORIES.DELETE(id));
     } catch (error) {
       return handleError(error);
     }

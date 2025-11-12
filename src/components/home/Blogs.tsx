@@ -8,7 +8,7 @@ import BlogCard from '@/components/blog/BlogCard';
 export default function Blogs() {
   const { data: blogs, isLoading, error } = useQuery<Blog[]>({
     queryKey: ['home-blogs'],
-    queryFn: () => blogService.getBlogs(3, 1),
+    queryFn: () => blogService.getBlogs({ limit: 3, page: 1 }),
     staleTime: 60_000,
   });
 
@@ -25,9 +25,9 @@ export default function Blogs() {
 
         {/* Loading state */}
         {isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="flex gap-6 overflow-x-auto pb-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8 md:overflow-visible">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="rounded-2xl overflow-hidden border border-gray-200 bg-white">
+              <div key={i} className="rounded-2xl overflow-hidden border border-gray-200 bg-white flex-shrink-0 w-80 md:w-auto">
                 <div className="h-48 bg-gray-200 animate-pulse" />
                 <div className="p-6 space-y-4">
                   <div className="h-4 w-1/3 bg-gray-200 animate-pulse rounded" />
@@ -50,9 +50,11 @@ export default function Blogs() {
         {/* Blogs grid */}
         {!isLoading && blogs && blogs.length > 0 && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="flex gap-6 overflow-x-auto pb-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8 md:overflow-visible">
               {blogs.map((blog) => (
-                <BlogCard key={blog.id} blog={blog} />
+                <div key={blog.id} className="flex-shrink-0 w-80 md:w-auto">
+                  <BlogCard blog={blog} />
+                </div>
               ))}
             </div>
 

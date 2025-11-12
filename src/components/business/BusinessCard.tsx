@@ -14,10 +14,12 @@ export default function BusinessCard({ business, onToggleFavorite }: BusinessCar
   const isOpen = business.status === 'ACTIVE';
   const priceLevel = business.averageRating >= 4.5 ? '$$$' : business.averageRating >= 3.5 ? '$$' : '$';
   const { isFavorite, toggleFavorite, isLoading } = useFavorites();
+  const descriptionText = business.description
+    ? business.description.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
+    : '';
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-      {/* Image Container */}
       <div className="relative h-64 group">
         <Link href={`/businesses/${business.slug}`}>
           <Image
@@ -30,12 +32,12 @@ export default function BusinessCard({ business, onToggleFavorite }: BusinessCar
         </Link>
 
         {/* Top Left Badges */}
-        <div className="absolute top-3 left-3 flex gap-2">
+        {/* <div className="absolute top-3 left-3 flex gap-2">
           <span className={`text-white text-xs font-bold px-3 py-1 rounded ${isOpen ? 'bg-green-500' : 'bg-red-500'
             }`}>
             {isOpen ? 'OPEN' : 'CLOSED'}
           </span>
-        </div>
+        </div> */}
 
         {/* Favorite Button */}
         <button
@@ -55,8 +57,7 @@ export default function BusinessCard({ business, onToggleFavorite }: BusinessCar
           )}
         </button>
 
-        {/* Owner Avatar */}
-        {business.user && (
+        {/* {business.user && (
           <div className="absolute bottom-3 left-3">
             <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-gray-200">
               {business.user.avatar ? (
@@ -74,7 +75,7 @@ export default function BusinessCard({ business, onToggleFavorite }: BusinessCar
               )}
             </div>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Content */}
@@ -94,9 +95,11 @@ export default function BusinessCard({ business, onToggleFavorite }: BusinessCar
           </h3>
         </Link>
 
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-          {business.description}
-        </p>
+        {descriptionText && (
+          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+            {descriptionText}
+          </p>
+        )}
 
         {/* Contact & Location */}
         <div className="space-y-2 mb-3">
@@ -128,7 +131,7 @@ export default function BusinessCard({ business, onToggleFavorite }: BusinessCar
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
+            <div className="flex items-center gap-1 bg-yellow-300 text-white px-2 py-1 rounded text-xs font-semibold">
               <span>{business.averageRating > 0 ? business.averageRating.toFixed(1) : '5.0'}</span>
               <Star className="w-3 h-3 fill-current" />
             </div>

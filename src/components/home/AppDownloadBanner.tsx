@@ -1,26 +1,47 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import Image from 'next/image';
+import Link from 'next/link';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 export default function AppDownloadBanner() {
   const { t, i18n } = useTranslation('common');
+  const { data: siteSettings } = useSiteSettings();
+
+  const bannerSettings = siteSettings?.downloadBanner;
+  const title = bannerSettings?.title ?? t('banner.title');
+  const subtitle = bannerSettings?.subtitle ?? t('banner.subtitle');
+  const appStoreUrl = bannerSettings?.appStoreUrl ?? '#';
+  const playStoreUrl = bannerSettings?.playStoreUrl ?? '#';
+  const metrics =
+    bannerSettings?.metrics && bannerSettings.metrics.length > 0
+      ? bannerSettings.metrics
+      : [
+          { label: t('banner.activeUsers'), value: '10K+' },
+          { label: t('banner.rating'), value: '4.8/5' },
+          { label: t('banner.cities'), value: '50+' },
+        ];
 
   return (
     <section className="bg-gradient-primary py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            {t('banner.title')}
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+            {title}
           </h2>
           <p className="text-xl text-white/90 max-w-3xl mx-auto leading-relaxed">
-            {t('banner.subtitle')}
+            {subtitle}
           </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
           {/* App Store Button */}
-          <div className="group cursor-pointer transform hover:scale-105 transition-all duration-300">
+          <Link
+            href={appStoreUrl}
+            target={appStoreUrl.startsWith('http') ? '_blank' : undefined}
+            rel={appStoreUrl.startsWith('http') ? 'noopener noreferrer' : undefined}
+            className="group cursor-pointer transform hover:scale-105 transition-all duration-300"
+          >
             <div className="bg-white rounded-2xl p-4 shadow-primary-lg hover:shadow-primary-xl transition-shadow duration-300 border border-white/20">
               <div className="flex items-center space-x-4">
                 {/* Apple Logo */}
@@ -54,10 +75,15 @@ export default function AppDownloadBanner() {
                 {t('banner.available')}
               </span>
             </div>
-          </div>
+          </Link>
 
           {/* Google Play Store Button */}
-          <div className="group cursor-pointer transform hover:scale-105 transition-all duration-300">
+          <Link
+            href={playStoreUrl}
+            target={playStoreUrl.startsWith('http') ? '_blank' : undefined}
+            rel={playStoreUrl.startsWith('http') ? 'noopener noreferrer' : undefined}
+            className="group cursor-pointer transform hover:scale-105 transition-all duration-300"
+          >
             <div className="bg-gray-900 rounded-2xl p-4 shadow-primary-lg hover:shadow-primary-xl transition-shadow duration-300 border border-gray-800">
               <div className="flex items-center space-x-4">
                 {/* Google Play Logo */}
@@ -99,41 +125,23 @@ export default function AppDownloadBanner() {
                 {t('banner.available')}
               </span>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Additional Features */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-          <div className="text-white/90">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="text-3xl font-bold text-white">10K+</div>
-              {/* Users Icon */}
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white">
-                <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" fill="currentColor" />
-              </svg>
+          {metrics.map((metric) => (
+            <div key={metric.label} className="text-white/90">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="text-3xl font-bold text-white">{metric.value}</div>
+                {/* Decorative Icon */}
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor" />
+                </svg>
+              </div>
+              <div className="text-sm">{metric.label}</div>
             </div>
-            <div className="text-sm">{t('banner.activeUsers')}</div>
-          </div>
-          <div className="text-white/90">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="text-3xl font-bold text-white">4.8</div>
-              {/* Star Icon */}
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor" />
-              </svg>
-            </div>
-            <div className="text-sm">{t('banner.rating')}</div>
-          </div>
-          <div className="text-white/90">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="text-3xl font-bold text-white">50+</div>
-              {/* Map/Location Icon */}
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor" />
-              </svg>
-            </div>
-            <div className="text-sm">{t('banner.cities')}</div>
-          </div>
+          ))}
         </div>
       </div>
     </section>

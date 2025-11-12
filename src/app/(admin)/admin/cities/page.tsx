@@ -24,12 +24,14 @@ import { MoreHorizontal, Plus, Trash2, MapPin, Map } from 'lucide-react';
 import { CitiesTable } from '@/components/admin/cities/CitiesTable';
 import { CityDialog } from '@/components/admin/cities/CityDialog';
 import { RegionDialog } from '@/components/admin/cities/RegionDialog';
-import { cityService, City, Region } from '@/services/city.service';
+import { cityService, City, Region, Country } from '@/services/city.service';
 import { toast } from 'sonner';
+import { CountryDialog } from '@/components/admin/cities/CountryDialog';
 
 export default function CitiesPage() {
   const [cities, setCities] = useState<City[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
   const [filteredCities, setFilteredCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
@@ -37,6 +39,7 @@ export default function CitiesPage() {
   
   const [cityDialogOpen, setCityDialogOpen] = useState(false);
   const [regionDialogOpen, setRegionDialogOpen] = useState(false);
+  const [countryDialogOpen, setCountryDialogOpen] = useState(false);
   const [editingCity, setEditingCity] = useState<City | null>(null);
 
   useEffect(() => {
@@ -50,12 +53,14 @@ export default function CitiesPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [citiesData, regionsData] = await Promise.all([
+      const [citiesData, regionsData, countriesData] = await Promise.all([
         cityService.fetchCities(),
         cityService.fetchRegions(),
+        cityService.fetchCountries(),
       ]);
       setCities(citiesData);
       setRegions(regionsData);
+      setCountries(countriesData);
     } catch (error) {
       toast.error('Failed to fetch data');
     } finally {
@@ -120,14 +125,30 @@ export default function CitiesPage() {
     }
   };
 
-  const handleSaveRegion = async (regionData: { name: string; slug: string }) => {
+  const handleSaveRegion = async (regionData: { name: string; slug: string; countryId: string }) => {
     try {
+      if (!regionData.countryId) {
+        toast.error('Please select a country');
+        throw new Error('Country is required');
+      }
+
       await cityService.createRegion(regionData);
       toast.success('Region created successfully!');
       
       await fetchData();
     } catch (error: any) {
       toast.error(error.message || 'Failed to create region');
+      throw error;
+    }
+  };
+
+  const handleSaveCountry = async (countryData: { name: string; slug: string; code?: string }) => {
+    try {
+      await cityService.createCountry(countryData);
+      toast.success('Country created successfully!');
+      await fetchData();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create country');
       throw error;
     }
   };
@@ -149,6 +170,26 @@ export default function CitiesPage() {
       await fetchData();
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete region');
+    }
+  };
+
+  const handleDeleteCountry = async (id: string) => {
+    const country = countries.find((c) => c.id === id);
+    const regionsInCountry = regions.filter((region) => region.countryId === id).length;
+
+    if (regionsInCountry > 0) {
+      toast.error(`This country has ${regionsInCountry} ${regionsInCountry === 1 ? 'region' : 'regions'}. Please delete or reassign them first.`);
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete ${country?.name ?? 'this country'}?`)) return;
+
+    try {
+      await cityService.deleteCountry(id);
+      toast.success('Country deleted successfully!');
+      await fetchData();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete country');
     }
   };
 
@@ -245,6 +286,10 @@ export default function CitiesPage() {
             <Map className="w-4 h-4" />
             Regions ({regions.length})
           </TabsTrigger>
+          <TabsTrigger value="countries" className="gap-2">
+            <Map className="w-4 h-4" />
+            Countries ({countries.length})
+          </TabsTrigger>
         </TabsList>
 
         {/* Cities Tab */}
@@ -288,7 +333,15 @@ export default function CitiesPage() {
                     Manage regions to organize cities
                   </CardDescription>
                 </div>
-                <Button onClick={() => setRegionDialogOpen(true)}>
+                <Button
+                  onClick={() => {
+                    if (countries.length === 0) {
+                      toast.error('Please create a country before adding regions.');
+                      return;
+                    }
+                    setRegionDialogOpen(true);
+                  }}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Region
                 </Button>
@@ -343,6 +396,81 @@ export default function CitiesPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Countries Tab */}
+        <TabsContent value="countries" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>All Countries</CardTitle>
+                  <CardDescription>
+                    Manage countries available in the platform
+                  </CardDescription>
+                </div>
+                <Button onClick={() => setCountryDialogOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Country
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {countries.map((country) => {
+                  const countryRegions = regions.filter((region) => region.countryId === country.id);
+                  const cityCount = countryRegions.reduce(
+                    (sum, region) => sum + cities.filter((city) => city.regionId === region.id).length,
+                    0
+                  );
+
+                  return (
+                    <Card key={country.id} className="relative">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <CardTitle className="text-lg">{country.name}</CardTitle>
+                            <code className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded inline-block mt-1">
+                              {country.slug}
+                            </code>
+                            {country.code && (
+                              <p className="text-xs text-gray-500 mt-1">ISO: {country.code}</p>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleDeleteCountry(country.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2 text-sm text-gray-600">
+                          <p>
+                            <span className="font-semibold">{countryRegions.length}</span>{' '}
+                            {countryRegions.length === 1 ? 'region' : 'regions'}
+                          </p>
+                          <p>
+                            <span className="font-semibold">{cityCount}</span>{' '}
+                            {cityCount === 1 ? 'city' : 'cities'}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+
+                {countries.length === 0 && (
+                  <div className="col-span-full text-center py-12 text-gray-500">
+                    No countries yet. Create your first country to get started.
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Dialogs */}
@@ -357,7 +485,15 @@ export default function CitiesPage() {
       <RegionDialog
         open={regionDialogOpen}
         onOpenChange={setRegionDialogOpen}
+        countries={countries}
+        defaultCountryId={countries[0]?.id}
         onSave={handleSaveRegion}
+      />
+
+      <CountryDialog
+        open={countryDialogOpen}
+        onOpenChange={setCountryDialogOpen}
+        onSave={handleSaveCountry}
       />
     </div>
   );

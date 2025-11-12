@@ -98,6 +98,14 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/api/blogs/${id}`,
   },
 
+  BLOG_CATEGORIES: {
+    GET_ALL: '/api/blog-categories',
+    GET_BY_SLUG: (slug: string) => `/api/blog-categories/slug/${slug}`,
+    CREATE: '/api/blog-categories',
+    UPDATE: (id: string) => `/api/blog-categories/${id}`,
+    DELETE: (id: string) => `/api/blog-categories/${id}`,
+  },
+
   // Admin endpoints
   ADMIN: {
     DASHBOARD: '/api/admin/dashboard',
@@ -115,6 +123,14 @@ export const API_ENDPOINTS = {
   UPLOAD: {
     IMAGE: '/api/upload/image',
     IMAGES: '/api/upload/images',
+  },
+
+  SETTINGS: {
+    SITE: '/api/settings/site',
+  },
+
+  ADVERTISEMENTS: {
+    DISPLAY: '/api/advertisements/display',
   },
 } as const;
 

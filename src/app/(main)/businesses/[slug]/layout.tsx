@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { businessService } from '@/services/business.service';
+import { buildOgImages, toAbsoluteUrl } from '@/config/seo.config';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -12,44 +13,42 @@ export async function generateMetadata({ params }: Omit<Props, 'children'>): Pro
     const business = await businessService.getBusinessBySlug(slug);
 
     const title = business.metaTitle || `${business.name} - ${business.city.name} | Mawjood`;
-    const description = business.metaDescription || business.description || 
+    const description = business.metaDescription || business.description ||
       `Find ${business.name} in ${business.city.name}. ${business.category.name} services with contact details, location, working hours, and reviews.`;
-    
-    const images = [
-      business.coverImage || business.logo || '/og-default.jpg'
-    ].filter(Boolean);
+
+    const { absolute: ogImage } = buildOgImages(business.coverImage || business.logo);
+    const canonical = toAbsoluteUrl(`/businesses/${business.slug}`);
 
     return {
+      title,
+      description,
+      keywords: business.keywords?.join(', ') ||
+        `${business.name}, ${business.category.name}, ${business.city.name}, business listing, ${business.address}`,
+      openGraph: {
         title,
         description,
-        keywords: business.keywords || 
-          `${business.name}, ${business.category.name}, ${business.city.name}, business listing, ${business.address}`,
-      
-        openGraph: {
-            title,
-            description,
-            images: images.map(img => ({
-              url: img,
-              width: 1200,
-              height: 630,
-              alt: business.name,
-            })),
-            type: 'website',
-            locale: 'en_US',
-            siteName: 'Mawjood',
+        images: [
+          {
+            url: ogImage,
+            width: 1200,
+            height: 630,
+            alt: business.name,
           },
-
+        ],
+        type: 'website',
+        locale: 'en_US',
+        siteName: 'Mawjood',
+        url: canonical,
+      },
       twitter: {
         card: 'summary_large_image',
         title,
         description,
-        images,
+        images: [ogImage],
       },
-
       alternates: {
-        canonical: `/businesses/${business.slug}`,
+        canonical,
       },
-
       robots: {
         index: business.status === 'APPROVED',
         follow: true,

@@ -1,17 +1,95 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCityStore } from '@/store/cityStore';
-import { useCategoryStore } from '@/store/categoryStore';
 import { businessService, SearchResult } from '@/services/business.service';
+import { cityService, City as CityType, Region as RegionType } from '@/services/city.service';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
+
+interface HeroCard {
+  id: string;
+  title: string;
+  buttonText: string;
+  buttonColor: string;
+  bgImage: string;
+  slug: string;
+}
 
 export default function HeroSection() {
   const { t } = useTranslation('common');
   const router = useRouter();
-  const { cities, selectedCity, loading: loadingCities, fetchCities, setSelectedCity } = useCityStore();
+  const {
+    cities,
+    regions,
+    selectedCity,
+    selectedLocation,
+    loading: loadingCities,
+    fetchCities,
+    fetchRegions,
+    setSelectedCity,
+    setSelectedLocation,
+  } = useCityStore();
+
+  const { data: siteSettings } = useSiteSettings();
+
+  const heroSettings = siteSettings?.hero;
+  const heroTitle = heroSettings?.title ?? t('hero.title');
+  const heroSubtitle = heroSettings?.subtitle;
+
+  const defaultCategoryCards: HeroCard[] = useMemo(
+    () => [
+      {
+        id: 'packers-movers',
+        title: t('hero.packersMovers'),
+        buttonText: t('hero.getBestDeal'),
+        bgImage: '/home/packers.jpg',
+        buttonColor: 'bg-orange-500 hover:bg-orange-600',
+        slug: 'transporters',
+      },
+      {
+        id: 'repairs-services',
+        title: t('hero.repairsServices'),
+        buttonText: t('hero.bookNow'),
+        bgImage: '/home/b2b.jpg',
+        buttonColor: 'bg-blue-500 hover:bg-blue-600',
+        slug: 'repairs',
+      },
+      {
+        id: 'real-estate',
+        title: t('hero.realEstate'),
+        buttonText: t('hero.explore'),
+        bgImage: '/home/real-estate.jpg',
+        buttonColor: 'bg-purple-500 hover:bg-purple-600',
+        slug: 'real-estate',
+      },
+      {
+        id: 'doctors',
+        title: t('hero.doctors'),
+        buttonText: t('hero.bookNow'),
+        bgImage: '/home/doctors.jpg',
+        buttonColor: 'bg-green-500 hover:bg-green-600',
+        slug: 'healthcare',
+      },
+    ],
+    [t]
+  );
+
+  const categoryCards = useMemo<HeroCard[]>(() => {
+    if (heroSettings?.cards?.length) {
+      return heroSettings.cards.map((card) => ({
+        id: card.id,
+        title: card.title,
+        buttonText: card.buttonText ?? t('hero.explore'),
+        buttonColor: card.buttonColor ?? 'bg-primary hover:bg-primary/90',
+        bgImage: card.image ?? '/home/placeholder.jpg',
+        slug: card.slug,
+      }));
+    }
+    return defaultCategoryCards;
+  }, [heroSettings?.cards, defaultCategoryCards, t]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -21,6 +99,12 @@ export default function HeroSection() {
     businesses: []
   });
   const [searchLoading, setSearchLoading] = useState(false);
+  const [locationTab, setLocationTab] = useState<'city' | 'region'>('city');
+  const [locationSearchQuery, setLocationSearchQuery] = useState('');
+  const [citySearchLoading, setCitySearchLoading] = useState(false);
+  const [citySearchResults, setCitySearchResults] = useState<CityType[]>([]);
+  const [geoAttempted, setGeoAttempted] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
 
   const searchRef = useRef<HTMLDivElement>(null);
   const cityRef = useRef<HTMLDivElement>(null);
@@ -29,18 +113,54 @@ export default function HeroSection() {
     fetchCities();
   }, [fetchCities]);
 
-  // Auto-select Riyadh when cities are loaded
   useEffect(() => {
-    if (cities.length > 0 && !selectedCity) {
-      const riyadh = cities.find(city => 
-        city.name.toLowerCase().includes('riyadh') || 
-        city.name.toLowerCase().includes('الرياض')
-      );
-      if (riyadh) {
-        setSelectedCity(riyadh);
+    if (!geoAttempted) return;
+    if (!cities.length) return;
+    if (selectedLocation && selectedLocation.type !== 'city') return;
+    if (selectedCity) return;
+
+    const riyadh = cities.find((city) =>
+      city.name.toLowerCase().includes('riyadh') || city.name.toLowerCase().includes('الرياض')
+    );
+    if (riyadh) {
+      setSelectedCity(riyadh);
+      return;
+    }
+    if (cities[0]) {
+      setSelectedCity(cities[0]);
+    }
+  }, [cities, selectedCity, selectedLocation, setSelectedCity, geoAttempted]);
+
+  useEffect(() => {
+    if (
+      selectedCity &&
+      (!selectedLocation ||
+        (selectedLocation.type === 'city' && selectedLocation.id !== selectedCity.id))
+    ) {
+      setSelectedLocation({
+        type: 'city',
+        slug: selectedCity.slug,
+        name: selectedCity.name,
+        id: selectedCity.id,
+        regionId: selectedCity.regionId,
+      });
+    }
+  }, [selectedCity, selectedLocation, setSelectedLocation]);
+
+  useEffect(() => {
+    if (!showCityDropdown) {
+      if (selectedLocation?.type === 'region') {
+        setLocationTab('region');
+      } else {
+        setLocationTab('city');
       }
     }
-  }, [cities, selectedCity, setSelectedCity]);
+  }, [selectedLocation, showCityDropdown]);
+
+  useEffect(() => {
+    setLocationSearchQuery('');
+    setCitySearchResults([]);
+  }, [locationTab]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -83,16 +203,236 @@ export default function HeroSection() {
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, selectedCity]);
 
-  // Filter suggestions based o
+  useEffect(() => {
+    if (!showCityDropdown) {
+      setLocationSearchQuery('');
+      setCitySearchResults([]);
+      setCitySearchLoading(false);
+      return;
+    }
+
+    if (locationTab !== 'city') {
+      setCitySearchResults([]);
+      setCitySearchLoading(false);
+      return;
+    }
+
+    const fetchCitySearch = async () => {
+      if (locationSearchQuery.trim().length < 2) {
+        setCitySearchResults([]);
+        setCitySearchLoading(false);
+        return;
+      }
+
+      try {
+        setCitySearchLoading(true);
+        const result = await cityService.unifiedSearch(locationSearchQuery.trim());
+        setCitySearchResults(result.cities);
+      } catch (error) {
+        console.error('City unified search error:', error);
+        setCitySearchResults([]);
+      } finally {
+        setCitySearchLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchCitySearch, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [locationSearchQuery, showCityDropdown, locationTab]);
+
+useEffect(() => {
+  if (!showCityDropdown) return;
+
+  if (!regions.length) {
+    fetchRegions();
+  }
+}, [showCityDropdown, regions.length, fetchRegions]);
+
+  useEffect(() => {
+    const trySelectDefault = () => {
+      const riyadh = cities.find((city) =>
+        city.name.toLowerCase().includes('riyadh') || city.name.toLowerCase().includes('الرياض')
+      );
+      if (riyadh) {
+        setSelectedCity(riyadh);
+        return;
+      }
+      if (cities[0]) {
+        setSelectedCity(cities[0]);
+      }
+    };
+
+    const matchCityByName = (name?: string): CityType | undefined => {
+      if (!name) return undefined;
+      const normalized = name.toLowerCase();
+      return (
+        cities.find((city) => city.name.toLowerCase() === normalized) ||
+        cities.find((city) => city.slug.toLowerCase() === normalized) ||
+        cities.find((city) => city.name.toLowerCase().includes(normalized))
+      );
+    };
+
+    const matchCityByRegionName = (name?: string): CityType | undefined => {
+      if (!name) return undefined;
+      const normalized = name.toLowerCase();
+      return cities.find((city) => city.region?.name?.toLowerCase() === normalized);
+    };
+
+    const matchCityByCountryName = (name?: string): CityType | undefined => {
+      if (!name) return undefined;
+      const normalized = name.toLowerCase();
+      return cities.find((city) => city.region?.country?.name?.toLowerCase() === normalized);
+    };
+
+    const fetchCityFromUnified = async (term: string): Promise<CityType | undefined> => {
+      try {
+        const result = await cityService.unifiedSearch(term);
+        if (result.cities.length > 0) {
+          return result.cities[0];
+        }
+        if (result.regions.length > 0) {
+          const regionMatch = cities.find((city) => city.region?.id === result.regions[0].id);
+          if (regionMatch) return regionMatch;
+        }
+        if (result.countries.length > 0) {
+          const countryMatch = cities.find(
+            (city) => city.region?.country?.id === result.countries[0].id
+          );
+          if (countryMatch) return countryMatch;
+        }
+      } catch (error) {
+        console.error('Unified location search error:', error);
+      }
+      return undefined;
+    };
+
+    const selectCityFromAddress = async (address: any) => {
+      const possibleCityNames = [
+        address?.city,
+        address?.town,
+        address?.village,
+        address?.municipality,
+        address?.county,
+        address?.state_district,
+      ];
+      const possibleRegionNames = [address?.state, address?.region, address?.province];
+      const possibleCountryNames = [address?.country];
+
+      let match: CityType | undefined;
+
+      for (const name of possibleCityNames) {
+        match = matchCityByName(name);
+        if (match) break;
+      }
+
+      if (!match) {
+        for (const name of possibleCityNames) {
+          if (!name) continue;
+          match = await fetchCityFromUnified(name);
+          if (match) break;
+        }
+      }
+
+      if (!match) {
+        for (const name of possibleRegionNames) {
+          match = matchCityByRegionName(name);
+          if (match) break;
+        }
+      }
+
+      if (!match) {
+        for (const name of possibleRegionNames) {
+          if (!name) continue;
+          match = await fetchCityFromUnified(name);
+          if (match) break;
+        }
+      }
+
+      if (!match) {
+        for (const name of possibleCountryNames) {
+          match = matchCityByCountryName(name);
+          if (match) break;
+        }
+      }
+
+      if (!match) {
+        for (const name of possibleCountryNames) {
+          if (!name) continue;
+          match = await fetchCityFromUnified(name);
+          if (match) break;
+        }
+      }
+
+      if (match) {
+        setSelectedCity(match);
+      } else {
+        trySelectDefault();
+      }
+    };
+
+    const isDefaultSelection =
+      !selectedLocation ||
+      (selectedLocation.type === 'city' &&
+        (selectedLocation.name.toLowerCase().includes('riyadh') ||
+          selectedLocation.name.toLowerCase().includes('الرياض')));
+
+    if (typeof window === 'undefined' || geoAttempted || geoLoading || !cities.length) {
+      return;
+    }
+
+    if (!isDefaultSelection) {
+      setGeoAttempted(true);
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setGeoAttempted(true);
+      trySelectDefault();
+      return;
+    }
+
+    setGeoAttempted(true);
+    setGeoLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          );
+          if (!response.ok) {
+            throw new Error('Failed to reverse geocode location');
+          }
+
+          const data = await response.json();
+          await selectCityFromAddress(data?.address);
+        } catch (error) {
+          console.error('Geolocation lookup error:', error);
+          trySelectDefault();
+        } finally {
+          setGeoLoading(false);
+        }
+      },
+      (error) => {
+        console.warn('Geolocation permission denied or unavailable:', error);
+        setGeoLoading(false);
+        trySelectDefault();
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 5 * 60 * 1000,
+      }
+    );
+  }, [cities, selectedCity, selectedLocation, geoAttempted, geoLoading, setSelectedCity]);
 
   const handleSearch = (slug?: string, type?: 'category' | 'business') => {
     if (slug && type) {
       // Navigate to specific category or business
-      const params = new URLSearchParams();
-      if (selectedCity?.id) params.set('cityId', selectedCity.id);
-
       if (type === 'category') {
-        router.push(`/categories/${slug}?${params.toString()}`);
+        const locationSlug = routingLocationSlug;
+        router.push(`/${locationSlug}/${slug}`);
       } else {
         router.push(`/businesses/${slug}`);
       }
@@ -120,66 +460,96 @@ export default function HeroSection() {
   };
 
   const handleCitySelect = (cityId: string) => {
-    const city = cities.find(c => c.id === cityId);
+    const city =
+      cities.find((c) => c.id === cityId) ||
+      citySearchResults.find((c) => c.id === cityId);
     if (city) {
       setSelectedCity(city);
+      setSelectedLocation({
+        type: 'city',
+        slug: city.slug,
+        name: city.name,
+        id: city.id,
+        regionId: city.regionId,
+      });
     }
     setShowCityDropdown(false);
+    setLocationSearchQuery('');
+    setCitySearchResults([]);
   };
 
-  const getSelectedCityName = () => {
-    return selectedCity ? selectedCity.name : '';
+  const handleRegionSelect = (region: RegionType) => {
+    const fallbackCity =
+      cities.find((city) => city.regionId === region.id) ||
+      region.cities?.[0] ||
+      null;
+
+    if (fallbackCity) {
+      setSelectedCity(fallbackCity);
+    } else {
+      setSelectedCity(null);
+    }
+
+    setSelectedLocation({
+      type: 'region',
+      slug: region.slug,
+      name: region.name,
+      id: region.id,
+    });
+
+    setShowCityDropdown(false);
+    setLocationSearchQuery('');
+    setCitySearchResults([]);
+    setLocationTab('region');
+  };
+
+  const getSelectedLocationName = () => {
+    if (selectedLocation) return selectedLocation.name;
+    if (selectedCity) return selectedCity.name;
+    return '';
   };
 
   const totalSuggestions = suggestions.categories.length + suggestions.businesses.length;
 
-  const categoryCards = [
-    {
-      id: 'packers-movers',
-      title: t('hero.packersMovers'),
-      buttonText: t('hero.getBestDeal'),
-      bgImage: '/home/packers.jpg',
-      buttonColor: 'bg-orange-500 hover:bg-orange-600',
-      link: '/categories/transporters',
-    },
-    {
-      id: 'repairs-services',
-      title: t('hero.repairsServices'),
-      buttonText: t('hero.bookNow'),
-      bgImage: '/home/b2b.jpg',
-      buttonColor: 'bg-blue-500 hover:bg-blue-600',
-      link: '/categories/repairs',
-    },
-    {
-      id: 'real-estate',
-      title: t('hero.realEstate'),
-      buttonText: t('hero.explore'),
-      bgImage: '/home/real-estate.jpg',
-      buttonColor: 'bg-purple-500 hover:bg-purple-600',
-      link: '/categories/real-estate',
-    },
-    {
-      id: 'doctors',
-      title: t('hero.doctors'),
-      buttonText: t('hero.bookNow'),
-      bgImage: '/home/doctors.jpg',
-      buttonColor: 'bg-green-500 hover:bg-green-600',
-      link: '/categories/healthcare',
-    }
-  ];
+  const routingLocationSlug = useMemo(() => {
+    if (selectedLocation?.slug) return selectedLocation.slug;
+    if (selectedCity?.slug) return selectedCity.slug;
+    const riyadh = cities.find((city) =>
+      city.name.toLowerCase().includes('riyadh') || city.name.toLowerCase().includes('الرياض')
+    );
+    if (riyadh?.slug) return riyadh.slug;
+    if (cities[0]?.slug) return cities[0].slug;
+    return 'riyadh';
+  }, [selectedLocation, selectedCity, cities]);
+  const displayCities =
+    locationSearchQuery.trim().length >= 2 ? citySearchResults : cities;
+
+  const filteredRegions = useMemo(() => {
+    if (!regions.length) return [];
+    if (!locationSearchQuery.trim()) return regions;
+    const query = locationSearchQuery.trim().toLowerCase();
+    return regions.filter(
+      (region) =>
+        region.name.toLowerCase().includes(query) ||
+        region.country?.name?.toLowerCase().includes(query)
+    );
+  }, [regions, locationSearchQuery]);
 
   return (
     <section className="bg-gradient-to-r from-green-50 to-green-200 min-h-screen flex flex-col py-8 px-4 sm:px-6 lg:px-8">
       {/* Outer container for centering title + search */}
       <div className="max-w-7xl mx-auto flex-1 flex flex-col justify-center w-full">
-        <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-8 text-center leading-tight">
-          {t('hero.title')}
+        <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2 text-center leading-tight">
+          {heroTitle}
         </h1>
+        {heroSubtitle && (
+          <p className="text-center text-gray-600 mb-6 max-w-3xl mx-auto">
+            {heroSubtitle}
+          </p>
+        )}
   
-        {/* Full-width Search Bar */}
         <div className="w-full max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl p-3 mb-12 border border-gray-100">
           <div className="flex flex-col md:flex-row gap-3 w-full">
-            {/* Search Input */}
             <div className="flex-1 relative" ref={searchRef}>
               <input
                 type="text"
@@ -194,7 +564,6 @@ export default function HeroSection() {
                 className="w-full px-6 py-4 text-lg border-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
               />
   
-              {/* Suggestions */}
               {showSuggestions && searchQuery.length >= 2 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
                   {searchLoading ? (
@@ -290,7 +659,6 @@ export default function HeroSection() {
               )}
             </div>
   
-            {/* City Dropdown */}
             <div className="flex-1 relative" ref={cityRef}>
               <div className="absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none z-10">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -309,9 +677,9 @@ export default function HeroSection() {
                 className="w-full pl-12 pr-10 py-4 text-lg border-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50 text-left"
               >
                 {loadingCities ? (
-                  <span className="text-gray-400">Loading cities...</span>
-                ) : selectedCity ? (
-                  <span className="text-gray-800">{selectedCity.name}</span>
+                  <span className="text-gray-400">Loading locations...</span>
+                ) : getSelectedLocationName() ? (
+                  <span className="text-gray-800">{getSelectedLocationName()}</span>
                 ) : (
                   <span className="text-gray-400">{t('hero.locationPlaceholder')}</span>
                 )}
@@ -329,34 +697,134 @@ export default function HeroSection() {
               </div>
   
               {showCityDropdown && !loadingCities && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-200 z-50 max-h-80 overflow-y-auto">
-                  {cities.map((city) => (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-200 z-50 max-h-80 overflow-hidden">
+                  <div className="px-4 pt-4">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      {(['city', 'region'] as const).map((tab) => (
+                        <button
+                          key={tab}
+                          onClick={() => setLocationTab(tab)}
+                          className={`px-3 py-1 rounded-full border ${
+                            locationTab === tab
+                              ? 'bg-primary text-white border-primary'
+                              : 'text-gray-600 border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          {tab === 'city'
+                            ? t('hero.citiesTab', { defaultValue: 'Cities' })
+                            : t('hero.regionsTab', { defaultValue: 'States' })}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-4 border-b border-gray-200">
+                    <input
+                      type="text"
+                      value={locationSearchQuery}
+                      onChange={(e) => setLocationSearchQuery(e.target.value)}
+                      placeholder={
+                        locationTab === 'city'
+                          ? t('hero.searchCityPlaceholder', { defaultValue: 'Search city' })
+                          : locationTab === 'region'
+                          ? t('hero.searchRegionPlaceholder', { defaultValue: 'Search region' })
+                          : t('hero.searchCountryPlaceholder', { defaultValue: 'Search country' })
+                      }
+                      className="w-full px-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div className="max-h-60 overflow-y-auto">
+                    {locationTab === 'city' ? (
+                      citySearchLoading ? (
+                        <div className="px-6 py-6 text-center text-gray-500">
+                          {t('hero.loadingCities', { defaultValue: 'Searching cities...' })}
+                        </div>
+                      ) : displayCities.length > 0 ? (
+                        displayCities.map((city) => (
                     <div
                       key={city.id}
                       onClick={() => handleCitySelect(city.id)}
                       className={`px-6 py-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 ${
-                        selectedCity?.id === city.id ? 'bg-primary/5' : ''
+                              selectedLocation?.type === 'city' && selectedLocation.id === city.id
+                                ? 'bg-primary/5'
+                                : ''
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="font-medium text-gray-800">{city.name}</div>
-                        {selectedCity?.id === city.id && (
-                          <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                              {selectedLocation?.type === 'city' && selectedLocation.id === city.id && (
+                                <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              )}
+                            </div>
+                            {city.region?.name && (
+                              <div className="text-xs text-gray-500">
+                                {city.region.name}
+                                {city.region.country?.name ? ` • ${city.region.country.name}` : ''}
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-6 py-6 text-center text-gray-500">
+                          {t('hero.noCitiesFound', {
+                            defaultValue:
+                              locationSearchQuery.trim().length >= 2
+                                ? 'No cities match your search'
+                                : 'No cities available',
+                          })}
+                        </div>
+                      )
+                    ) : locationTab === 'region' ? (
+                      filteredRegions.length > 0 ? (
+                        filteredRegions.map((region) => (
+                          <div
+                            key={region.id}
+                            onClick={() => handleRegionSelect(region)}
+                            className={`px-6 py-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 ${
+                              selectedLocation?.type === 'region' && selectedLocation.id === region.id
+                                ? 'bg-primary/5'
+                                : ''
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="font-medium text-gray-800">{region.name}</div>
+                              {selectedLocation?.type === 'region' &&
+                                selectedLocation.id === region.id && (
+                                  <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                )}
+                            </div>
+                            {region.country?.name && (
+                              <div className="text-xs text-gray-500">{region.country.name}</div>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-6 py-6 text-center text-gray-500">
+                          {t('hero.noRegionsFound', {
+                            defaultValue:
+                              locationSearchQuery.trim().length >= 2
+                                ? 'No regions match your search'
+                                : 'No regions available',
+                          })}
+                        </div>
+                      )
+                    ) : null}
+                  </div>
                 </div>
               )}
             </div>
   
-            {/* Search Button */}
             <button
               onClick={() => handleSearch()}
               className="bg-primary text-white px-6 py-4 rounded-2xl hover:bg-primary/90 transition-all flex items-center justify-center gap-2 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 md:w-40 w-full"
@@ -369,13 +837,12 @@ export default function HeroSection() {
         </div>
       </div>
   
-      {/* Cards area */}
       <div className="max-w-7xl mx-auto pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
           {categoryCards.map((card) => (
             <div
               key={card.id}
-              onClick={() => router.push(card.link)}
+              onClick={() => router.push(`/${routingLocationSlug}/${card.slug}`)}
               className="bg-blue-100 rounded-xl overflow-hidden shadow-lg transition-all duration-300 transform flex h-40 cursor-pointer hover:scale-105"
             >
               <div className="flex-1 p-6 flex flex-col justify-between">
@@ -395,6 +862,4 @@ export default function HeroSection() {
       </div>
     </section>
   );
-  
-  
 }

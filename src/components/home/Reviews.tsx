@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Star, Quote } from 'lucide-react';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 interface Review {
   id: number;
@@ -13,7 +14,7 @@ interface Review {
   avatar: string;
 }
 
-const reviewsData: Review[] = [
+const defaultReviews: Review[] = [
   {
     id: 1,
     name: 'Sarah Johnson',
@@ -65,9 +66,63 @@ const reviewsData: Review[] = [
 ];
 
 export default function Reviews() {
+  const { data: siteSettings } = useSiteSettings();
+  const reviews = siteSettings?.reviews?.length ? (siteSettings.reviews as Review[]) : defaultReviews;
   const [currentSlide, setCurrentSlide] = useState(0);
   const reviewsPerPage = 4;
-  const totalSlides = Math.ceil(reviewsData.length / reviewsPerPage);
+  const totalSlides = reviews.length ? Math.ceil(reviews.length / reviewsPerPage) : 1;
+
+  const renderReviewCard = (review: Review) => (
+    <div
+      key={review.id}
+      className="group relative bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col flex-shrink-0 w-72 md:w-auto"
+    >
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-emerald-500" />
+
+      <div className="p-6 flex flex-col flex-1">
+        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
+          <Quote className="w-5 h-5" />
+        </div>
+
+        <div className="flex items-center gap-1 mb-3">
+          {[...Array(Math.max(0, Math.min(5, Math.round(review.rating ?? 5))))].map((_, i) => (
+            <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+          ))}
+        </div>
+
+        <h3 className="text-base font-semibold text-gray-900 mb-2">
+          "One of the Superb Platform"
+        </h3>
+
+        <p className="text-gray-600 text-sm leading-relaxed line-clamp-5">
+          {review.comment}
+        </p>
+
+        <div className="mt-6 pt-4 border-t border-gray-100 flex items-center gap-3">
+          <div className="relative w-12 h-12">
+            <Image
+              src={review.avatar}
+              alt={review.name}
+              fill
+              unoptimized
+              className="rounded-full object-cover ring-2 ring-primary/10"
+              sizes="48px"
+            />
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-gray-900 text-sm truncate">
+              {review.name}
+            </div>
+            <div className="text-xs text-gray-500 truncate">
+              {review.designation}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+    </div>
+  );
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % totalSlides);
@@ -82,8 +137,9 @@ export default function Reviews() {
   };
 
   const getVisibleReviews = () => {
+    if (!reviews.length) return [];
     const start = currentSlide * reviewsPerPage;
-    return reviewsData.slice(start, start + reviewsPerPage);
+    return reviews.slice(start, start + reviewsPerPage);
   };
 
   return (
@@ -100,92 +156,53 @@ export default function Reviews() {
         </div>
 
         {/* Reviews Grid */}
-        <div className="relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {getVisibleReviews().map((review) => (
-              <div
-                key={review.id}
-                className="group relative bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col"
-              >
-                {/* Accent bar */}
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-emerald-500" />
-
-                <div className="p-6 flex flex-col flex-1">
-                  {/* Quote badge */}
-                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
-                    <Quote className="w-5 h-5" />
-                  </div>
-
-                  {/* Stars */}
-                  <div className="flex items-center gap-1 mb-3">
-                    {[...Array(review.rating)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">
-                    "One of the Superb Platform"
-                  </h3>
-
-                  {/* Comment */}
-                  <p className="text-gray-600 text-sm leading-relaxed line-clamp-5">
-                    {review.comment}
-                  </p>
-
-                  {/* Footer */}
-                  <div className="mt-6 pt-4 border-t border-gray-100 flex items-center gap-3">
-                    <div className="relative w-12 h-12">
-                      <Image
-                        src={review.avatar}
-                        alt={review.name}
-                        fill
-                        unoptimized
-                        className="rounded-full object-cover ring-2 ring-primary/10"
-                        sizes="48px"
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="font-semibold text-gray-900 text-sm truncate">
-                        {review.name}
-                      </div>
-                      <div className="text-xs text-gray-500 truncate">
-                        {review.designation}
-                      </div>
-                    </div>
-                  </div>
+        <div>
+          {/* Mobile horizontal scroll */}
+          <div className="md:hidden mb-8">
+            <div className="flex gap-4 overflow-x-auto pb-4">
+              {reviews.length ? reviews.map((review) => renderReviewCard(review)) : (
+                <div className="text-center text-gray-500 py-10 w-full">
+                  No reviews available at the moment.
                 </div>
-
-                {/* Subtle hover overlay */}
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            ))}
+              )}
+            </div>
           </div>
 
-          {/* Navigation Arrows */}
-          {totalSlides > 1 && (
-            <>
-              <button
-                onClick={prevSlide}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-3 shadow-lg transition-colors z-10 hidden lg:flex items-center justify-center"
-                aria-label="Previous reviews"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button
-                onClick={nextSlide}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-3 shadow-lg transition-colors z-10 hidden lg:flex items-center justify-center"
-                aria-label="Next reviews"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            </>
-          )}
+          {/* Desktop slider */}
+          <div className="relative hidden md:block">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {getVisibleReviews().map((review) => renderReviewCard(review))}
+              {!reviews.length && (
+                <div className="col-span-full text-center text-gray-500 py-10">
+                  No reviews available at the moment.
+                </div>
+              )}
+            </div>
+
+            {totalSlides > 1 && (
+              <>
+                <button
+                  onClick={prevSlide}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-3 shadow-lg transition-colors z-10 flex items-center justify-center"
+                  aria-label="Previous reviews"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={nextSlide}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-3 shadow-lg transition-colors z-10 flex items-center justify-center"
+                  aria-label="Next reviews"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Pagination Dots */}
-        {totalSlides > 1 && (
-          <div className="flex justify-center gap-2 mt-8">
+        {/* Pagination Dots for desktop slider */}
+        {reviews.length > 0 && totalSlides > 1 && (
+          <div className="hidden md:flex justify-center gap-2 mt-8">
             {[...Array(totalSlides)].map((_, index) => (
               <button
                 key={index}
@@ -200,25 +217,7 @@ export default function Reviews() {
           </div>
         )}
 
-        {/* Mobile Navigation Buttons */}
-        {totalSlides > 1 && (
-          <div className="flex lg:hidden justify-center gap-4 mt-8">
-            <button
-              onClick={prevSlide}
-              className="bg-primary hover:bg-primary/90 text-white rounded-full p-3 shadow-lg transition-colors"
-              aria-label="Previous reviews"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="bg-primary hover:bg-primary/90 text-white rounded-full p-3 shadow-lg transition-colors"
-              aria-label="Next reviews"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-        )}
+        {/* Mobile helpers omitted to allow natural horizontal scrolling */}
       </div>
     </section>
   );

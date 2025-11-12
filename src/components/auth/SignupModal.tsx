@@ -41,6 +41,7 @@ export default function SignupModal({
   const [error, setError] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [registerAsBusiness, setRegisterAsBusiness] = useState(defaultRole === 'BUSINESS_OWNER');
+  const [countryCode, setCountryCode] = useState('+966');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -70,10 +71,18 @@ export default function SignupModal({
       return;
     }
 
+    const trimmedPhone = formData.phone.trim();
+    const formattedPhone = trimmedPhone.startsWith('+')
+      ? trimmedPhone
+      : `${countryCode}${trimmedPhone.replace(/^0+/, '')}`;
+
     try {
       setLoading(true);
       setError('');
-      const response = await authService.register(formData);
+      const response = await authService.register({
+        ...formData,
+        phone: formattedPhone,
+      });
       login(response.data.user, response.data.token, response.data.refreshToken);
       onClose();
     } catch (err: any) {
@@ -158,10 +167,14 @@ export default function SignupModal({
               Phone Number *
             </label>
             <div className="flex gap-2">
-              <select className="px-3 py-3 border border-gray-300 rounded-lg bg-gray-50">
-                <option>+966</option>
-                <option>+1</option>
-                <option>+91</option>
+              <select
+                className="px-3 py-3 border border-gray-300 rounded-lg bg-gray-50"
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+              >
+                <option value="+966">+966</option>
+                <option value="+1">+1</option>
+                <option value="+91">+91</option>
               </select>
               <input
                 type="tel"

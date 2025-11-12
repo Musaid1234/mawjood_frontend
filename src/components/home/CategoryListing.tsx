@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCategoryStore } from '@/store/categoryStore';
+import { useCityStore } from '@/store/cityStore';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Category } from '@/services/category.service';
 
 interface CategoryCardProps {
   category: Category;
+  locationSlug: string;
   onClick?: () => void;
 }
 
@@ -23,13 +25,16 @@ function CategorySkeleton() {
   );
 }
 
-export function CategoryCard({ category, onClick }: CategoryCardProps) {
+export function CategoryCard({ category, locationSlug, onClick }: CategoryCardProps) {
   const { t } = useTranslation('common');
   const [imageError, setImageError] = useState(false);
 
   return (
-    <Link href={`/categories/${category.slug}`}>
-      <div className="flex flex-col items-center cursor-pointer group" onClick={onClick}>
+    <Link href={`/${locationSlug}/${category.slug}`}>
+      <div
+        className="flex flex-col items-center cursor-pointer group flex-shrink-0 min-w-[110px] md:min-w-0"
+        onClick={onClick}
+      >
         <div className="bg-white rounded-2xl border border-gray-300 transition-all duration-300 transform hover:scale-105 p-5 flex items-center justify-center mb-3">
           <div className="rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 bg-gray-50">
             {category.icon && !imageError ? (
@@ -59,11 +64,25 @@ export function CategoryCard({ category, onClick }: CategoryCardProps) {
 export default function CategoryListing() {
   const { t } = useTranslation('common');
   const { categories, loading, error, fetchCategories } = useCategoryStore();
+  const { selectedCity, selectedLocation, cities, fetchCities } = useCityStore();
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
+
+  useEffect(() => {
+    if (!cities.length) {
+      fetchCities();
+    }
+  }, [cities.length, fetchCities]);
+
+  const locationSlug =
+    selectedLocation?.slug ||
+    selectedCity?.slug ||
+    cities.find((city) => city.name.toLowerCase().includes('riyadh'))?.slug ||
+    cities[0]?.slug ||
+    'riyadh';
 
   if (loading || error) {
     return (
@@ -77,7 +96,7 @@ export default function CategoryListing() {
               {t('categories.subtitle')}
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-9 gap-6">
+          <div className="flex gap-4 overflow-x-auto pb-4 md:grid md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-9 md:gap-6 md:overflow-visible">
             {Array.from({ length: 17 }).map((_, index) => (
               <CategorySkeleton key={index} />
             ))}
@@ -120,13 +139,13 @@ export default function CategoryListing() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-9 gap-6">
+        <div className="flex gap-4 overflow-x-auto pb-4 md:grid md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-9 md:gap-6 md:overflow-visible">
           {categories.slice(0, 17).map((category) => (
-            <CategoryCard key={category.id} category={category} />
+            <CategoryCard key={category.id} category={category} locationSlug={locationSlug} />
           ))}
           
           <Link href="/categories">
-            <div className="flex flex-col items-center cursor-pointer group">
+            <div className="flex flex-col items-center cursor-pointer group flex-shrink-0 min-w-[110px] md:min-w-0">
               <div className="bg-white rounded-2xl border border-gray-300 transition-all duration-300 transform hover:scale-105 p-5 flex items-center justify-center mb-3">
                 <div className="rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 bg-gray-50">
                   <span className="text-3xl">📋</span>

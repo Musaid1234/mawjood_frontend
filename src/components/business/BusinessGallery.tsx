@@ -8,7 +8,7 @@ interface Business {
   name: string;
   logo?: string;
   coverImage?: string;
-  images: string[];
+  images?: string[] | null;
 }
 
 interface Props {
@@ -20,10 +20,12 @@ export default function BusinessGallery({ business }: Props) {
   const [showLightbox, setShowLightbox] = useState(false);
 
   // Combine all images
+  const galleryImages = Array.isArray(business.images) ? business.images : [];
+
   const allImages = [
     business.coverImage,
     business.logo,
-    ...business.images
+    ...galleryImages
   ].filter(Boolean) as string[];
 
   // Display max 5 images in grid

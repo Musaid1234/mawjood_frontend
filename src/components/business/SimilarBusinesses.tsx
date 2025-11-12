@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Star, MapPin, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { businessService } from '@/services/business.service';
+import { businessService, LocationType } from '@/services/business.service';
 
 interface Business {
   id: string;
@@ -25,11 +25,17 @@ interface Business {
 
 interface Props {
   categoryId: string;
-  cityId: string;
+  locationId?: string;
+  locationType?: LocationType;
   currentBusinessId: string;
 }
 
-export default function SimilarBusinesses({ categoryId, cityId, currentBusinessId }: Props) {
+export default function SimilarBusinesses({
+  categoryId,
+  locationId,
+  locationType = 'city',
+  currentBusinessId,
+}: Props) {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +45,8 @@ export default function SimilarBusinesses({ categoryId, cityId, currentBusinessI
         setLoading(true);
         const data = await businessService.searchBusinesses({
           categoryId,
-          cityId,
+          locationId,
+          locationType,
           limit: 6,
         });
 
@@ -54,7 +61,7 @@ export default function SimilarBusinesses({ categoryId, cityId, currentBusinessI
     };
 
     fetchSimilarBusinesses();
-  }, [categoryId, cityId, currentBusinessId]);
+  }, [categoryId, locationId, locationType, currentBusinessId]);
 
   if (loading) {
     return (
@@ -80,7 +87,9 @@ export default function SimilarBusinesses({ categoryId, cityId, currentBusinessI
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Similar Businesses</h2>
         <Link
-          href={`/businesses?categoryId=${categoryId}&cityId=${cityId}`}
+          href={`/businesses?categoryId=${categoryId}${
+            locationId ? `&locationId=${locationId}&locationType=${locationType}` : ''
+          }`}
           className="flex items-center gap-1 text-primary hover:text-primary/80 font-semibold transition-colors text-sm"
         >
           View All
