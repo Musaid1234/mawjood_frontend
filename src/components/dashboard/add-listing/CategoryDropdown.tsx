@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Search, ChevronRight } from 'lucide-react';
-import { Category } from '@/services/category.service';
+interface DropdownCategory {
+  id: string;
+  name: string;
+  slug: string;
+  subcategories?: DropdownCategory[];
+}
 
 interface CategoryDropdownProps {
-  categories: Category[];
+  categories: DropdownCategory[];
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
@@ -23,7 +28,7 @@ export default function CategoryDropdown({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Find selected category (could be a subcategory)
-  const findSelectedCategory = (cats: Category[], id: string): Category | undefined => {
+  const findSelectedCategory = (cats: DropdownCategory[], id: string): DropdownCategory | undefined => {
     for (const cat of cats) {
       if (cat.id === id) return cat;
       if (cat.subcategories && cat.subcategories.length > 0) {
@@ -37,7 +42,7 @@ export default function CategoryDropdown({
   const selectedCategory = findSelectedCategory(categories, value);
 
   // Filter categories based on search query
-  const filterCategories = (cats: Category[], query: string): Category[] => {
+  const filterCategories = (cats: DropdownCategory[], query: string): DropdownCategory[] => {
     if (!query) return cats;
     
     return cats.filter((category) => {
@@ -63,7 +68,7 @@ export default function CategoryDropdown({
   useEffect(() => {
     if (searchQuery) {
       const newExpanded = new Set<string>();
-      const expandMatchingParents = (cats: Category[]) => {
+      const expandMatchingParents = (cats: DropdownCategory[]) => {
         cats.forEach((cat) => {
           if (cat.subcategories && cat.subcategories.length > 0) {
             const hasMatchingSubcategories = filterCategories(cat.subcategories, searchQuery).length > 0;
@@ -110,7 +115,7 @@ export default function CategoryDropdown({
     setSearchQuery('');
   };
 
-  const renderCategory = (category: Category, level: number = 0) => {
+  const renderCategory = (category: DropdownCategory, level: number = 0) => {
     const hasSubcategories = category.subcategories && category.subcategories.length > 0;
     const isExpanded = expandedCategories.has(category.id);
     const isSelected = value === category.id;
@@ -151,7 +156,7 @@ export default function CategoryDropdown({
           </button>
         </div>
 
-        {hasSubcategories && isExpanded && (
+        {category.subcategories && hasSubcategories && isExpanded && (
           <div>
             {category.subcategories.map((subcategory) => renderCategory(subcategory, level + 1))}
           </div>

@@ -134,7 +134,7 @@ export const settingsService = {
   },
 
   async updateSiteSettings(payload: Partial<SiteSettings>): Promise<SiteSettings> {
-    const response = await axiosInstance.put<{ data: SiteSettings }>(
+    const response = await axiosInstance.patch<{ data: SiteSettings }>(
       API_ENDPOINTS.SETTINGS.SITE,
       payload
     );
