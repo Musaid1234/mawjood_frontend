@@ -193,14 +193,14 @@ export default function ContactPage() {
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                    placeholder="John Doe"
+                    placeholder="Enter your name"
                   />
                 </div>
 
                 {/* Email */}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    eMail ID
+                    Email ID
                   </label>
                   <input
                     type="email"
@@ -210,7 +210,7 @@ export default function ContactPage() {
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                    placeholder="john@example.com"
+                    placeholder="Enter your email"
                   />
                 </div>
               </div>

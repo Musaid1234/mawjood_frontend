@@ -33,11 +33,17 @@ export default function HeroSection() {
     setSelectedLocation,
   } = useCityStore();
 
-  const { data: siteSettings } = useSiteSettings();
+  const { data: siteSettings, isLoading: siteSettingsLoading } = useSiteSettings();
 
   const heroSettings = siteSettings?.hero;
-  const heroTitle = heroSettings?.title ?? t('hero.title');
-  const heroSubtitle = heroSettings?.subtitle;
+  const heroTitle = useMemo(() => {
+    if (siteSettingsLoading) return '';
+    return heroSettings?.title ?? t('hero.title');
+  }, [heroSettings?.title, siteSettingsLoading, t]);
+  const heroSubtitle = useMemo(() => {
+    if (siteSettingsLoading) return '';
+    return heroSettings?.subtitle ?? '';
+  }, [heroSettings?.subtitle, siteSettingsLoading]);
 
   const defaultCategoryCards: HeroCard[] = useMemo(
     () => [
@@ -537,15 +543,25 @@ useEffect(() => {
 
   return (
     <section className="bg-gradient-to-r from-green-50 to-green-200 min-h-screen flex flex-col py-8 px-4 sm:px-6 lg:px-8">
-      {/* Outer container for centering title + search */}
       <div className="max-w-7xl mx-auto flex-1 flex flex-col justify-center w-full">
-        <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2 text-center leading-tight">
-          {heroTitle}
-        </h1>
-        {heroSubtitle && (
-          <p className="text-center text-gray-600 mb-6 max-w-3xl mx-auto">
-            {heroSubtitle}
-          </p>
+        {siteSettingsLoading ? (
+          <div className="mb-8 flex flex-col items-center gap-4 animate-pulse">
+            <div className="h-10 w-full max-w-2xl rounded-full bg-gray-200" />
+            <div className="h-4 w-full max-w-xl rounded-full bg-gray-200" />
+          </div>
+        ) : (
+          <>
+            {heroTitle && (
+              <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2 text-center leading-tight">
+                {heroTitle}
+              </h1>
+            )}
+            {heroSubtitle && (
+              <p className="text-center text-gray-600 mb-6 max-w-3xl mx-auto">
+                {heroSubtitle}
+              </p>
+            )}
+          </>
         )}
   
         <div className="w-full max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl p-3 mb-12 border border-gray-100">
@@ -839,25 +855,35 @@ useEffect(() => {
   
       <div className="max-w-7xl mx-auto pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
-          {categoryCards.map((card) => (
-            <div
-              key={card.id}
-              onClick={() => router.push(`/${routingLocationSlug}/${card.slug}`)}
-              className="bg-blue-100 rounded-xl overflow-hidden shadow-lg transition-all duration-300 transform flex h-40 cursor-pointer hover:scale-105"
-            >
-              <div className="flex-1 p-6 flex flex-col justify-between">
-                <h3 className="text-md font-bold text-gray-800 mb-3">{card.title}</h3>
-                <button
-                  className={`${card.buttonColor} text-white font-bold py-2 px-4 rounded-sm hover:opacity-90 transition-all duration-300 text-xs uppercase tracking-wide w-fit`}
+          {siteSettingsLoading
+            ? Array.from({ length: 4 }).map((_, idx) => (
+                <div
+                  key={`hero-skeleton-${idx}`}
+                  className="h-40 rounded-xl bg-white shadow-lg border border-gray-100 p-6 flex flex-col justify-between animate-pulse"
                 >
-                  {card.buttonText}
-                </button>
-              </div>
-              <div className="w-32 relative">
-                <Image src={card.bgImage} alt={card.title} fill className="object-cover" sizes="128px" />
-              </div>
-            </div>
-          ))}
+                  <div className="h-5 w-3/4 bg-gray-200 rounded-full" />
+                  <div className="h-8 w-32 bg-gray-200 rounded-md self-start" />
+                </div>
+              ))
+            : categoryCards.map((card) => (
+                <div
+                  key={card.id}
+                  onClick={() => router.push(`/${routingLocationSlug}/${card.slug}`)}
+                  className="bg-blue-100 rounded-xl overflow-hidden shadow-lg transition-all duration-300 transform flex h-40 cursor-pointer hover:scale-105"
+                >
+                  <div className="flex-1 p-6 flex flex-col justify-between">
+                    <h3 className="text-md font-bold text-gray-800 mb-3">{card.title}</h3>
+                    <button
+                      className={`${card.buttonColor} text-white font-bold py-2 px-4 rounded-sm hover:opacity-90 transition-all duration-300 text-xs uppercase tracking-wide w-fit`}
+                    >
+                      {card.buttonText}
+                    </button>
+                  </div>
+                  <div className="w-32 relative">
+                    <Image src={card.bgImage} alt={card.title} fill className="object-cover" sizes="128px" />
+                  </div>
+                </div>
+              ))}
         </div>
       </div>
     </section>
