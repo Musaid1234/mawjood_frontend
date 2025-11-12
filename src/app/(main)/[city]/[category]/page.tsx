@@ -18,7 +18,7 @@ type FiltersState = {
 };
 
 const SORT_OPTIONS = [
-  { value: 'popular', label: 'Popular (Profile Views)' },
+  { value: 'popular', label: 'Most Popular' },
   { value: 'rating_high', label: 'Rating: High to Low' },
   { value: 'rating_low', label: 'Rating: Low to High' },
   { value: 'newest', label: 'Newest' },
@@ -474,7 +474,7 @@ export default function CityCategoryPage() {
       <div className="max-w-7xl mx-auto">
       <div className="space-y-6 mb-4">
           {adLoading && (
-            <div className="h-40 md:h-48 rounded-2xl bg-gray-100 animate-pulse" />
+            <div/>
           )}
           {!adLoading && advertisement && (
             <div className="overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
@@ -486,7 +486,7 @@ export default function CityCategoryPage() {
                     width={1200}
                     height={360}
                     className="w-full h-46 object-cover"
-                    priority
+                    priority  
                   />
                 </Link>
               ) : (

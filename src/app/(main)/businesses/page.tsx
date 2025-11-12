@@ -18,7 +18,7 @@ type FiltersState = {
 };
 
 const SORT_OPTIONS = [
-  { value: 'popular', label: 'Popular (Profile Views)' },
+  { value: 'popular', label: 'Most Popular' },
   { value: 'rating_high', label: 'Rating: High to Low' },
   { value: 'rating_low', label: 'Rating: Low to High' },
   { value: 'newest', label: 'Newest' },

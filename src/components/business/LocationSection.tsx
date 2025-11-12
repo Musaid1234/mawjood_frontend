@@ -105,21 +105,13 @@ export default function LocationSection({ business }: Props) {
       </div>
 
       {/* Map */}
-      {hasCoordinates ? (
+      {hasCoordinates && (
         <div className="rounded-lg overflow-hidden border border-gray-200">
           <Map
             latitude={business.latitude!}
             longitude={business.longitude!}
             businessName={business.name}
           />
-        </div>
-      ) : (
-        <div className="w-full h-[400px] bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
-          <div className="text-center p-6">
-            <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-600 font-medium">Map coordinates not available</p>
-            <p className="text-gray-500 text-sm mt-2">Use the buttons above to view in Google Maps</p>
-          </div>
         </div>
       )}
     </section>

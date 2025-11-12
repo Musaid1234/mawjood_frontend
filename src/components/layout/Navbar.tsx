@@ -87,11 +87,6 @@ export default function Navbar() {
                   <h1 className="text-primary hover:text-primary block text-base font-bold leading-tight">
                     {brandName}
                   </h1>
-                  {brandTagline && (
-                    <span className="block text-[10px] text-gray-500 leading-tight">
-                      {brandTagline}
-                    </span>
-                  )}
                 </div>
               </Link>
             </div>
