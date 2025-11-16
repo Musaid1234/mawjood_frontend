@@ -18,8 +18,11 @@ export default function BusinessListCard({ business, onToggleFavorite }: Busines
   const allImages = [
     business.logo,
     business.coverImage,
-    ...(business.images || [])
+    ...(Array.isArray(business.images) 
+    ? business.images.map(img => typeof img === 'string' ? img : img.url) 
+    : [])
   ].filter(Boolean) as string[];
+
 
   const hasMultipleImages = allImages.length > 1;
   const isOpen = business.status === 'ACTIVE';
