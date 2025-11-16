@@ -19,7 +19,7 @@ export interface Business {
   longitude?: number;
   logo?: string;
   coverImage?: string;
-  images?: string[] | null;
+  images?: ImageObject[] | null;
   metaTitle?: string | null;
   metaDescription?: string | null;
   averageRating: number;
@@ -184,6 +184,11 @@ export interface Service {
   price?: number;
   duration?: number;
   businessId: string;
+}
+
+export interface ImageObject {
+  url: string;
+  alt?: string;
 }
 
 export interface WorkingHours {

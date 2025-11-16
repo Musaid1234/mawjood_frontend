@@ -4,11 +4,18 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
+interface ImageObject {
+  url: string;
+  alt?: string;
+}
+
 interface Business {
   name: string;
   logo?: string;
+  logoAlt?: string;
   coverImage?: string;
-  images?: string[] | null;
+  coverImageAlt?: string;
+  images?: ImageObject[] | null;
 }
 
 interface Props {
@@ -19,14 +26,16 @@ export default function BusinessGallery({ business }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showLightbox, setShowLightbox] = useState(false);
 
-  // Combine all images
-  const galleryImages = Array.isArray(business.images) ? business.images : [];
+  // Combine all images with proper url/alt extraction
+  const galleryImages = Array.isArray(business.images) 
+    ? business.images.map(img => ({ url: img.url, alt: img.alt || business.name }))
+    : [];
 
   const allImages = [
-    business.coverImage,
-    business.logo,
+    business.coverImage ? { url: business.coverImage, alt: business.coverImageAlt || `${business.name} cover` } : null,
+    business.logo ? { url: business.logo, alt: business.logoAlt || `${business.name} logo` } : null,
     ...galleryImages
-  ].filter(Boolean) as string[];
+  ].filter(Boolean) as { url: string; alt: string }[];
 
   // Display max 5 images in grid
   const displayImages = allImages.slice(0, 5);
@@ -70,8 +79,8 @@ export default function BusinessGallery({ business }: Props) {
           }}
         >
           <Image
-            src={displayImages[0]}
-            alt={business.name}
+            src={displayImages[0].url}
+            alt={displayImages[0].alt}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             priority
@@ -91,8 +100,8 @@ export default function BusinessGallery({ business }: Props) {
             }}
           >
             <Image
-              src={image}
-              alt={`${business.name} ${idx + 2}`}
+              src={image.url}
+              alt={image.alt}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               sizes="(max-width: 768px) 50vw, 25vw"
@@ -138,8 +147,8 @@ export default function BusinessGallery({ business }: Props) {
           {/* Main Image */}
           <div className="relative w-full h-full max-w-7xl max-h-[85vh] mx-4">
             <Image
-              src={allImages[currentIndex]}
-              alt={`${business.name} ${currentIndex + 1}`}
+              src={allImages[currentIndex].url}
+              alt={allImages[currentIndex].alt}
               fill
               className="object-contain"
               sizes="100vw"
@@ -180,8 +189,8 @@ export default function BusinessGallery({ business }: Props) {
                 }`}
               >
                 <Image
-                  src={image}
-                  alt={`Thumbnail ${idx + 1}`}
+                  src={image.url}
+                  alt={image.alt}
                   fill
                   className="object-cover"
                   sizes="80px"
