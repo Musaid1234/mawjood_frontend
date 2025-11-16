@@ -14,6 +14,7 @@ import {
   Settings,
   Shield,
   Folder,
+  CreditCard,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -34,12 +35,17 @@ const sidebarItems = [
     icon: Building2,
   },
   {
+    name: 'Reviews',
+    href: '/admin/reviews',
+    icon: Star,
+  },
+  {
     name: 'Categories',
     href: '/admin/categories',
     icon: Folder,
   },
   {
-    name: 'Cities',
+    name: 'Locations',
     href: '/admin/cities',
     icon: MapPin,
   },
@@ -52,6 +58,16 @@ const sidebarItems = [
     name: 'Transactions',
     href: '/admin/transactions',
     icon: Receipt,
+  },
+  {
+    name: 'Subscription Plans',
+    href: '/admin/subscription-plans',
+    icon: CreditCard,
+  },
+  {
+    name: 'Advertisements',
+    href: '/admin/advertisements',
+    icon: FolderTree,
   },
 ];
 

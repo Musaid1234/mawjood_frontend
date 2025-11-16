@@ -1,18 +1,295 @@
 import { useFormikContext } from 'formik';
-import { MapPin, ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
+import { MapPin, ChevronDown, ChevronUp, Search, Loader2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { cityService } from '@/services/city.service';
+import { cityService, type Country, type Region, type City } from '@/services/city.service';
+
+type Option = {
+  value: string;
+  label: string;
+  description?: string;
+};
+
+interface SearchableSelectProps {
+  name: string;
+  label: string;
+  placeholder: string;
+  options: Option[];
+  value: string;
+  onSelect: (value: string) => void;
+  error?: string;
+  required?: boolean;
+  disabled?: boolean;
+  isLoading?: boolean;
+  helperText?: string;
+}
+
+function SearchableSelect({
+  name,
+  label,
+  placeholder,
+  options,
+  value,
+  onSelect,
+  error,
+  required,
+  disabled,
+  isLoading,
+  helperText,
+}: SearchableSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const filteredOptions = useMemo(() => {
+    if (!searchQuery) return options;
+    const lowered = searchQuery.toLowerCase();
+    return options.filter((option) => option.label.toLowerCase().includes(lowered));
+  }, [options, searchQuery]);
+
+  const selectedOption = useMemo(
+    () => options.find((option) => option.value === value),
+    [options, value]
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setSearchQuery('');
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleOptionSelect = (optionValue: string) => {
+    onSelect(optionValue);
+    setIsOpen(false);
+    setSearchQuery('');
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={`${name}-options`}
+        onClick={() => {
+          if (!disabled) {
+            setIsOpen((prev) => !prev);
+          }
+        }}
+        disabled={disabled}
+        className={`w-full px-4 py-3 border rounded-lg flex items-center justify-between transition-colors ${
+          error
+            ? 'border-red-500'
+            : disabled
+              ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'border-gray-300 focus:ring-2 focus:ring-[#1c4233] focus:border-transparent'
+        }`}
+      >
+        <span
+          className={`truncate ${
+            selectedOption ? 'text-gray-900' : 'text-gray-500'
+          }`}
+        >
+          {selectedOption ? selectedOption.label : isLoading ? 'Loading...' : placeholder}
+        </span>
+        <ChevronDown
+          className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {helperText ? (
+        <p className="mt-1 text-xs text-gray-500">{helperText}</p>
+      ) : null}
+
+      {isOpen && !disabled && (
+        <div
+          id={`${name}-options`}
+          role="listbox"
+          className="absolute z-20 mt-2 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-72 overflow-hidden"
+        >
+          <div className="p-3 border-b border-gray-200">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1c4233]"
+              />
+            </div>
+          </div>
+
+          <div className="max-h-60 overflow-y-auto">
+            {isLoading ? (
+              <div className="flex items-center justify-center gap-2 py-6 text-sm text-gray-500">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading...
+              </div>
+            ) : filteredOptions.length === 0 ? (
+              <div className="px-4 py-3 text-sm text-gray-500 text-center">No results found</div>
+            ) : (
+              filteredOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  onClick={() => handleOptionSelect(option.value)}
+                  className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
+                    option.value === value ? 'bg-[#1c4233]/10 text-[#1c4233] font-medium' : 'text-gray-900'
+                  }`}
+                >
+                  <div className="flex flex-col">
+                    <span className="truncate">{option.label}</span>
+                    {option.description ? (
+                      <span className="text-xs text-gray-500 truncate">{option.description}</span>
+                    ) : null}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {error ? <p className="mt-1 text-sm text-red-600">{error}</p> : null}
+    </div>
+  );
+}
 
 export default function LocationSection() {
-  const { values, errors, touched, handleChange, handleBlur, setFieldValue } = useFormikContext<any>();
+  const {
+    values,
+    errors,
+    touched,
+    handleChange,
+    handleBlur,
+    setFieldValue,
+    setFieldTouched,
+  } = useFormikContext<any>();
   const [showCoordinates, setShowCoordinates] = useState(false);
 
-  const { data: cities } = useQuery({
-    queryKey: ['cities'],
-    queryFn: () => cityService.fetchCities(),
-
+  const {
+    data: countriesResponse,
+    isLoading: isCountriesLoading,
+    isError: isCountriesError,
+  } = useQuery({
+    queryKey: ['countries-with-regions'],
+    queryFn: () => cityService.fetchCountries(),
   });
+
+  const countries: Country[] = countriesResponse ?? [];
+
+  const selectedCountry = useMemo(() => {
+    if (!values.countryId) return undefined;
+    return countries.find((country) => country.id === values.countryId);
+  }, [countries, values.countryId]);
+
+  const availableRegions: Region[] = useMemo(() => {
+    return selectedCountry?.regions ?? [];
+  }, [selectedCountry]);
+
+  const selectedRegion = useMemo(() => {
+    if (!values.regionId) return undefined;
+    return availableRegions.find((region) => region.id === values.regionId);
+  }, [availableRegions, values.regionId]);
+
+  const availableCities: City[] = useMemo(() => {
+    return selectedRegion?.cities ?? [];
+  }, [selectedRegion]);
+
+  // Auto-populate country and region when city is already selected (e.g., editing state)
+  useEffect(() => {
+    if (!values.cityId || countries.length === 0) {
+      return;
+    }
+
+    const hasCountry = Boolean(values.countryId);
+    const hasRegion = Boolean(values.regionId);
+
+    if (hasCountry && hasRegion) {
+      return;
+    }
+
+    for (const country of countries) {
+      for (const region of country.regions ?? []) {
+        const cityMatch = region.cities?.find((city) => city.id === values.cityId);
+        if (cityMatch) {
+          if (!hasCountry) {
+            setFieldValue('countryId', country.id, false);
+          }
+          if (!hasRegion) {
+            setFieldValue('regionId', region.id, false);
+          }
+          return;
+        }
+      }
+    }
+  }, [countries, setFieldValue, values.cityId, values.countryId, values.regionId]);
+
+  const countryOptions: Option[] = useMemo(
+    () =>
+      countries.map((country) => ({
+        value: country.id,
+        label: country.name,
+        description: country.code ? `Code: ${country.code}` : undefined,
+      })),
+    [countries]
+  );
+
+  const regionOptions: Option[] = useMemo(
+    () =>
+      availableRegions.map((region) => ({
+        value: region.id,
+        label: region.name,
+        description: selectedCountry ? selectedCountry.name : undefined,
+      })),
+    [availableRegions, selectedCountry]
+  );
+
+  const cityOptions: Option[] = useMemo(
+    () =>
+      availableCities.map((city) => ({
+        value: city.id,
+        label: city.name,
+        description: selectedRegion ? selectedRegion.name : undefined,
+      })),
+    [availableCities, selectedRegion]
+  );
+
+  const isCountryDisabled = isCountriesLoading || isCountriesError;
+  const isRegionDisabled = !values.countryId || availableRegions.length === 0;
+  const isCityDisabled = !values.regionId || availableCities.length === 0;
+
+  const handleCountrySelect = (countryId: string) => {
+    setFieldValue('countryId', countryId);
+    setFieldTouched('countryId', true, false);
+    setFieldValue('regionId', '');
+    setFieldValue('cityId', '');
+    setFieldTouched('regionId', false, false);
+    setFieldTouched('cityId', false, false);
+  };
+
+  const handleRegionSelect = (regionId: string) => {
+    setFieldValue('regionId', regionId);
+    setFieldTouched('regionId', true, false);
+    setFieldValue('cityId', '');
+    setFieldTouched('cityId', false, false);
+  };
+
+  const handleCitySelect = (cityId: string) => {
+    setFieldValue('cityId', cityId);
+    setFieldTouched('cityId', true, false);
+  };
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -43,47 +320,72 @@ export default function LocationSection() {
           )}
         </div>
 
-        {/* City and State Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* City Dropdown */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              City <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="cityId"
-              value={values.cityId || ''}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent"
-            >
-              <option value="">Select City</option>
-              {cities?.map((city: any) => (
-                <option key={city.id} value={city.id}>
-                  {city.name}
-                </option>
-              ))}
-            </select>
-            {touched.cityId && errors.cityId && (
-              <p className="mt-1 text-sm text-red-600">{errors.cityId as string}</p>
-            )}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <SearchableSelect
+            name="countryId"
+            label="Country"
+            placeholder={isCountriesLoading ? 'Loading countries...' : 'Select Country'}
+            options={countryOptions}
+            value={values.countryId || ''}
+            onSelect={handleCountrySelect}
+            error={touched.countryId && errors.countryId ? (errors.countryId as string) : undefined}
+            required
+            disabled={isCountryDisabled}
+            isLoading={isCountriesLoading}
+            helperText={
+              isCountriesError
+                ? 'Unable to load countries. Please refresh the page.'
+                : undefined
+            }
+          />
 
-          {/* State */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              State
-            </label>
-            <input
-              type="text"
-              name="state"
-              value={values.state || ''}
-              onChange={handleChange}
-              placeholder="State"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent"
-            />
-          </div>
+          <SearchableSelect
+            name="regionId"
+            label="Region / State"
+            placeholder={
+              !values.countryId
+                ? 'Select a country first'
+                : availableRegions.length === 0
+                  ? 'No regions found'
+                  : 'Select Region'
+            }
+            helperText={
+              values.countryId && availableRegions.length === 0
+                ? 'No regions found for selected country'
+                : undefined
+            }
+            options={regionOptions}
+            value={values.regionId || ''}
+            onSelect={handleRegionSelect}
+            error={touched.regionId && errors.regionId ? (errors.regionId as string) : undefined}
+            required
+            disabled={isRegionDisabled}
+          />
+
+          <SearchableSelect
+            name="cityId"
+            label="City"
+            placeholder={
+              !values.regionId
+                ? 'Select a region first'
+                : availableCities.length === 0
+                  ? 'No cities found'
+                  : 'Select City'
+            }
+            helperText={
+              values.regionId && availableCities.length === 0
+                ? 'No cities found for selected region'
+                : undefined
+            }
+            options={cityOptions}
+            value={values.cityId || ''}
+            onSelect={handleCitySelect}
+            error={touched.cityId && errors.cityId ? (errors.cityId as string) : undefined}
+            required
+            disabled={isCityDisabled}
+          />
         </div>
+
 
         {/* CR Number (Optional) */}
         <div>

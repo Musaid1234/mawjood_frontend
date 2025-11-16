@@ -256,5 +256,97 @@ export const adminService = {
       return handleError(error);
     }
   },
+
+  /**
+   * Get all reviews (admin)
+   */
+  async getAllReviews(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    deleteRequestStatus?: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.GET_ALL_REVIEWS, { params });
+      return response.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  /**
+   * Get pending delete requests
+   */
+  async getPendingDeleteRequests(params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.GET_PENDING_DELETE_REQUESTS, {
+        params,
+      });
+      return response.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  /**
+   * Approve delete request
+   */
+  async approveDeleteRequest(reviewId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await axiosInstance.patch(API_ENDPOINTS.ADMIN.APPROVE_DELETE_REQUEST(reviewId));
+      return response.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  /**
+   * Reject delete request
+   */
+  async rejectDeleteRequest(reviewId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await axiosInstance.patch(API_ENDPOINTS.ADMIN.REJECT_DELETE_REQUEST(reviewId));
+      return response.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  /**
+   * Get all payments (admin)
+   */
+  async getAllPayments(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const response = await axiosInstance.get(API_ENDPOINTS.PAYMENTS.GET_ALL, { params });
+      return response.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  /**
+   * Get all subscriptions (admin)
+   */
+  async getAllSubscriptions(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    businessId?: string;
+    search?: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const response = await axiosInstance.get(API_ENDPOINTS.SUBSCRIPTIONS.GET_ALL_ADMIN, { params });
+      return response.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
 };
 

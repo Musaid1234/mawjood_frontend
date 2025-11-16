@@ -13,6 +13,7 @@ import {
   Receipt,
   FileText,
   Settings,
+  CreditCard,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -33,11 +34,6 @@ const sidebarItems = [
     icon: Heart,
   },
   {
-    name: 'Add Listing',
-    href: '/dashboard/add-listing',
-    icon: PlusCircle,
-  },
-  {
     name: 'Services',
     href: '/dashboard/services',
     icon: Briefcase,
@@ -51,6 +47,11 @@ const sidebarItems = [
     name: 'Transactions/Billing',
     href: '/dashboard/transactions',
     icon: Receipt,
+  },
+  {
+    name: 'Subscriptions',
+    href: '/dashboard/subscriptions',
+    icon: CreditCard,
   },
   {
     name: 'Settings',

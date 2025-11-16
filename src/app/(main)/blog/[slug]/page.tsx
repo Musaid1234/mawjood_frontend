@@ -128,12 +128,6 @@ export default function BlogDetailPage() {
       href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
       color: 'hover:bg-[#0A66C2]/10 text-[#0A66C2]',
     },
-    {
-      name: 'WhatsApp',
-      icon: MessageCircle,
-      href: `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`,
-      color: 'hover:bg-[#25D366]/10 text-[#25D366]',
-    },
   ] as const;
 
   const handleCopyLink = async () => {
@@ -174,6 +168,74 @@ export default function BlogDetailPage() {
         </div>
       </div>
     );
+  }
+
+  // Hide scheduled posts that are in the future or drafts, even if backend returns them
+  const now = new Date();
+  const anyBlog: any = blog as any;
+  const meta =
+    anyBlog.tags && typeof anyBlog.tags === 'object' && !Array.isArray(anyBlog.tags)
+      ? anyBlog.tags
+      : {};
+  const rawStatus = (anyBlog.status as 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | undefined) ??
+    (blog.published ? 'PUBLISHED' : 'DRAFT');
+  let status: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' = 'DRAFT';
+  if (typeof meta.status === 'string') {
+    const upper = (meta.status as string).toUpperCase();
+    if (upper === 'DRAFT' || upper === 'PUBLISHED' || upper === 'SCHEDULED') {
+      status = upper;
+    } else {
+      status = rawStatus || 'DRAFT';
+    }
+  } else {
+    status = rawStatus || 'DRAFT';
+  }
+
+  if (status === 'DRAFT') {
+    return (
+      <div className="min-h-screen bg-white py-16">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h1 className="text-2xl font-bold mb-4">Blog Not Found</h1>
+          <p className="text-gray-600 mb-6">The blog post you're looking for doesn't exist.</p>
+          <Link href="/blog" className="text-primary hover:underline">
+            ← Back to Blogs
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'SCHEDULED') {
+    const schedStr: string | undefined =
+      (anyBlog.scheduledAt as string) ?? (meta.scheduledAt as string | undefined);
+    if (!schedStr) {
+      // treat as not yet available
+      return (
+        <div className="min-h-screen bg-white py-16">
+          <div className="max-w-4xl mx-auto px-4 text-center">
+            <h1 className="text-2xl font-bold mb-4">Blog Not Found</h1>
+            <p className="text-gray-600 mb-6">The blog post you're looking for doesn't exist.</p>
+            <Link href="/blog" className="text-primary hover:underline">
+              ← Back to Blogs
+            </Link>
+          </div>
+        </div>
+      );
+    }
+    const schedDate = new Date(schedStr);
+    if (isNaN(schedDate.getTime()) || schedDate > now) {
+      return (
+        <div className="min-h-screen bg-white py-16">
+          <div className="max-w-4xl mx-auto px-4 text-center">
+            <h1 className="text-2xl font-bold mb-4">Blog Not Found</h1>
+            <p className="text-gray-600 mb-6">The blog post you're looking for doesn't exist.</p>
+            <Link href="/blog" className="text-primary hover:underline">
+              ← Back to Blogs
+            </Link>
+          </div>
+        </div>
+      );
+    }
   }
 
   const featuredImage = blog.image ? blog.image : resolvedImage;

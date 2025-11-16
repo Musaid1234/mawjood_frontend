@@ -61,13 +61,26 @@ export const createColumns = (
     ),
   },
   {
-    accessorKey: 'published',
+    accessorKey: 'status',
     header: 'Status',
-    cell: ({ row }) => (
-      <Badge variant={row.original.published ? 'default' : 'secondary'}>
-        {row.original.published ? 'Published' : 'Draft'}
-      </Badge>
-    ),
+    cell: ({ row }) => {
+      const rawStatus = (row.original as any).status as 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | undefined;
+      const fallbackStatus: 'DRAFT' | 'PUBLISHED' = row.original.published ? 'PUBLISHED' : 'DRAFT';
+      const status = rawStatus || fallbackStatus;
+
+      let label = 'Draft';
+      let variant: 'default' | 'secondary' | 'outline' = 'secondary';
+
+      if (status === 'PUBLISHED') {
+        label = 'Published';
+        variant = 'default';
+      } else if (status === 'SCHEDULED') {
+        label = 'Scheduled';
+        variant = 'outline';
+      }
+
+      return <Badge variant={variant}>{label}</Badge>;
+    },
   },
   {
     accessorKey: 'createdAt',

@@ -28,7 +28,7 @@ export default function DashboardNavbar() {
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-count'],
     queryFn: () => notificationService.getUnreadCount(),
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 500000, // Refetch every 30 seconds
   });
 
   // Mark as read mutation

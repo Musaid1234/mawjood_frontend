@@ -15,6 +15,7 @@ export const API_ENDPOINTS = {
   AUTH: {
     REGISTER: '/api/auth/register',
     LOGIN: '/api/auth/login/password',
+    LOGIN_SOCIAL: '/api/auth/login/social',
     LOGIN_OTP_EMAIL: '/api/auth/otp/verify-email',
     LOGIN_OTP_PHONE: '/api/auth/otp/verify-phone',
     SEND_EMAIL_OTP: '/api/auth/otp/send-email',
@@ -86,6 +87,25 @@ export const API_ENDPOINTS = {
     CREATE: '/api/payments',
     GET_BUSINESS_PAYMENTS: (businessId: string) => `/api/payments/business/${businessId}`,
     WEBHOOK: (paymentId: string) => `/api/payments/webhook/${paymentId}`,
+    GET_ALL: '/api/payments/admin/all',
+  },
+
+  // Subscription endpoints
+  SUBSCRIPTIONS: {
+    GET_ALL: '/api/subscriptions',
+    GET_BY_ID: (id: string) => `/api/subscriptions/${id}`,
+    CREATE: '/api/subscriptions',
+    CANCEL: (id: string) => `/api/subscriptions/${id}/cancel`,
+    GET_ALL_ADMIN: '/api/subscriptions/admin/all',
+  },
+
+  // Subscription Plan endpoints
+  SUBSCRIPTION_PLANS: {
+    GET_ALL: '/api/subscription-plans',
+    GET_BY_ID: (id: string) => `/api/subscription-plans/${id}`,
+    CREATE: '/api/subscription-plans',
+    UPDATE: (id: string) => `/api/subscription-plans/${id}`,
+    ARCHIVE: (id: string) => `/api/subscription-plans/${id}`,
   },
 
   // Blog endpoints
@@ -117,6 +137,10 @@ export const API_ENDPOINTS = {
     DELETE_USER: (id: string) => `/api/admin/users/${id}`,
     GET_PENDING_BUSINESSES: '/api/admin/businesses/pending',
     SUSPEND_BUSINESS: (id: string) => `/api/admin/businesses/${id}/suspend`,
+    GET_ALL_REVIEWS: '/api/admin/reviews',
+    GET_PENDING_DELETE_REQUESTS: '/api/admin/reviews/pending-delete-requests',
+    APPROVE_DELETE_REQUEST: (id: string) => `/api/admin/reviews/${id}/approve-delete`,
+    REJECT_DELETE_REQUEST: (id: string) => `/api/admin/reviews/${id}/reject-delete`,
   },
 
   // Upload endpoints
@@ -131,6 +155,7 @@ export const API_ENDPOINTS = {
 
   ADVERTISEMENTS: {
     DISPLAY: '/api/advertisements/display',
+    BASE: '/api/advertisements',
   },
 } as const;
 

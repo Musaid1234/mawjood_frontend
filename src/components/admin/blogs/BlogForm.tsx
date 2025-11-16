@@ -4,11 +4,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { Blog, BlogCategory, blogService } from '@/services/blog.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import RichTextEditor from '@/components/dashboard/add-listing/RichTextEditor';
 import Image from 'next/image';
-import { Upload, X, Loader2, Save, Plus } from 'lucide-react';
+import { Upload, X, Loader, Loader2, Save, Plus, ChevronDown, ChevronUp, CalendarClock } from 'lucide-react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { DateTimePicker } from '@/components/ui/datetime-picker';
 
 interface BlogFormProps {
   blog?: Blog | null;
@@ -29,7 +31,8 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
   const [content, setContent] = useState('');
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
-  const [published, setPublished] = useState(false);
+  const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'SCHEDULED'>('DRAFT');
+  const [scheduledAt, setScheduledAt] = useState<string>('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -39,6 +42,7 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
   const [categorySearch, setCategorySearch] = useState('');
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [newCategory, setNewCategory] = useState({
     name: '',
@@ -53,13 +57,37 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
       setContent(blog.content);
       setMetaTitle(blog.metaTitle || '');
       setMetaDescription(blog.metaDescription || '');
-      setPublished(blog.published || false);
+      const meta: any = (blog as any).tags || {};
+      let initialStatus: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' = blog.published ? 'PUBLISHED' : 'DRAFT';
+      if (meta && typeof meta === 'object' && !Array.isArray(meta) && typeof meta.status === 'string') {
+        const upper = (meta.status as string).toUpperCase();
+        if (upper === 'DRAFT' || upper === 'PUBLISHED' || upper === 'SCHEDULED') {
+          initialStatus = upper as 'DRAFT' | 'PUBLISHED' | 'SCHEDULED';
+        }
+      }
+      setStatus(initialStatus);
+      if (meta && typeof meta === 'object' && typeof meta.scheduledAt === 'string') {
+        try {
+          const d = new Date(meta.scheduledAt as string);
+          const isoLocal = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+            .toISOString()
+            .slice(0, 16);
+          setScheduledAt(isoLocal);
+        } catch {
+          setScheduledAt('');
+        }
+      } else {
+        setScheduledAt('');
+      }
       if (blog.image) {
         setImagePreview(blog.image);
       }
       if (blog.categories && blog.categories.length > 0) {
         setSelectedCategories(blog.categories.map((category) => category.id));
       }
+    } else {
+      setStatus('DRAFT');
+      setScheduledAt('');
     }
   }, [blog]);
 
@@ -212,6 +240,9 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
     if (!title.trim()) newErrors.title = 'Title is required';
     if (!slug.trim()) newErrors.slug = 'Slug is required';
     if (!content.trim()) newErrors.content = 'Content is required';
+    if (status === 'SCHEDULED' && !scheduledAt) {
+      newErrors.scheduledAt = 'Please select a schedule date and time';
+    }
     if (!selectedCategories.length) newErrors.categories = 'Select at least one category';
     if (metaTitle && metaTitle.length > 60) {
       newErrors.metaTitle = 'Meta title should not exceed 60 characters';
@@ -233,7 +264,13 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
     formData.append('title', title.trim());
     formData.append('slug', slug.trim());
     formData.append('content', content);
-    formData.append('published', published.toString());
+    const publishFlag = status === 'PUBLISHED' || status === 'SCHEDULED';
+    formData.append('published', publishFlag.toString());
+    formData.append('status', status);
+    if (status === 'SCHEDULED' && scheduledAt) {
+      const iso = new Date(scheduledAt).toISOString();
+      formData.append('scheduledAt', iso);
+    }
     formData.append('categoryIds', JSON.stringify(selectedCategories));
 
     if (metaTitle) formData.append('metaTitle', metaTitle);
@@ -305,15 +342,7 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
         </div>
 
         <div className="space-y-4">
-          <div>
-            <Input
-              value={categorySearch}
-              onChange={(e) => setCategorySearch(e.target.value)}
-              placeholder="Search categories..."
-              disabled={categoriesLoading}
-            />
-          </div>
-
+          {/* Selected chips */}
           {selectedCategories.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {selectedCategories
@@ -338,52 +367,88 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
             </div>
           )}
 
-          <div className="border border-gray-200 rounded-lg max-h-60 overflow-y-auto divide-y">
-            {categoriesLoading ? (
-              <div className="flex items-center justify-center py-6 text-gray-500">
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                Loading categories...
-              </div>
-            ) : filteredCategories.length === 0 ? (
-              <div className="py-6 text-center text-gray-500 text-sm">
-                No categories found. Try a different search or create a new category.
-              </div>
-            ) : (
-              filteredCategories.map((category) => {
-                const isSelected = selectedCategories.includes(category.id);
-                return (
-                  <label
-                    key={category.id}
-                    className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors ${
-                      isSelected ? 'bg-[#1c4233]/5' : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      className="mt-1 w-4 h-4 text-[#1c4233] border-gray-300 rounded focus:ring-[#1c4233]"
-                      checked={isSelected}
-                      onChange={() => toggleCategorySelection(category.id)}
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{category.name}</p>
-                      {category.description && (
-                        <p className="text-xs text-gray-500 mt-1">{category.description}</p>
-                      )}
-                      {typeof category.blogCount === 'number' && (
-                        <p className="text-xs text-gray-400 mt-1">
-                          {category.blogCount} {category.blogCount === 1 ? 'post' : 'posts'}
-                        </p>
-                      )}
+          {/* Multi-select dropdown trigger + panel */}
+          <div className="relative w-full">
+            <button
+              type="button"
+              onClick={() => setIsCategoryDropdownOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white hover:border-[#1c4233] transition-colors"
+            >
+              <span className="text-gray-700">
+                {selectedCategories.length
+                  ? `${selectedCategories.length} categor${selectedCategories.length === 1 ? 'y' : 'ies'} selected`
+                  : 'Select categories'}
+              </span>
+              <span className="ml-2 text-gray-500 flex items-center">
+                {isCategoryDropdownOpen ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </span>
+            </button>
+
+            {isCategoryDropdownOpen && (
+              <div className="absolute z-30 mt-2 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-80 overflow-hidden">
+                <div className="p-3 border-b border-gray-100">
+                  <Input
+                    value={categorySearch}
+                    onChange={(e) => setCategorySearch(e.target.value)}
+                    placeholder="Search categories..."
+                    disabled={categoriesLoading}
+                    className="h-9"
+                  />
+                </div>
+
+                <div className="max-h-64 overflow-y-auto divide-y">
+                  {categoriesLoading ? (
+                    <div className="flex items-center justify-center py-6 text-gray-500">
+                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      Loading categories...
                     </div>
-                  </label>
-                );
-              })
+                  ) : filteredCategories.length === 0 ? (
+                    <div className="py-6 text-center text-gray-500 text-sm">
+                      No categories found. Try a different search or create a new category.
+                    </div>
+                  ) : (
+                    filteredCategories.map((category) => {
+                      const isSelected = selectedCategories.includes(category.id);
+                      return (
+                        <label
+                          key={category.id}
+                          className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors ${
+                            isSelected ? 'bg-[#1c4233]/5' : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="mt-1 w-4 h-4 text-[#1c4233] border-gray-300 rounded focus:ring-[#1c4233]"
+                            checked={isSelected}
+                            onChange={() => toggleCategorySelection(category.id)}
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">{category.name}</p>
+                            {category.description && (
+                              <p className="text-xs text-gray-500 mt-1">{category.description}</p>
+                            )}
+                            {typeof category.blogCount === 'number' && (
+                              <p className="text-xs text-gray-400 mt-1">
+                                {category.blogCount} {category.blogCount === 1 ? 'post' : 'posts'}
+                              </p>
+                            )}
+                          </div>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
+            {errors.categories && (
+              <p className="mt-2 text-sm text-red-600">{errors.categories}</p>
             )}
           </div>
-
-          {errors.categories && (
-            <p className="text-sm text-red-600">{errors.categories}</p>
-          )}
         </div>
       </div>
 
@@ -491,25 +556,60 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
 
       {/* Publish Status & Submit */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              id="published"
-              checked={published}
-              onChange={(e) => setPublished(e.target.checked)}
-              disabled={isSubmitting}
-              className="w-4 h-4 text-[#1c4233] border-gray-300 rounded focus:ring-[#1c4233]"
-            />
-            <label htmlFor="published" className="text-sm font-medium text-gray-700 cursor-pointer">
-              Publish immediately
-            </label>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="space-y-3 max-w-md">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Publish Status
+              </label>
+              <Select
+                value={status}
+                onValueChange={(value: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED') => {
+                  setStatus(value);
+                  if (value !== 'SCHEDULED') {
+                    setScheduledAt('');
+                  }
+                }}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger className="w-full md:w-64">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DRAFT">Draft</SelectItem>
+                  <SelectItem value="PUBLISHED">Published</SelectItem>
+                  <SelectItem value="SCHEDULED">Schedule</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {status === 'SCHEDULED' && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <CalendarClock className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-medium text-gray-700">Schedule at</span>
+                </div>
+                <Input
+                  type="datetime-local"
+                  value={scheduledAt}
+                  onChange={(e) => setScheduledAt(e.target.value)}
+                  disabled={isSubmitting}
+                  className={errors.scheduledAt ? 'border-red-500' : ''}
+                />
+                {errors.scheduledAt && (
+                  <p className="mt-1 text-sm text-red-600">{errors.scheduledAt}</p>
+                )}
+                <p className="text-xs text-gray-500">
+                  The blog will be treated as published on or after this date and time.
+                </p>
+              </div>
+            )}
           </div>
 
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-[#1c4233] hover:bg-[#245240] text-white px-8"
+            className="bg-[#1c4233] hover:bg-[#245240] text-white px-8 self-start"
           >
             {isSubmitting ? (
               <>

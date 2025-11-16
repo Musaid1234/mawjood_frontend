@@ -3,23 +3,32 @@ import { Image as ImageIcon, Upload, X } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 
+interface GalleryImage {
+  url: string;
+  alt?: string;
+}
+
 export default function ImageUploadSection() {
   const { values, setFieldValue } = useFormikContext<any>();
   const [logoPrev, setLogoPrev] = useState<string | null>(null);
   const [coverPrev, setCoverPrev] = useState<string | null>(null);
-  const [galleryPrev, setGalleryPrev] = useState<string[]>([]);
+  const [galleryPrev, setGalleryPrev] = useState<GalleryImage[]>([]);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
   // Set existing images on mount
   useEffect(() => {
     if (values.existingLogo && !logoPrev) {
-      setLogoPrev(values.existingLogo);
+      setLogoPrev(typeof values.existingLogo === 'string' ? values.existingLogo : values.existingLogo.url);
     }
     if (values.existingCoverImage && !coverPrev) {
-      setCoverPrev(values.existingCoverImage);
+      setCoverPrev(typeof values.existingCoverImage === 'string' ? values.existingCoverImage : values.existingCoverImage.url);
     }
     if (values.existingImages && values.existingImages.length > 0 && galleryPrev.length === 0) {
-      setGalleryPrev(values.existingImages);
+      // Handle both old format (string[]) and new format (object[])
+      const formattedImages = values.existingImages.map((img: any) => 
+        typeof img === 'string' ? { url: img, alt: '' } : img
+      );
+      setGalleryPrev(formattedImages);
     }
   }, [values.existingLogo, values.existingCoverImage, values.existingImages]);
 
@@ -32,7 +41,7 @@ export default function ImageUploadSection() {
       
       const reader = new FileReader();
       reader.onloadend = () => {
-        setGalleryPrev(prev => [...prev, reader.result as string]);
+        setGalleryPrev(prev => [...prev, { url: reader.result as string, alt: '' }]);
       };
       reader.readAsDataURL(file);
     } else {
@@ -47,17 +56,43 @@ export default function ImageUploadSection() {
     }
   };
 
+  const handleMultipleFiles = (files: File[]) => {
+    if (files.length === 0) return;
+    
+    // Get current files from formik
+    const currentFiles = values.images || [];
+    const newFiles = [...currentFiles, ...files];
+    
+    // Update formik with all files at once
+    setFieldValue('images', newFiles);
+    
+    // Read all files and update preview
+    const newPreviews: GalleryImage[] = [];
+    let loadedCount = 0;
+    
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        newPreviews.push({ url: reader.result as string, alt: '' });
+        loadedCount++;
+        
+        // When all files are loaded, update the preview state once
+        if (loadedCount === files.length) {
+          setGalleryPrev(prev => [...prev, ...newPreviews]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const removeGalleryImage = (index: number) => {
-    // Check if it's an existing image or new upload
     const isExistingImage = index < (values.existingImages?.length || 0);
     
     if (isExistingImage) {
-      // Remove from existing images
       const newExistingImages = [...(values.existingImages || [])];
       newExistingImages.splice(index, 1);
       setFieldValue('existingImages', newExistingImages);
     } else {
-      // Remove from new uploads
       const adjustedIndex = index - (values.existingImages?.length || 0);
       const newImages = [...(values.images || [])];
       newImages.splice(adjustedIndex, 1);
@@ -67,17 +102,45 @@ export default function ImageUploadSection() {
     const newPreviews = [...galleryPrev];
     newPreviews.splice(index, 1);
     setGalleryPrev(newPreviews);
+    setFieldValue('galleryImages', newPreviews);
   };
+
+  const updateGalleryImageAlt = (index: number, alt: string) => {
+    const newPreviews = [...galleryPrev];
+    newPreviews[index] = { ...newPreviews[index], alt };
+    setGalleryPrev(newPreviews);
+    
+    setFieldValue('galleryImages', newPreviews);
+    
+    if (index < (values.existingImages?.length || 0)) {
+      const newExistingImages = [...(values.existingImages || [])];
+      if (typeof newExistingImages[index] === 'string') {
+        newExistingImages[index] = { url: newExistingImages[index], alt };
+      } else {
+        newExistingImages[index] = { ...newExistingImages[index], alt };
+      }
+      setFieldValue('existingImages', newExistingImages);
+    }
+  };
+  
+  // Sync galleryPrev to formik whenever it changes
+  useEffect(() => {
+    if (galleryPrev.length > 0) {
+      setFieldValue('galleryImages', galleryPrev);
+    }
+  }, [galleryPrev]);
 
   const removeLogo = () => {
     setFieldValue('logo', null);
     setFieldValue('existingLogo', null);
+    setFieldValue('logoAlt', '');
     setLogoPrev(null);
   };
 
   const removeCover = () => {
     setFieldValue('coverImage', null);
     setFieldValue('existingCoverImage', null);
+    setFieldValue('coverImageAlt', '');
     setCoverPrev(null);
   };
 
@@ -110,7 +173,7 @@ export default function ImageUploadSection() {
             >
               {logoPrev ? (
                 <div className="relative w-full h-full group">
-                  <Image src={logoPrev} alt="Logo preview" fill className="object-contain p-2" />
+                  <Image src={logoPrev} alt={values.logoAlt || "Logo preview"} fill className="object-contain p-2" />
                   <button
                     type="button"
                     onClick={(e) => {
@@ -130,6 +193,20 @@ export default function ImageUploadSection() {
               )}
             </label>
           </div>
+          {logoPrev && (
+            <div className="mt-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Alt Text
+              </label>
+              <input
+                type="text"
+                value={values.logoAlt || ''}
+                onChange={(e) => setFieldValue('logoAlt', e.target.value)}
+                placeholder="Describe the logo for accessibility"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1c4233]"
+              />
+            </div>
+          )}
           <p className="mt-2 text-xs text-gray-500">Maximum file size: 2 MB</p>
         </div>
 
@@ -152,7 +229,7 @@ export default function ImageUploadSection() {
             >
               {coverPrev ? (
                 <div className="relative w-full h-full group">
-                  <Image src={coverPrev} alt="Cover preview" fill className="object-cover rounded-lg" />
+                  <Image src={coverPrev} alt={values.coverImageAlt || "Cover preview"} fill className="object-cover rounded-lg" />
                   <button
                     type="button"
                     onClick={(e) => {
@@ -172,6 +249,20 @@ export default function ImageUploadSection() {
               )}
             </label>
           </div>
+          {coverPrev && (
+            <div className="mt-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Alt Text
+              </label>
+              <input
+                type="text"
+                value={values.coverImageAlt || ''}
+                onChange={(e) => setFieldValue('coverImageAlt', e.target.value)}
+                placeholder="Describe the featured image for accessibility"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1c4233]"
+              />
+            </div>
+          )}
           <p className="mt-2 text-xs text-gray-500">Maximum file size: 2 MB</p>
         </div>
 
@@ -188,9 +279,9 @@ export default function ImageUploadSection() {
               multiple
               onChange={(e) => {
                 const files = Array.from(e.target.files || []);
-                files.forEach(file => {
-                  handleFileChange('images', file, true);
-                });
+                if (files.length > 0) {
+                  handleMultipleFiles(files);
+                }
                 // Reset input to allow selecting same files again
                 if (galleryInputRef.current) {
                   galleryInputRef.current.value = '';
@@ -215,23 +306,37 @@ export default function ImageUploadSection() {
       {galleryPrev.length > 0 && (
         <div className="mt-6">
           <h3 className="text-sm font-medium text-gray-700 mb-3">Gallery Images ({galleryPrev.length})</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {galleryPrev.map((img, index) => (
-              <div key={index} className="relative group">
-                <Image
-                  src={img}
-                  alt={`Gallery ${index + 1}`}
-                  width={200}
-                  height={150}
-                  className="w-full h-32 object-cover rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeGalleryImage(index)}
-                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+              <div key={index} className="space-y-2">
+                <div className="relative group">
+                  <Image
+                    src={img.url}
+                    alt={img.alt || `Gallery ${index + 1}`}
+                    width={200}
+                    height={150}
+                    className="w-full h-32 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeGalleryImage(index)}
+                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Alt Text
+                  </label>
+                  <input
+                    type="text"
+                    value={img.alt || ''}
+                    onChange={(e) => updateGalleryImageAlt(index, e.target.value)}
+                    placeholder="Describe this image for accessibility"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1c4233]"
+                  />
+                </div>
               </div>
             ))}
           </div>

@@ -6,6 +6,7 @@ export interface Review {
   comment: string;
   userId: string;
   businessId: string;
+  deleteRequestStatus?: string | null; // PENDING, APPROVED, REJECTED, null
   createdAt: string;
   updatedAt: string;
   user: {
@@ -82,12 +83,13 @@ export const reviewService = {
 
   async deleteReview(reviewId: string): Promise<void> {
     try {
+      // Request deletion instead of deleting directly
       const response = await axiosInstance.delete(`api/reviews/${reviewId}`);
       if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to delete review');
+        throw new Error(response.data.message || 'Failed to request review deletion');
       }
     } catch (error) {
-      console.error('Error deleting review:', error);
+      console.error('Error requesting review deletion:', error);
       throw error;
     }
   },

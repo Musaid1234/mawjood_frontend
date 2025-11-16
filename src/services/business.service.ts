@@ -77,6 +77,8 @@ export interface CreateBusinessData {
   latitude?: number;
   longitude?: number;
   categoryId: string;
+  countryId?: string;
+  regionId?: string;
   cityId: string;
   crNumber?: string;
   workingHours?: Record<string, { open: string; close: string; isClosed?: boolean }>;
@@ -84,8 +86,12 @@ export interface CreateBusinessData {
   metaDescription?: string;
   keywords?: string[];
   logo?: File;
+  logoAlt?: string;
   coverImage?: File;
+  coverImageAlt?: string;
   images?: File[];
+  galleryImages?: Array<{ url: string; alt?: string }>;
+  existingImages?: Array<string | { url: string; alt?: string }>;
 }
 
 export interface BusinessSearchParams {
@@ -401,6 +407,8 @@ export const businessService = {
       if (data.latitude) formData.append('latitude', data.latitude.toString());
       if (data.longitude) formData.append('longitude', data.longitude.toString());
       formData.append('categoryId', data.categoryId);
+      if (data.countryId) formData.append('countryId', data.countryId);
+      if (data.regionId) formData.append('regionId', data.regionId);
       formData.append('cityId', data.cityId);
       if (data.crNumber) formData.append('crNumber', data.crNumber);
       
@@ -418,13 +426,31 @@ export const businessService = {
         formData.append('keywords', JSON.stringify(data.keywords));
       }
       
+      // Append alt tags
+      if (data.logoAlt) formData.append('logoAlt', data.logoAlt);
+      if (data.coverImageAlt) formData.append('coverImageAlt', data.coverImageAlt);
+      
       // Append files
       if (data.logo) formData.append('logo', data.logo);
       if (data.coverImage) formData.append('coverImage', data.coverImage);
+      
+      // Collect alt tags for gallery images from galleryImages field
+      const imageAlts: string[] = [];
+      if ((data as any).galleryImages && Array.isArray((data as any).galleryImages)) {
+        (data as any).galleryImages.forEach((img: any) => {
+          imageAlts.push(img?.alt || '');
+        });
+      }
+      
+      // Append new image files
       if (data.images && data.images.length > 0) {
         data.images.forEach((image) => {
           formData.append('images', image);
         });
+      }
+      
+      if (imageAlts.length > 0) {
+        formData.append('imageAlts', JSON.stringify(imageAlts));
       }
 
       const response = await axiosInstance.post('api/businesses', formData, {
@@ -434,9 +460,13 @@ export const businessService = {
       });
 
       return response.data.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating Business:', error);
-      throw error;
+      // Preserve the error response for better error handling
+      if (error.response) {
+        throw error;
+      }
+      throw new Error(error?.message || 'Failed to create business');
     }
   },
 
@@ -455,6 +485,12 @@ export const businessService = {
               formData.append('images', image);
             }
           });
+        } else if (key === 'galleryImages' && Array.isArray(value)) {
+          // Extract alt tags from gallery images
+          const imageAlts = value.map((img: any) => img?.alt || '');
+          if (imageAlts.length > 0) {
+            formData.append('imageAlts', JSON.stringify(imageAlts));
+          }
         } else if (value instanceof File) {
           formData.append(key, value);
         } else {

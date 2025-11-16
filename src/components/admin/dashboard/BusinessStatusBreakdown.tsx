@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, CheckCircle, XCircle, Ban } from 'lucide-react';
 
@@ -20,6 +21,7 @@ export default function BusinessStatusBreakdown({ status }: BusinessStatusBreakd
       icon: Clock,
       color: 'text-amber-600',
       bgColor: 'bg-amber-50 dark:bg-amber-950',
+      tab: 'pending' as const,
     },
     {
       label: 'Approved',
@@ -27,6 +29,7 @@ export default function BusinessStatusBreakdown({ status }: BusinessStatusBreakd
       icon: CheckCircle,
       color: 'text-[#1c4233]',
       bgColor: 'bg-green-50 dark:bg-green-950',
+      tab: 'approved' as const,
     },
     {
       label: 'Rejected',
@@ -34,6 +37,7 @@ export default function BusinessStatusBreakdown({ status }: BusinessStatusBreakd
       icon: XCircle,
       color: 'text-red-600',
       bgColor: 'bg-red-50 dark:bg-red-950',
+      tab: 'all' as const,
     },
     {
       label: 'Suspended',
@@ -41,6 +45,7 @@ export default function BusinessStatusBreakdown({ status }: BusinessStatusBreakd
       icon: Ban,
       color: 'text-gray-600',
       bgColor: 'bg-gray-50 dark:bg-gray-800',
+      tab: 'suspended' as const,
     },
   ];
 
@@ -53,16 +58,23 @@ export default function BusinessStatusBreakdown({ status }: BusinessStatusBreakd
         <div className="space-y-3">
           {statuses.map((item, index) => {
             const Icon = item.icon;
+            const href =
+              item.tab === 'all'
+                ? '/admin/businesses'
+                : `/admin/businesses?tab=${encodeURIComponent(item.tab)}`;
+
             return (
-              <div key={index} className="flex items-center justify-between p-3 rounded-lg border hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className={`${item.bgColor} p-2.5 rounded-lg`}>
-                    <Icon className={`w-5 h-5 ${item.color}`} />
+              <Link key={index} href={href} className="block">
+                <div className="flex items-center justify-between p-3 rounded-lg border hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`${item.bgColor} p-2.5 rounded-lg`}>
+                      <Icon className={`w-5 h-5 ${item.color}`} />
+                    </div>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{item.label}</span>
                   </div>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">{item.label}</span>
+                  <span className="text-xl font-bold text-gray-900 dark:text-gray-100">{item.value}</span>
                 </div>
-                <span className="text-xl font-bold text-gray-900 dark:text-gray-100">{item.value}</span>
-              </div>
+              </Link>
             );
           })}
         </div>

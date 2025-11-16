@@ -40,9 +40,11 @@ export function RegionDialog({
   const [countryId, setCountryId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
 
   useEffect(() => {
     if (open) {
+      setCountrySearch('');
       const initialCountry =
         defaultCountryId && countries.some((country) => country.id === defaultCountryId)
           ? defaultCountryId
@@ -53,6 +55,7 @@ export function RegionDialog({
       setSlug('');
       setCountryId('');
       setSlugManuallyEdited(false);
+      setCountrySearch('');
     }
   }, [open, countries, defaultCountryId]);
 
@@ -74,6 +77,10 @@ export function RegionDialog({
     setSlugManuallyEdited(true);
     setSlug(generateSlug(value));
   };
+
+  const filteredCountries = countries.filter((country) =>
+    country.name.toLowerCase().includes(countrySearch.toLowerCase())
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,11 +151,19 @@ export function RegionDialog({
               onValueChange={setCountryId}
               disabled={isSubmitting || countries.length === 0}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full max-w-xs">
                 <SelectValue placeholder="Select a country" />
               </SelectTrigger>
-              <SelectContent>
-                {countries.map((country) => (
+              <SelectContent className="w-full max-w-xs max-h-60 overflow-y-auto">
+                <div className="px-2 pb-2 pt-1 sticky top-0 bg-white dark:bg-gray-900">
+                  <Input
+                    placeholder="Search country..."
+                    value={countrySearch}
+                    onChange={(e) => setCountrySearch(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                {filteredCountries.map((country) => (
                   <SelectItem key={country.id} value={country.id}>
                     {country.name}
                   </SelectItem>

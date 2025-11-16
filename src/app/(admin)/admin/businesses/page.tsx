@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { adminService } from '@/services/admin.service';
 import { BusinessesTable } from '@/components/admin/businesses/BusinessesTable';
 import { createColumns, Business } from '@/components/admin/businesses/columns';
@@ -33,9 +34,12 @@ export default function BusinessesPage() {
     businessId: string | null;
   }>({ open: false, type: null, businessId: null });
 
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Debounce search input
   useEffect(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
@@ -52,12 +56,10 @@ export default function BusinessesPage() {
     };
   }, [searchInput]);
 
-  // Fetch businesses when tab, search, or filters change
   useEffect(() => {
     fetchBusinesses();
   }, [activeTab, debouncedSearch]);
 
-  // Fetch pending count for badge
   useEffect(() => {
     fetchPendingCount();
   }, []);
@@ -69,6 +71,31 @@ export default function BusinessesPage() {
     } catch (error) {
       console.error('Error fetching pending count:', error);
     }
+  };
+
+  // Sync active tab with URL (e.g. ?tab=pending)
+  useEffect(() => {
+    const tabParam = (searchParams.get('tab') as TabType | null) || 'all';
+    const validTabs: TabType[] = ['all', 'pending', 'suspended', 'approved'];
+    const nextTab = validTabs.includes(tabParam) ? tabParam : 'all';
+    if (nextTab !== activeTab) {
+      setActiveTab(nextTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === 'all') {
+      params.delete('tab');
+    } else {
+      params.set('tab', tab);
+    }
+
+    const queryString = params.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
   };
 
   const fetchBusinesses = async () => {
@@ -181,7 +208,6 @@ export default function BusinessesPage() {
 
   return (
     <div className="py-4 space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Businesses Management</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -189,7 +215,6 @@ export default function BusinessesPage() {
         </p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-[#1c4233] rounded-lg p-4 text-white">
           <p className="text-sm opacity-90">Total Businesses</p>
@@ -213,13 +238,12 @@ export default function BusinessesPage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="border-b border-gray-200 dark:border-gray-700">
         <div className="flex space-x-8">
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as TabType)}
+              onClick={() => handleTabChange(tab.id as TabType)}
               className={`relative py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${
                 activeTab === tab.id
                   ? 'border-[#1c4233] text-[#1c4233] dark:border-green-400 dark:text-green-400'
@@ -240,7 +264,6 @@ export default function BusinessesPage() {
         </div>
       </div>
 
-      {/* Businesses Table */}
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-6">
         <BusinessesTable
           columns={columns}
@@ -250,7 +273,6 @@ export default function BusinessesPage() {
         />
       </div>
 
-      {/* Reject Confirmation Dialog */}
       <AlertDialog
         open={actionDialog.open && actionDialog.type === 'reject'}
         onOpenChange={(open) =>
@@ -277,7 +299,6 @@ export default function BusinessesPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Suspend Confirmation Dialog */}
       <AlertDialog
         open={actionDialog.open && actionDialog.type === 'suspend'}
         onOpenChange={(open) =>

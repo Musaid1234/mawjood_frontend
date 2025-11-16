@@ -71,10 +71,14 @@ export default function FeaturedListings() {
         return null;
     }
 
-    const renderBusinessCard = (business: Business) => (
+    const renderBusinessCard = (business: Business) => {
+        // Check if business has active subscription (top placement)
+        const hasActiveSubscription = business.promotedUntil && new Date(business.promotedUntil) > new Date();
+
+        return (
         <div
             key={business.id}
-            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex-shrink-0 w-72 lg:w-auto"
+            className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex-shrink-0 w-72 lg:w-auto ${hasActiveSubscription ? 'ring-2 ring-purple-500 ring-opacity-50' : ''}`}
         >
             <div className="relative h-48 group">
                 <Link href={`/businesses/${business.slug}`}>
@@ -87,10 +91,22 @@ export default function FeaturedListings() {
                     />
                 </Link>
 
+                {/* Featured Badge */}
+                {hasActiveSubscription && (
+                    <div className="absolute top-3 left-3 z-10">
+                        <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                            </svg>
+                            FEATURED
+                        </span>
+                    </div>
+                )}
+
                 <button
                     onClick={() => toggleFavorite(business.id)}
                     disabled={favLoading}
-                    className="absolute top-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="absolute top-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed z-10"
                     aria-label="Add to favorites"
                 >
                     {favLoading ? (
@@ -188,7 +204,8 @@ export default function FeaturedListings() {
                 </div>
             </div>
         </div>
-    );
+        );
+    };
 
     return (
         <section className="py-16 bg-white">
@@ -200,7 +217,7 @@ export default function FeaturedListings() {
                     <p className="text-gray-600 text-lg">
                         Explore Hot & Popular Business Listings
                     </p>
-                    {fallbackContext?.fallbackApplied && fallbackContext.applied && (
+                    {fallbackContext?.fallbackApplied && fallbackContext?.applied && (
                         <p className="text-sm text-gray-500 mt-2">
                             Showing top listings from {fallbackContext.applied.name}.
                         </p>

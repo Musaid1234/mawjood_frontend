@@ -13,6 +13,45 @@ function stripHtml(html: string, maxLen: number = 140) {
   return text.length > maxLen ? `${text.slice(0, maxLen)}...` : text;
 }
 
+export function isBlogVisibleNow(blog: Blog): boolean {
+  const now = new Date();
+  const anyBlog: any = blog as any;
+
+  const meta =
+    anyBlog.tags && typeof anyBlog.tags === 'object' && !Array.isArray(anyBlog.tags)
+      ? anyBlog.tags
+      : {};
+
+  const rawStatus = (anyBlog.status as 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | undefined) ??
+    (blog.published ? 'PUBLISHED' : 'DRAFT');
+
+  let status: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' = 'DRAFT';
+  if (typeof meta.status === 'string') {
+    const upper = (meta.status as string).toUpperCase();
+    if (upper === 'DRAFT' || upper === 'PUBLISHED' || upper === 'SCHEDULED') {
+      status = upper;
+    } else {
+      status = rawStatus || 'DRAFT';
+    }
+  } else {
+    status = rawStatus || 'DRAFT';
+  }
+
+  if (status === 'DRAFT') {
+    return false;
+  }
+
+  if (status === 'SCHEDULED') {
+    const schedStr: string | undefined = (anyBlog.scheduledAt as string) ?? (meta.scheduledAt as string | undefined);
+    if (!schedStr) return false;
+    const schedDate = new Date(schedStr);
+    if (isNaN(schedDate.getTime())) return false;
+    return schedDate <= now;
+  }
+
+  return true;
+}
+
 export default function BlogCard({ blog }: BlogCardProps) {
   return (
     <article className="group rounded-2xl overflow-hidden border border-gray-200 bg-white hover:shadow-lg transition-shadow h-[500px] flex flex-col">

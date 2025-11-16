@@ -115,7 +115,15 @@ export interface ContactSettings {
   };
 }
 
+export interface LegalContentSettings {
+  title?: string;
+  content?: string;
+  updatedAt?: string;
+  lastUpdated?: string;
+}
+
 export interface SiteSettings {
+  currency?: string;
   hero?: HeroSettings;
   navbar?: NavbarSettings;
   featuredSections?: FeaturedSectionSettings[];
@@ -124,6 +132,8 @@ export interface SiteSettings {
   footer?: FooterSettings;
   about?: AboutSettings;
   contact?: ContactSettings;
+  terms?: LegalContentSettings | string;
+  privacy?: LegalContentSettings | string;
   [key: string]: unknown;
 }
 

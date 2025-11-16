@@ -13,7 +13,7 @@ export default function ContactSection() {
         <h2 className="text-xl font-bold text-gray-900">Contact Information</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Email */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">

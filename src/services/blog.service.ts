@@ -27,8 +27,16 @@ export interface Blog {
   image?: string | null;
   metaTitle?: string | null;
   metaDescription?: string | null;
-  tags?: string[] | null;
+  // For backward compatibility, tags may be an array of strings or an object containing metadata
+  tags?: string[] | {
+    tags?: string[];
+    status?: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED';
+    scheduledAt?: string;
+    [key: string]: any;
+  } | null;
   published?: boolean;
+  status?: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED';
+  scheduledAt?: string | null;
   createdAt: string;
   updatedAt?: string;
   author: BlogAuthor;

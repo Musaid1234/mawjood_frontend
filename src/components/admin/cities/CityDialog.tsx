@@ -39,6 +39,7 @@ export function CityDialog({
   const [slug, setSlug] = useState('');
   const [regionId, setRegionId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [regionSearch, setRegionSearch] = useState('');
 
   useEffect(() => {
     if (city) {
@@ -50,6 +51,7 @@ export function CityDialog({
       setSlug('');
       setRegionId('');
     }
+    setRegionSearch('');
   }, [city, open]);
 
   // Auto-generate slug from name
@@ -63,6 +65,10 @@ export function CityDialog({
       setSlug(generatedSlug);
     }
   };
+
+  const filteredRegions = regions.filter((region) =>
+    region.name.toLowerCase().includes(regionSearch.toLowerCase())
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,11 +136,19 @@ export function CityDialog({
               Region <span className="text-red-500">*</span>
             </label>
             <Select value={regionId} onValueChange={setRegionId} disabled={isSubmitting}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full max-w-xs">
                 <SelectValue placeholder="Select a region" />
               </SelectTrigger>
-              <SelectContent>
-                {regions.map((region) => (
+              <SelectContent className="w-full max-w-xs max-h-60 overflow-y-auto">
+                <div className="px-2 pb-2 pt-1 sticky top-0 bg-white dark:bg-gray-900">
+                  <Input
+                    placeholder="Search region..."
+                    value={regionSearch}
+                    onChange={(e) => setRegionSearch(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                {filteredRegions.map((region) => (
                   <SelectItem key={region.id} value={region.id}>
                     {region.name}
                   </SelectItem>

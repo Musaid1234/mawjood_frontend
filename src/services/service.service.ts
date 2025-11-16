@@ -6,7 +6,9 @@ export interface Service {
   name: string;
   description?: string;
   price: number;
-  duration: number;
+  duration?: number;
+  image?: string;
+  youtubeUrl?: string;
   businessId: string;
   createdAt: string;
   updatedAt: string;
@@ -31,6 +33,8 @@ export interface CreateServiceData {
   description?: string;
   price: number;
   duration?: number;
+  image?: File;
+  youtubeUrl?: string;
 }
 
 const handleError = (error: unknown): never => {
@@ -53,7 +57,60 @@ export const serviceService = {
 
   async createService(businessId: string, data: CreateServiceData): Promise<Service> {
     try {
-      const response = await axiosInstance.post(`api/businesses/${businessId}/services`, data);
+      const formData = new FormData();
+      
+      formData.append('name', data.name);
+      formData.append('price', data.price.toString());
+      
+      if (data.description) {
+        formData.append('description', data.description);
+      }
+      if (data.duration) {
+        formData.append('duration', data.duration.toString());
+      }
+      if (data.youtubeUrl) {
+        formData.append('youtubeUrl', data.youtubeUrl);
+      }
+      if (data.image) {
+        formData.append('image', data.image);
+      }
+      
+      const response = await axiosInstance.post(`api/businesses/${businessId}/services`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async updateService(serviceId: string, data: CreateServiceData): Promise<Service> {
+    try {
+      const formData = new FormData();
+      
+      formData.append('name', data.name);
+      formData.append('price', data.price.toString());
+      
+      if (data.description) {
+        formData.append('description', data.description);
+      }
+      if (data.duration) {
+        formData.append('duration', data.duration.toString());
+      }
+      if (data.youtubeUrl) {
+        formData.append('youtubeUrl', data.youtubeUrl);
+      }
+      if (data.image) {
+        formData.append('image', data.image);
+      }
+      
+      const response = await axiosInstance.put(`api/businesses/services/${serviceId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data.data;
     } catch (error) {
       return handleError(error);

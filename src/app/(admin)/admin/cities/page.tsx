@@ -269,7 +269,7 @@ export default function CitiesPage() {
     <div className="space-y-6 py-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Cities & Regions</h1>
+          <h1 className="text-3xl font-bold">Locations</h1>
           <p className="text-gray-600 mt-1">
             Manage cities and regions across the platform
           </p>

@@ -51,7 +51,7 @@ export default function PendingApprovalsList({ approvals }: PendingApprovalsList
           Pending Approvals
         </CardTitle>
         <Link
-          href="/admin/businesses?status=PENDING"
+          href="/admin/businesses?tab=pending"
           className="text-sm text-[#1c4233] hover:underline font-medium"
         >
           View All →
@@ -66,7 +66,7 @@ export default function PendingApprovalsList({ approvals }: PendingApprovalsList
             >
               <div className="flex-1">
                 <Link
-                  href={`/admin/businesses/${approval.id}`}
+                  href={`/admin/businesses?tab=pending`}
                   className="font-semibold text-gray-900 dark:text-gray-100 hover:text-[#1c4233] transition-colors"
                 >
                   {approval.name}

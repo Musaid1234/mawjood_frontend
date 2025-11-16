@@ -24,6 +24,8 @@ const validationSchema = Yup.object({
   phone: Yup.string().required('Phone is required'),
   address: Yup.string().required('Address is required'),
   categoryId: Yup.string().required('Category is required'),
+  countryId: Yup.string().required('Country is required'),
+  regionId: Yup.string().required('Region is required'),
   cityId: Yup.string().required('City is required'),
   description: Yup.string(),
   whatsapp: Yup.string(),
@@ -47,6 +49,8 @@ const initialValues = {
   latitude: '',
   longitude: '',
   categoryId: '',
+  countryId: '',
+  regionId: '',
   cityId: '',
   crNumber: '',
   workingHours: {
@@ -62,8 +66,12 @@ const initialValues = {
   metaDescription: '',
   keywords: [],
   logo: null,
+  logoAlt: '',
   coverImage: null,
+  coverImageAlt: '',
   images: [],
+  existingImages: [],
+  galleryImages: [],
 };
 
 export default function AddListingPage() {
@@ -87,7 +95,7 @@ export default function AddListingPage() {
     },
   });
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: any, { setFieldError, setFieldValue }: any) => {
     try {
       // Filter out closed days from working hours
       const filteredWorkingHours: any = {};
@@ -108,8 +116,35 @@ export default function AddListingPage() {
       };
 
       await createMutation.mutateAsync(submitData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Submit error:', error);
+      
+      // Handle duplicate slug error (409)
+      if (error?.response?.status === 409) {
+        const errorMessage = error?.response?.data?.message || 'This slug is already taken';
+        setFieldError('slug', errorMessage);
+        
+        // Auto-suggest a new slug by appending a number
+        const currentSlug = values.slug;
+        const baseSlug = currentSlug.replace(/-\d+$/, ''); // Remove trailing number if exists
+        let counter = 1;
+        let newSlug = `${baseSlug}-${counter}`;
+        
+        // Generate a suggested slug that's different from current
+        while (newSlug === currentSlug && counter < 10) {
+          counter++;
+          newSlug = `${baseSlug}-${counter}`;
+        }
+        
+        // Show toast with suggestion
+        toast.error(`${errorMessage}. Try using: ${newSlug}`, {
+          duration: 6000,
+        });
+      } else {
+        // Handle other errors
+        const errorMessage = error?.response?.data?.message || error?.message || 'Failed to create business listing';
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -128,7 +163,7 @@ export default function AddListingPage() {
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
-        {({ values, isSubmitting }) => (
+        {({ values, isSubmitting, setFieldError, setFieldValue }) => (
           <Form className="space-y-6">
             {/* Inject categories into form context */}
             <CategoryInjector categories={categoriesData?.data.categories as Category[] || []} />

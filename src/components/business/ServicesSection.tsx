@@ -1,6 +1,8 @@
 'use client';
 
-import { Briefcase, Clock, DollarSign } from 'lucide-react';
+import { Briefcase, Youtube } from 'lucide-react';
+import Image from 'next/image';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface Service {
   id: string;
@@ -8,6 +10,8 @@ interface Service {
   description?: string;
   price?: number;
   duration?: number;
+  image?: string;
+  youtubeUrl?: string;
 }
 
 interface Props {
@@ -15,7 +19,9 @@ interface Props {
 }
 
 export default function ServicesSection({ services }: Props) {
-    if (!services || services.length === 0) {
+  const { currency } = useCurrency();
+  
+  if (!services || services.length === 0) {
         return (
           <section id="services" className="bg-white rounded-lg shadow-sm p-6 scroll-mt-48">
             <div className="flex items-center gap-3 mb-6">
@@ -46,6 +52,13 @@ export default function ServicesSection({ services }: Props) {
             key={service.id}
             className="p-4 border border-gray-200 rounded-lg hover:border-primary hover:shadow-md transition-all"
           >
+            {/* Service Image */}
+            {service.image && (
+              <div className="relative w-full h-48 rounded-lg overflow-hidden bg-gray-100 mb-3">
+                <Image src={service.image} alt={service.name} fill className="object-cover" />
+              </div>
+            )}
+
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               {service.name}
             </h3>
@@ -59,15 +72,20 @@ export default function ServicesSection({ services }: Props) {
             <div className="flex flex-wrap items-center gap-4 text-sm">
               {service.price && (
                 <div className="flex items-center gap-1.5 text-green-600 font-semibold">
-                  <span>SAR - {service.price}</span>
+                  <span>{currency} {service.price}</span>
                 </div>
               )}
-              
-              {service.duration && (
-                <div className="flex items-center gap-1.5 text-gray-600">
-                  <Clock className="w-4 h-4" />
-                  <span>{service.duration} min</span>
-                </div>
+
+              {service.youtubeUrl && (
+                <a
+                  href={service.youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-red-600 hover:text-red-700 transition-colors"
+                >
+                  <Youtube className="w-4 h-4" />
+                  <span>Watch Video</span>
+                </a>
               )}
             </div>
           </div>

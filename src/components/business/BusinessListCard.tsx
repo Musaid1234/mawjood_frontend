@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Phone, MapPin, Star, ShieldCheck, Eye, MessageCircle } from 'lucide-react';
+import { Heart, Phone, MapPin, Star, ShieldCheck, Eye, MessageCircle, Sparkles } from 'lucide-react';
 import { Business } from '@/services/business.service';
 import { useState } from 'react';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -39,8 +39,11 @@ export default function BusinessListCard({ business, onToggleFavorite }: Busines
     setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
   };
 
+  // Check if business has active subscription (top placement)
+  const hasActiveSubscription = business.promotedUntil && new Date(business.promotedUntil) > new Date();
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+    <div className={`bg-white rounded-lg border overflow-hidden hover:shadow-lg transition-shadow ${hasActiveSubscription ? 'border-purple-500 border-2 shadow-purple-100' : 'border-gray-200'}`}>
       <div className="flex flex-col md:flex-row">
         {/* Left: Image Section */}
         <div className="relative w-full md:w-80 h-74 bg-gray-100 flex-shrink-0 shadow-md">
@@ -57,12 +60,13 @@ export default function BusinessListCard({ business, onToggleFavorite }: Busines
               </Link>
 
               {/* Top Left Badges */}
-              {/* <div className="absolute top-3 left-3 flex gap-2 z-10">
-                <span className={`text-white text-xs font-bold px-3 py-1 rounded ${isOpen ? 'bg-green-500' : 'bg-red-500'
-                  }`}>
-                  {isOpen ? 'OPEN' : 'CLOSED'}
-                </span>
-              </div> */}
+              <div className="absolute top-3 left-3 flex gap-2 z-10">
+                {hasActiveSubscription && (
+                  <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                    FEATURED
+                  </span>
+                )}
+              </div>
 
               {/* Navigation Arrows */}
               {hasMultipleImages && (
@@ -177,6 +181,12 @@ export default function BusinessListCard({ business, onToggleFavorite }: Busines
               <span className="text-sm text-gray-600">{business.totalReviews || 0} Reviews</span>
 
               <div className="flex flex-wrap items-center gap-2">
+                {hasActiveSubscription && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-medium text-purple-700">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Featured
+                  </span>
+                )}
                 {business.isVerified && (
                   <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
                     <ShieldCheck className="w-3.5 h-3.5" />

@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, RotateCcw } from 'lucide-react';
+import { Loader2, RefreshCw, RotateCcw, Globe2, Layout, Star, ImageIcon, MapPin, Info } from 'lucide-react';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { settingsService, SiteSettings } from '@/services/settings.service';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HeroSettingsSection } from '@/components/admin/site-settings/HeroSettingsSection';
 import { NavbarSettingsSection } from '@/components/admin/site-settings/NavbarSettingsSection';
 import { FeaturedSectionsSettingsSection } from '@/components/admin/site-settings/FeaturedSectionsSettingsSection';
@@ -15,10 +16,22 @@ import { DownloadBannerSettingsSection } from '@/components/admin/site-settings/
 import { FooterSettingsSection } from '@/components/admin/site-settings/FooterSettingsSection';
 import { AboutSettingsSection } from '@/components/admin/site-settings/AboutSettingsSection';
 import { ContactSettingsSection } from '@/components/admin/site-settings/ContactSettingsSection';
+import { CurrencySettingsSection } from '@/components/admin/site-settings/CurrencySettingsSection';
 
 const PAGE_TITLE = 'Site Experience Settings';
 const PAGE_DESCRIPTION =
   'Manage the core content blocks that power the Mawjood marketing pages. Update hero content, featured sections, reviews, footer links, and more—all in one place.';
+
+type SectionId =
+  | 'hero'
+  | 'navbar'
+  | 'currency'
+  | 'featured'
+  | 'reviews'
+  | 'download'
+  | 'footer'
+  | 'about'
+  | 'contact';
 
 export default function SiteSettingsPage() {
   const { data, isLoading, isFetching, refetch } = useSiteSettings();
@@ -26,6 +39,7 @@ export default function SiteSettingsPage() {
 
   const [formState, setFormState] = useState<SiteSettings | null>(null);
   const [savingSection, setSavingSection] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<SectionId>('hero');
 
   useEffect(() => {
     if (data) {
@@ -73,6 +87,11 @@ export default function SiteSettingsPage() {
     [formState?.navbar]
   );
 
+  const currencyValue = useMemo(
+    () => formState?.currency ?? 'SAR',
+    [formState?.currency]
+  );
+
   if (isLoading || !formState) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-3">
@@ -111,85 +130,188 @@ export default function SiteSettingsPage() {
         </div>
       </header>
 
-      <div className="space-y-6">
-        <HeroSettingsSection
-          value={heroValue}
-          onChange={(hero) =>
-            setFormState((prev) => (prev ? { ...prev, hero } : prev))
-          }
-          onSave={(hero) => handlePartialSave('hero', { hero })}
-          isSaving={isSavingSection('hero')}
-        />
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as SectionId)}>
+        <TabsList className="flex flex-wrap gap-2 bg-transparent p-0 mb-6">
+          <TabsTrigger
+            value="hero"
+            className="flex-1 basis-[140px] bg-white data-[state=active]:bg-[#1c4233] data-[state=active]:text-white"
+          >
+            <Globe2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Hero</span>
+            <span className="sm:hidden">Hero</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="navbar"
+            className="flex-1 basis-[140px] bg-white data-[state=active]:bg-[#1c4233] data-[state=active]:text-white"
+          >
+            <Layout className="h-4 w-4" />
+            <span className="hidden sm:inline">Navbar & header</span>
+            <span className="sm:hidden">Navbar</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="currency"
+            className="flex-1 basis-[140px] bg-white data-[state=active]:bg-[#1c4233] data-[state=active]:text-white"
+          >
+            <Info className="h-4 w-4" />
+            <span className="hidden sm:inline">Currency</span>
+            <span className="sm:hidden">Currency</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="featured"
+            className="flex-1 basis-[140px] bg-white data-[state=active]:bg-[#1c4233] data-[state=active]:text-white"
+          >
+            <ImageIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Homepage sections</span>
+            <span className="sm:hidden">Home</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="reviews"
+            className="flex-1 basis-[140px] bg-white data-[state=active]:bg-[#1c4233] data-[state=active]:text-white"
+          >
+            <Star className="h-4 w-4" />
+            <span className="hidden sm:inline">Reviews</span>
+            <span className="sm:hidden">Reviews</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="download"
+            className="flex-1 basis-[140px] bg-white data-[state=active]:bg-[#1c4233] data-[state=active]:text-white"
+          >
+            <ImageIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Download banner</span>
+            <span className="sm:hidden">Download</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="footer"
+            className="flex-1 basis-[140px] bg-white data-[state=active]:bg-[#1c4233] data-[state=active]:text-white"
+          >
+            <Layout className="h-4 w-4" />
+            <span className="hidden sm:inline">Footer</span>
+            <span className="sm:hidden">Footer</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="about"
+            className="flex-1 basis-[140px] bg-white data-[state=active]:bg-[#1c4233] data-[state=active]:text-white"
+          >
+            <Info className="h-4 w-4" />
+            <span className="hidden sm:inline">About page</span>
+            <span className="sm:hidden">About</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="contact"
+            className="flex-1 basis-[140px] bg-white data-[state=active]:bg-[#1c4233] data-[state=active]:text-white"
+          >
+            <MapPin className="h-4 w-4" />
+            <span className="hidden sm:inline">Contact</span>
+            <span className="sm:hidden">Contact</span>
+          </TabsTrigger>
+        </TabsList>
 
-        <NavbarSettingsSection
-          value={navbarValue}
-          onChange={(navbar) =>
-            setFormState((prev) => (prev ? { ...prev, navbar } : prev))
-          }
-          onSave={(navbar) => handlePartialSave('navbar', { navbar })}
-          isSaving={isSavingSection('navbar')}
-        />
+        <div className="mt-6 space-y-6">
+          <TabsContent value="hero">
+            <HeroSettingsSection
+              value={heroValue}
+              onChange={(hero) =>
+                setFormState((prev) => (prev ? { ...prev, hero } : prev))
+              }
+              onSave={(hero) => handlePartialSave('hero', { hero })}
+              isSaving={isSavingSection('hero')}
+            />
+          </TabsContent>
 
-        <FeaturedSectionsSettingsSection
-          value={formState.featuredSections ?? []}
-          onChange={(featuredSections) =>
-            setFormState((prev) => (prev ? { ...prev, featuredSections } : prev))
-          }
-          onSave={(featuredSections) =>
-            handlePartialSave('featuredSections', { featuredSections })
-          }
-          isSaving={isSavingSection('featuredSections')}
-        />
+          <TabsContent value="navbar">
+            <NavbarSettingsSection
+              value={navbarValue}
+              onChange={(navbar) =>
+                setFormState((prev) => (prev ? { ...prev, navbar } : prev))
+              }
+              onSave={(navbar) => handlePartialSave('navbar', { navbar })}
+              isSaving={isSavingSection('navbar')}
+            />
+          </TabsContent>
 
-        <ReviewsSettingsSection
-          value={formState.reviews ?? []}
-          onChange={(reviews) =>
-            setFormState((prev) => (prev ? { ...prev, reviews } : prev))
-          }
-          onSave={(reviews) => handlePartialSave('reviews', { reviews })}
-          isSaving={isSavingSection('reviews')}
-        />
+          <TabsContent value="currency">
+            <CurrencySettingsSection
+              value={currencyValue}
+              onChange={(currency) =>
+                setFormState((prev) => (prev ? { ...prev, currency } : prev))
+              }
+              onSave={(currency) => handlePartialSave('currency', { currency })}
+              isSaving={isSavingSection('currency')}
+            />
+          </TabsContent>
 
-        <DownloadBannerSettingsSection
-          value={formState.downloadBanner ?? {}}
-          onChange={(downloadBanner) =>
-            setFormState((prev) => (prev ? { ...prev, downloadBanner } : prev))
-          }
-          onSave={(downloadBanner) =>
-            handlePartialSave('downloadBanner', { downloadBanner })
-          }
-          isSaving={isSavingSection('downloadBanner')}
-        />
+          <TabsContent value="featured">
+            <FeaturedSectionsSettingsSection
+              value={formState.featuredSections ?? []}
+              onChange={(featuredSections) =>
+                setFormState((prev) => (prev ? { ...prev, featuredSections } : prev))
+              }
+              onSave={(featuredSections) =>
+                handlePartialSave('featuredSections', { featuredSections })
+              }
+              isSaving={isSavingSection('featuredSections')}
+            />
+          </TabsContent>
 
-        <FooterSettingsSection
-          value={formState.footer ?? {}}
-          onChange={(footer) =>
-            setFormState((prev) => (prev ? { ...prev, footer } : prev))
-          }
-          onSave={(footer) => handlePartialSave('footer', { footer })}
-          isSaving={isSavingSection('footer')}
-        />
+          <TabsContent value="reviews">
+            <ReviewsSettingsSection
+              value={formState.reviews ?? []}
+              onChange={(reviews) =>
+                setFormState((prev) => (prev ? { ...prev, reviews } : prev))
+              }
+              onSave={(reviews) => handlePartialSave('reviews', { reviews })}
+              isSaving={isSavingSection('reviews')}
+            />
+          </TabsContent>
 
-        <AboutSettingsSection
-          value={formState.about ?? {}}
-          onChange={(about) =>
-            setFormState((prev) => (prev ? { ...prev, about } : prev))
-          }
-          onSave={(about) => handlePartialSave('about', { about })}
-          isSaving={isSavingSection('about')}
-        />
+          <TabsContent value="download">
+            <DownloadBannerSettingsSection
+              value={formState.downloadBanner ?? {}}
+              onChange={(downloadBanner) =>
+                setFormState((prev) => (prev ? { ...prev, downloadBanner } : prev))
+              }
+              onSave={(downloadBanner) =>
+                handlePartialSave('downloadBanner', { downloadBanner })
+              }
+              isSaving={isSavingSection('downloadBanner')}
+            />
+          </TabsContent>
 
-        <ContactSettingsSection
-          value={formState.contact ?? {}}
-          onChange={(contact) =>
-            setFormState((prev) => (prev ? { ...prev, contact } : prev))
-          }
-          onSave={(contact) => handlePartialSave('contact', { contact })}
-          isSaving={isSavingSection('contact')}
-        />
-      </div>
+          <TabsContent value="footer">
+            <FooterSettingsSection
+              value={formState.footer ?? {}}
+              onChange={(footer) =>
+                setFormState((prev) => (prev ? { ...prev, footer } : prev))
+              }
+              onSave={(footer) => handlePartialSave('footer', { footer })}
+              isSaving={isSavingSection('footer')}
+            />
+          </TabsContent>
+
+          <TabsContent value="about">
+            <AboutSettingsSection
+              value={formState.about ?? {}}
+              onChange={(about) =>
+                setFormState((prev) => (prev ? { ...prev, about } : prev))
+              }
+              onSave={(about) => handlePartialSave('about', { about })}
+              isSaving={isSavingSection('about')}
+            />
+          </TabsContent>
+
+          <TabsContent value="contact">
+            <ContactSettingsSection
+              value={formState.contact ?? {}}
+              onChange={(contact) =>
+                setFormState((prev) => (prev ? { ...prev, contact } : prev))
+              }
+              onSave={(contact) => handlePartialSave('contact', { contact })}
+              isSaving={isSavingSection('contact')}
+            />
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   );
 }
-
 

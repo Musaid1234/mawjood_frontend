@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Phone, MapPin, Star } from 'lucide-react';
+import { Heart, Phone, MapPin, Star, Sparkles } from 'lucide-react';
 import { Business } from '@/services/business.service';
 import { useFavorites } from '@/hooks/useFavorites';
 
@@ -18,8 +18,11 @@ export default function BusinessCard({ business, onToggleFavorite }: BusinessCar
     ? business.description.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
     : '';
 
+  // Check if business has active subscription (top placement)
+  const hasActiveSubscription = business.promotedUntil && new Date(business.promotedUntil) > new Date();
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 ${hasActiveSubscription ? 'ring-2 ring-purple-500 ring-opacity-50' : ''}`}>
       <div className="relative h-64 group">
         <Link href={`/businesses/${business.slug}`}>
           <Image
@@ -32,12 +35,14 @@ export default function BusinessCard({ business, onToggleFavorite }: BusinessCar
         </Link>
 
         {/* Top Left Badges */}
-        {/* <div className="absolute top-3 left-3 flex gap-2">
-          <span className={`text-white text-xs font-bold px-3 py-1 rounded ${isOpen ? 'bg-green-500' : 'bg-red-500'
-            }`}>
-            {isOpen ? 'OPEN' : 'CLOSED'}
-          </span>
-        </div> */}
+        <div className="absolute top-3 left-3 flex gap-2 z-10">
+          {hasActiveSubscription && (
+            <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+              <Sparkles className="w-3 h-3" />
+              FEATURED
+            </span>
+          )}
+        </div>
 
         {/* Favorite Button */}
         <button

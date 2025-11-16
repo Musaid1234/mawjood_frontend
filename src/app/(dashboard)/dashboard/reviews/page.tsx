@@ -26,19 +26,19 @@ export default function ReviewsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-reviews'] });
       setDeletingId(null);
-      toast.success('Review deleted successfully');
+      toast.success('Delete request submitted successfully. Admin will review your request.');
     },
-    onError: (error) => {
-      console.error('Failed to delete review:', error);
+    onError: (error: any) => {
+      console.error('Failed to request review deletion:', error);
       setDeletingId(null);
-      toast.error('Failed to delete review. Please try again.');
+      toast.error(error?.response?.data?.message || 'Failed to request review deletion. Please try again.');
     },
   });
 
   const handleDelete = (reviewId: string) => {
-    toast('Are you sure you want to delete this review?', {
+    toast('Are you sure you want to request deletion of this review?', {
       action: {
-        label: 'Delete',
+        label: 'Request Delete',
         onClick: () => deleteMutation.mutate(reviewId),
       },
     });
@@ -182,18 +182,38 @@ export default function ReviewsPage() {
 
                 {/* Actions */}
                 <div className="pt-3 border-t border-gray-100">
-                  <button
-                    onClick={() => handleDelete(review.id)}
-                    disabled={isDeleting}
-                    className="flex items-center gap-1.5 px-3 py-3 text-xs font-semibold text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors w-full justify-center"
-                  >
-                    {isDeleting ? (
-                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-red-500 border-t-transparent"></div>
-                    ) : (
-                      <Trash2 className="w-3.5 h-3.5" />
-                    )}
-                    Delete Review
-                  </button>
+                  {review.deleteRequestStatus === 'PENDING' ? (
+                    <div className="flex items-center justify-center gap-1.5 px-3 py-3 text-xs font-semibold text-orange-600 bg-orange-50 rounded-lg">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      Delete Request Pending
+                    </div>
+                  ) : review.deleteRequestStatus === 'REJECTED' ? (
+                    <button
+                      onClick={() => handleDelete(review.id)}
+                      disabled={isDeleting}
+                      className="flex items-center gap-1.5 px-3 py-3 text-xs font-semibold text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors w-full justify-center"
+                    >
+                      {isDeleting ? (
+                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-red-500 border-t-transparent"></div>
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
+                      Request Delete Again
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleDelete(review.id)}
+                      disabled={isDeleting}
+                      className="flex items-center gap-1.5 px-3 py-3 text-xs font-semibold text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors w-full justify-center"
+                    >
+                      {isDeleting ? (
+                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-red-500 border-t-transparent"></div>
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
+                      Request Delete
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

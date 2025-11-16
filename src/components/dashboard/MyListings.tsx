@@ -3,17 +3,30 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { businessService, Business } from '@/services/business.service';
 import MyListingCard from './MyListingCard';
-import { Building2, AlertCircle, PlusCircle } from 'lucide-react';
+import { Building2, AlertCircle, PlusCircle, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { useState, useMemo } from 'react';
 
 export default function MyListings() {
   const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
   
   const { data: businesses, isLoading, error } = useQuery({
     queryKey: ['my-businesses'],
     queryFn: () => businessService.getMyBusinesses(),
   });
+
+  // Filter businesses by search term
+  const filteredBusinesses = useMemo(() => {
+    if (!businesses) return [];
+    if (!searchTerm.trim()) return businesses;
+    
+    const searchLower = searchTerm.toLowerCase();
+    return businesses.filter((business) =>
+      business.name.toLowerCase().includes(searchLower)
+    );
+  }, [businesses, searchTerm]);
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => businessService.deleteBusiness(id),
@@ -87,7 +100,7 @@ export default function MyListings() {
         </p>
         <Link
           href="/dashboard/add-listing"
-          className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium"
+          className="flex items-center gap-2 px-6 py-3 bg-[#1c4233] hover:bg-[#245240] text-white rounded-lg font-semibold transition-colors"
         >
           <PlusCircle className="w-5 h-5" />
           <span>Create Your First Listing</span>
@@ -97,36 +110,82 @@ export default function MyListings() {
   }
 
   return (
-    <div className="space-y-6 my-4">
-      {/* Header Stats */}
-      <div className="bg-primary rounded-xl p-6 text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold mb-1">Your Listings</h2>
-            <p className="text-white/90">
-              You have {businesses.length} {businesses.length === 1 ? 'listing' : 'listings'}
-            </p>
-          </div>
-          <Link
-            href="/dashboard/add-listing"
-            className="flex items-center gap-2 px-4 py-2 bg-white text-primary rounded-lg hover:bg-white/90 transition-colors font-medium"
-          >
-            <PlusCircle className="w-5 h-5" />
-            <span className="hidden sm:inline">Add New Listing</span>
-          </Link>
+    <div className="space-y-6 my-5">
+      {/* Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">My Listings</h1>
+          <p className="text-gray-600 mt-1">
+            Manage all your business listings
+            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#1c4233] text-white">
+              {searchTerm ? filteredBusinesses.length : businesses.length} {searchTerm ? (filteredBusinesses.length === 1 ? 'Listing' : 'Listings') : (businesses.length === 1 ? 'Listing' : 'Listings')}
+            </span>
+          </p>
+        </div>
+        <Link
+          href="/dashboard/add-listing"
+          className="flex items-center gap-2 px-6 py-3 bg-[#1c4233] hover:bg-[#245240] text-white rounded-lg font-semibold transition-colors shadow-lg hover:shadow-xl"
+        >
+          <PlusCircle className="w-5 h-5" />
+          Add New Listing
+        </Link>
+      </div>
+
+      {/* Search */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search by business name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              type="button"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Listings Grid */}
-      <div className="space-y-4">
-        {businesses.map((business: Business) => (
-          <MyListingCard
-            key={business.id}
-            business={business}
-            onDelete={handleDelete}
-          />
-        ))}
-      </div>
+      {filteredBusinesses.length === 0 ? (
+        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Search className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No listings found</h3>
+          <p className="text-gray-600 mb-4">
+            {searchTerm
+              ? 'Try adjusting your search criteria.'
+              : 'No listings match your criteria.'}
+          </p>
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="text-[#1c4233] hover:text-[#245240] font-medium"
+            >
+              Clear search
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredBusinesses.map((business: Business) => (
+            <MyListingCard
+              key={business.id}
+              business={business}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

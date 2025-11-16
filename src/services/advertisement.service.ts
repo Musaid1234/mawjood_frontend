@@ -1,4 +1,6 @@
 import { API_BASE_URL, API_ENDPOINTS } from '@/config/api.config';
+import axiosInstance from '@/lib/axios';
+import { AxiosError } from 'axios';
 
 export interface Advertisement {
   id: string;
@@ -29,8 +31,12 @@ interface ApiResponse<T> {
   data: T;
 }
 
-const buildUrlWithParams = (baseUrl: string, params?: Record<string, string | undefined>) => {
-  const url = new URL(baseUrl);
+const buildUrlWithParams = (basePath: string, params?: Record<string, string | undefined>) => {
+  if (!API_BASE_URL) {
+    throw new Error('NEXT_PUBLIC_API_BASE_URL is not defined');
+  }
+
+  const url = new URL(basePath, API_BASE_URL);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value && value.length > 0) {
@@ -41,20 +47,21 @@ const buildUrlWithParams = (baseUrl: string, params?: Record<string, string | un
   return url.toString();
 };
 
+const handleError = (error: unknown): never => {
+  if (error instanceof AxiosError) {
+    const message = error.response?.data?.message || error.message || 'An error occurred';
+    throw new Error(message);
+  }
+  throw error;
+};
+
 export const advertisementService = {
   async getDisplayAdvertisement(query: AdvertisementQuery): Promise<Advertisement | null> {
-    if (!API_BASE_URL) {
-      throw new Error('NEXT_PUBLIC_API_BASE_URL is not defined');
-    }
-
-    const url = buildUrlWithParams(
-      `${API_BASE_URL}${API_ENDPOINTS.ADVERTISEMENTS.DISPLAY}`,
-      {
-        locationId: query.locationId,
-        locationType: query.locationType,
-        categoryId: query.categoryId,
-      }
-    );
+    const url = buildUrlWithParams(API_ENDPOINTS.ADVERTISEMENTS.DISPLAY, {
+      locationId: query.locationId,
+      locationType: query.locationType,
+      categoryId: query.categoryId,
+    });
 
     const response = await fetch(url, {
       method: 'GET',
@@ -72,5 +79,22 @@ export const advertisementService = {
     }
 
     return payload.data ?? null;
+  },
+
+  async createAdvertisement(formData: FormData): Promise<Advertisement> {
+    try {
+      const response = await axiosInstance.post<ApiResponse<Advertisement>>(
+        API_ENDPOINTS.ADVERTISEMENTS.BASE,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
   },
 };

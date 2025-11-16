@@ -3,7 +3,11 @@
 import { useEditor, EditorContent, Extension } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useEffect } from 'react';
+import ImageExtension from '@tiptap/extension-image';
+import { useEffect, useRef, useState } from 'react';
+import { ImagePlus, Loader2 } from 'lucide-react';
+import axiosInstance from '@/lib/axios';
+import { API_ENDPOINTS } from '@/config/api.config';
 
 interface RichTextEditorProps {
   content: string;
@@ -19,12 +23,7 @@ const InsertParagraphAfterHeading = Extension.create({
       Enter: () => {
         const { editor } = this;
         if (editor.isActive('heading')) {
-          editor
-            .chain()
-            .focus()
-            .exitCode()               // exit current block
-            .insertContent('<p></p>')  // insert a new paragraph
-            .run();
+          editor.chain().focus().splitBlock().setParagraph().run();
           return true;
         }
         return false;
@@ -39,16 +38,27 @@ export default function RichTextEditor({
   placeholder = 'Describe your business...',
   error,
 }: RichTextEditorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState('');
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
       StarterKit.configure({
+        code: false,
+        codeBlock: false,
         heading: {
           levels: [1, 2, 3],
         },
       }),
       Placeholder.configure({
         placeholder,
+      }),
+      ImageExtension.configure({
+        HTMLAttributes: {
+          class: 'max-h-80 w-auto rounded-md',
+        },
       }),
       InsertParagraphAfterHeading,
     ],
@@ -68,6 +78,49 @@ export default function RichTextEditor({
       editor.commands.setContent(content);
     }
   }, [content, editor]);
+
+  const triggerImagePicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !editor) {
+      return;
+    }
+
+    setImageUploadError('');
+    setIsUploadingImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await axiosInstance.post(
+        API_ENDPOINTS.UPLOAD.IMAGE,
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
+      );
+
+      const imageUrl = response.data?.data?.imageUrl;
+      if (!imageUrl) {
+        throw new Error('Image URL missing from upload response.');
+      }
+
+      editor.chain().focus().setImage({ src: imageUrl, alt: file.name }).run();
+    } catch (uploadError: any) {
+      setImageUploadError(
+        uploadError?.message || 'Failed to upload image. Please try again.'
+      );
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   return (
     <div>
@@ -126,14 +179,6 @@ export default function RichTextEditor({
           >
             <span className="line-through">S</span>
           </button>
-          <button
-            type="button"
-            onClick={() => editor?.chain().focus().toggleCode().run()}
-            className={`p-2 rounded hover:bg-gray-200 ${editor?.isActive('code') ? 'bg-gray-200' : ''}`}
-            title="Code"
-          >
-            {'</>'}
-          </button>
 
           <div className="w-px h-6 bg-gray-300 mx-1"></div>
 
@@ -175,6 +220,28 @@ export default function RichTextEditor({
 
           <button
             type="button"
+            onClick={triggerImagePicker}
+            className="p-2 rounded hover:bg-gray-200"
+            title="Insert Image"
+            disabled={isUploadingImage}
+          >
+            {isUploadingImage ? (
+              <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
+            ) : (
+              <ImagePlus className="h-4 w-4 text-gray-600" />
+            )}
+          </button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageUpload}
+          />
+
+          <button
+            type="button"
             onClick={() => editor?.chain().focus().undo().run()}
             disabled={!editor?.can().undo()}
             title="Undo"
@@ -197,6 +264,9 @@ export default function RichTextEditor({
         <EditorContent editor={editor} />
       </div>
 
+      {imageUploadError ? (
+        <p className="mt-2 text-sm text-red-600">{imageUploadError}</p>
+      ) : null}
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
   );

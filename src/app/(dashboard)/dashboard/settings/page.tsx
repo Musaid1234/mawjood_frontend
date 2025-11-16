@@ -46,14 +46,12 @@ export default function SettingsPage() {
   const [selectedTab, setSelectedTab] = useState<'profile' | 'security' | 'notifications' | 'preferences'>('profile');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
-  // Form states
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Fetch user profile
   const { data: profile, isLoading } = useQuery({
     queryKey: ['user-profile'],
     queryFn: async () => {
@@ -62,7 +60,6 @@ export default function SettingsPage() {
     },
   });
 
-  // Initialize form with profile data
   useEffect(() => {
     if (profile) {
       setFirstName(profile.firstName);
@@ -70,7 +67,6 @@ export default function SettingsPage() {
     }
   }, [profile]);
 
-  // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { firstName: string; lastName: string; avatar?: File }) => {
       const formData = new FormData();
@@ -96,7 +92,6 @@ export default function SettingsPage() {
     },
   });
 
-  // Change password mutation
   const changePasswordMutation = useMutation({
     mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
       const response = await axiosInstance.post('api/users/change-password', data);
@@ -113,14 +108,12 @@ export default function SettingsPage() {
     },
   });
 
-  // Fetch notifications
   const { data: notificationsData, isLoading: notificationsLoading } = useQuery({
     queryKey: ['all-notifications'],
     queryFn: () => notificationService.getNotifications(1, 50),
     enabled: selectedTab === 'notifications',
   });
 
-  // Delete notification mutation
   const deleteNotificationMutation = useMutation({
     mutationFn: (notificationId: string) => notificationService.deleteNotification(notificationId),
     onSuccess: () => {
@@ -134,7 +127,6 @@ export default function SettingsPage() {
     },
   });
 
-  // Mark as read mutation
   const markAsReadMutation = useMutation({
     mutationFn: (notificationId: string) => notificationService.markAsRead(notificationId),
     onSuccess: () => {
@@ -144,7 +136,6 @@ export default function SettingsPage() {
     },
   });
 
-  // Mark all as read mutation
   const markAllAsReadMutation = useMutation({
     mutationFn: () => notificationService.markAllAsRead(),
     onSuccess: () => {
@@ -223,13 +214,11 @@ export default function SettingsPage() {
 
   return (
     <div className=" mx-auto">
-      {/* Header */}
       <div className="my-5">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
         <p className="text-gray-600">Manage your account settings</p>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-2 border-b border-gray-200 mb-8">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -250,215 +239,220 @@ export default function SettingsPage() {
         })}
       </div>
 
-      {/* Profile Tab */}
       {selectedTab === 'profile' && (
-        <div className="space-y-6">
-          {/* Profile Picture */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile Picture</h2>
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                {profile?.avatar ? (
-                  <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200">
-                    <Image src={profile.avatar} alt="Avatar" fill className="object-cover" />
-                  </div>
-                ) : (
-                  <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-                    <User className="w-12 h-12 text-gray-400" />
-                  </div>
-                )}
-                {uploadingAvatar && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
-                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
-                  </div>
-                )}
-              </div>
-              <div>
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
-                    disabled={uploadingAvatar}
-                  />
-                  <div className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors w-fit">
-                    <Camera className="w-4 h-4" />
-                    Upload Photo
-                  </div>
-                </label>
-                <p className="text-xs text-gray-500 mt-2">JPG, PNG, GIF up to 5MB</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg border border-gray-200 p-6 h-full">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile Picture</h2>
+              <div className="flex flex-col flex items-center justify-center h-full gap-3">
+                <div className="relative">
+                  {profile?.avatar ? (
+                    <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200">
+                      <Image src={profile.avatar} alt="Avatar" fill className="object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
+                      <User className="w-12 h-12 text-gray-400" />
+                    </div>
+                  )}
+                  {uploadingAvatar && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
+                      <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                      disabled={uploadingAvatar}
+                    />
+                    <div className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors w-fit">
+                      <Camera className="w-4 h-4" />
+                      Upload Photo
+                    </div>
+                  </label>
+                  <p className="text-xs text-gray-500 mt-2">JPG, PNG, GIF up to 5MB</p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Personal Information */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="Enter first name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="Enter last name"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Mail className="inline w-4 h-4 mr-2" />
-                  Email Address
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    value={profile?.email || ''}
-                    disabled
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {profile?.emailVerified ? (
-                      <div className="flex items-center gap-1 text-green-600 text-xs">
-                        <CheckCircle2 className="w-4 h-4" />
-                        Verified
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1 text-yellow-600 text-xs">
-                        <XCircle className="w-4 h-4" />
-                        Unverified
-                      </div>
-                    )}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg border border-gray-200 p-6 h-full">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
+              <div className="space-y-4 w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Enter first name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Enter last name"
+                    />
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Phone className="inline w-4 h-4 mr-2" />
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <input
-                    type="tel"
-                    value={profile?.phone || ''}
-                    disabled
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {profile?.phoneVerified ? (
-                      <div className="flex items-center gap-1 text-green-600 text-xs">
-                        <CheckCircle2 className="w-4 h-4" />
-                        Verified
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1 text-yellow-600 text-xs">
-                        <XCircle className="w-4 h-4" />
-                        Unverified
-                      </div>
-                    )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Mail className="inline w-4 h-4 mr-2" />
+                    Email Address
+                  </label>
+                  <div className="relative w-full">
+                    <input
+                      type="email"
+                      value={profile?.email || ''}
+                      disabled
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {profile?.emailVerified ? (
+                        <div className="flex items-center gap-1 text-green-600 text-xs">
+                          <CheckCircle2 className="w-4 h-4" />
+                          Verified
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 text-yellow-600 text-xs">
+                          <XCircle className="w-4 h-4" />
+                          Unverified
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <button
-                onClick={handleSaveProfile}
-                disabled={updateProfileMutation.isPending}
-                className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                {updateProfileMutation.isPending ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                ) : (
-                  <Save className="w-4 h-4" />
-                )}
-                Save Changes
-              </button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Phone className="inline w-4 h-4 mr-2" />
+                    Phone Number
+                  </label>
+                  <div className="relative w-full">
+                    <input
+                      type="tel"
+                      value={profile?.phone || ''}
+                      disabled
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {profile?.phoneVerified ? (
+                        <div className="flex items-center gap-1 text-green-600 text-xs">
+                          <CheckCircle2 className="w-4 h-4" />
+                          Verified
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 text-yellow-600 text-xs">
+                          <XCircle className="w-4 h-4" />
+                          Unverified
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={updateProfileMutation.isPending}
+                  className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {updateProfileMutation.isPending ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  Save Changes
+                </button>
+              </div>
             </div>
           </div>
+
         </div>
       )}
 
-      {/* Security Tab */}
       {selectedTab === 'security' && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Key className="w-5 h-5" />
-              Change Password
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Current Password
-                </label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Enter current password"
-                />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg border border-gray-200 p-6 w-full">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Key className="w-5 h-5" />
+                Change Password
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="Enter current password"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Enter new password"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Confirm New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Confirm new password"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={handleChangePassword}
+                  disabled={changePasswordMutation.isPending}
+                  className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {changePasswordMutation.isPending ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  Update Password
+                </button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Enter new password"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Confirm new password"
-                />
-              </div>
-              <button
-                onClick={handleChangePassword}
-                disabled={changePasswordMutation.isPending}
-                className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                {changePasswordMutation.isPending ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                ) : (
-                  <Save className="w-4 h-4" />
-                )}
-                Update Password
-              </button>
             </div>
           </div>
+
         </div>
       )}
 
-      {/* Notifications Tab */}
       {selectedTab === 'notifications' && (
         <div className="space-y-6">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -565,7 +559,6 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Preferences Tab */}
       {selectedTab === 'preferences' && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -580,4 +573,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

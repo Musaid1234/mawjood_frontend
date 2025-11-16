@@ -30,6 +30,9 @@ export interface AuthResponse {
     user: User;
     token: string;
     refreshToken: string;
+    isNewUser?: boolean;
+    needsPhoneUpdate?: boolean;
+    provider?: SocialProvider;
   };
 }
 
@@ -42,6 +45,16 @@ export interface RegisterData {
   role?: 'USER' | 'BUSINESS_OWNER';
 }
 
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+  data: {
+    email: string;
+    otpSent: boolean;
+    userId?: string;
+  };
+}
+
 export interface LoginData {
   identifier: string; // email or phone
   password: string;
@@ -51,6 +64,15 @@ export interface OTPVerifyData {
   email?: string;
   phone?: string;
   otp: string;
+}
+
+export type SocialProvider = 'google' | 'facebook';
+
+export interface SocialLoginPayload {
+  provider: SocialProvider;
+  token: string;
+  role?: 'USER' | 'BUSINESS_OWNER';
+  phone?: string;
 }
 
 // Error handler
@@ -67,9 +89,24 @@ export const authService = {
   /**
    * Register new user
    */
-  async register(data: RegisterData): Promise<AuthResponse> {
+  async register(data: RegisterData): Promise<RegisterResponse> {
     try {
-      const response = await axiosInstance.post<AuthResponse>(API_ENDPOINTS.AUTH.REGISTER, data);
+      const response = await axiosInstance.post<RegisterResponse>(API_ENDPOINTS.AUTH.REGISTER, data);
+      return response.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  /**
+   * Social login/register
+   */
+  async socialLogin(data: SocialLoginPayload): Promise<AuthResponse> {
+    try {
+      const response = await axiosInstance.post<AuthResponse>(
+        API_ENDPOINTS.AUTH.LOGIN_SOCIAL,
+        data
+      );
       return response.data;
     } catch (error) {
       return handleError(error);
