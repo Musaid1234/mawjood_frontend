@@ -210,23 +210,34 @@ export default function SignupModal({
     if (!isOpen || !googleReady || !window.google?.accounts?.id) {
       return;
     }
-    const container = document.getElementById('google-signup-button');
-    const googleId = window.google?.accounts?.id as any;
-    if (container && googleId?.renderButton) {
-      container.innerHTML = '';
-      googleId.renderButton(container, {
-        type: 'standard',
-        theme: 'filled_blue',
-        size: 'large',
-        shape: 'rectangular',
-        text: 'continue_with',
-        logo_alignment: 'left',
-        width: 320,
-      } as any);
-      setGoogleButtonRendered(true);
-    } else {
-      setGoogleButtonRendered(false);
-    }
+    
+    const timer = setTimeout(() => {
+      const container = document.getElementById('google-signup-button');
+      const googleId = window.google?.accounts?.id as any;
+      
+      if (container && googleId?.renderButton) {
+        try {
+          container.innerHTML = '';
+          googleId.renderButton(container, {
+            type: 'standard',
+            theme: 'filled_blue',
+            size: 'large',
+            shape: 'rectangular',
+            text: 'continue_with',
+            logo_alignment: 'left',
+            width: 320,
+          } as any);
+          setGoogleButtonRendered(true);
+        } catch (error) {
+          console.error('Google button render error:', error);
+          setGoogleButtonRendered(false);
+        }
+      } else {
+        setGoogleButtonRendered(false);
+      }
+    }, 100); // 100ms delay
+  
+    return () => clearTimeout(timer);
   }, [googleReady, isOpen]);
 
   useEffect(() => {

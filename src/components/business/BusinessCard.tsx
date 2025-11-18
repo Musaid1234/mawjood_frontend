@@ -22,8 +22,8 @@ export default function BusinessCard({ business, onToggleFavorite }: BusinessCar
   const hasActiveSubscription = business.promotedUntil && new Date(business.promotedUntil) > new Date();
 
   return (
-    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 ${hasActiveSubscription ? 'ring-2 ring-purple-500 ring-opacity-50' : ''}`}>
-      <div className="relative h-64 group">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+      <div className="relative h-56 group">
         <Link href={`/businesses/${business.slug}`}>
           <Image
             src={business.coverImage || business.logo || '/placeholder-business.jpg'}
@@ -33,16 +33,6 @@ export default function BusinessCard({ business, onToggleFavorite }: BusinessCar
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         </Link>
-
-        {/* Top Left Badges */}
-        <div className="absolute top-3 left-3 flex gap-2 z-10">
-          {hasActiveSubscription && (
-            <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
-              <Sparkles className="w-3 h-3" />
-              FEATURED
-            </span>
-          )}
-        </div>
 
         {/* Favorite Button */}
         <button
@@ -86,17 +76,14 @@ export default function BusinessCard({ business, onToggleFavorite }: BusinessCar
       {/* Content */}
       <div className="p-4">
         <Link href={`/businesses/${business.slug}`}>
-          <h3 className="font-semibold text-lg text-gray-900 mb-2 hover:text-primary transition-colors flex items-center gap-2">
+            <h3 className="font-semibold text-lg text-gray-900 mb-2 hover:text-primary transition-colors flex items-center gap-2 flex-wrap">
             {business.name}
-            {business.isVerified && (
-              <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            )}
+              {hasActiveSubscription && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Featured
+                </span>
+              )}
           </h3>
         </Link>
 

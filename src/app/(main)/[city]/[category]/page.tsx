@@ -10,6 +10,8 @@ import { cityService, City as CityType, Region as RegionType } from '@/services/
 import { advertisementService, Advertisement } from '@/services/advertisement.service';
 import { useCityStore } from '@/store/cityStore';
 import BusinessListCard from '@/components/business/BusinessListCard';
+import BusinessCard from '@/components/business/BusinessCard';
+import { LayoutGrid, List, ChevronLeft, ChevronRight } from 'lucide-react';
 
 type FiltersState = {
   search: string;
@@ -64,14 +66,16 @@ export default function CityCategoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
-  const [advertisement, setAdvertisement] = useState<Advertisement | null>(null);
+  const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [adLoading, setAdLoading] = useState(false);
+  const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [filters, setFilters] = useState<FiltersState>({
     search: '',
     rating: '',
     sortBy: 'popular',
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   const updateFilters = (updates: Partial<FiltersState>) => {
     setFilters((prev) => ({ ...prev, ...updates }));
@@ -267,12 +271,13 @@ export default function CityCategoryPage() {
   const effectiveLocationId = effectiveLocation?.id;
   const effectiveLocationType = effectiveLocation?.type;
   const canonicalPath = `/${locationSlug}/${categorySlug}`;
-  const resolvedTargetUrl =
-    advertisement?.targetUrl && advertisement.targetUrl.trim().length > 0
-      ? advertisement.targetUrl.startsWith('http')
-        ? advertisement.targetUrl
-        : `/businesses/${advertisement.targetUrl.replace(/^\/+/, '')}`
-      : null;
+  
+  const getResolvedTargetUrl = (ad: Advertisement) => {
+    if (!ad?.targetUrl || ad.targetUrl.trim().length === 0) return null;
+    return ad.targetUrl.startsWith('http')
+      ? ad.targetUrl
+      : `/businesses/${ad.targetUrl.replace(/^\/+/, '')}`;
+  };
 
   useEffect(() => {
     if (!category) return;
@@ -373,25 +378,36 @@ export default function CityCategoryPage() {
   useEffect(() => {
     if (!category) return;
 
-    const loadAdvertisement = async () => {
+    const loadAdvertisements = async () => {
       try {
         setAdLoading(true);
-        const ad = await advertisementService.getDisplayAdvertisement({
+        const ads = await advertisementService.getDisplayAdvertisements({
           categoryId: category.id,
           locationId: effectiveLocationId ?? undefined,
           locationType: effectiveLocationType,
-        });
-        setAdvertisement(ad);
+        }, 5);
+        setAdvertisements(ads);
       } catch (err) {
-        console.error('Failed to fetch advertisement:', err);
-        setAdvertisement(null);
+        console.error('Failed to fetch advertisements:', err);
+        setAdvertisements([]);
       } finally {
         setAdLoading(false);
       }
     };
 
-    loadAdvertisement();
+    loadAdvertisements();
   }, [category, effectiveLocationId, effectiveLocationType]);
+
+  // Auto-slide for top ad slider
+  useEffect(() => {
+    if (advertisements.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentAdIndex((prev) => (prev + 1) % advertisements.length);
+    }, 5000); // Change ad every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [advertisements.length]);
 
   useEffect(() => {
     if (loadingCategory) return;
@@ -472,32 +488,80 @@ export default function CityCategoryPage() {
   return (
     <div className="min-h-screen bg-white py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
+      {/* Top Ad Slider */}
       <div className="space-y-6 mb-4">
           {adLoading && (
-            <div/>
+            <div className="h-48 bg-gray-200 rounded-2xl animate-pulse" />
           )}
-          {!adLoading && advertisement && (
-            <div className="overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
-              {resolvedTargetUrl ? (
-                <Link href={resolvedTargetUrl} target="_blank" rel="noopener noreferrer">
-                  <Image
-                    src={advertisement.imageUrl}
-                    alt={advertisement.title}
-                    width={1200}
-                    height={360}
-                    className="w-full h-46 object-cover"
-                    priority  
-                  />
-                </Link>
-              ) : (
-                <Image
-                  src={advertisement.imageUrl}
-                  alt={advertisement.title}
-                  width={1200}
-                  height={360}
-                  className="w-full h-62 object-cover"
-                  priority
-                />
+          {!adLoading && advertisements.length > 0 && (
+            <div className="relative overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
+              <div className="relative h-48 md:h-42 lg:h-52">
+                {advertisements.map((ad, index) => {
+                  const resolvedUrl = getResolvedTargetUrl(ad);
+                  return (
+                    <div
+                      key={ad.id}
+                      className={`absolute inset-0 transition-opacity duration-500 ${
+                        index === currentAdIndex ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    >
+                      {resolvedUrl ? (
+                        <Link href={resolvedUrl} target="_blank" rel="noopener noreferrer">
+                          <Image
+                            src={ad.imageUrl}
+                            alt={ad.title}
+                            fill
+                            className="object-cover"
+                            priority={index === 0}
+                          />
+                        </Link>
+                      ) : (
+                        <Image
+                          src={ad.imageUrl}
+                          alt={ad.title}
+                          fill
+                          className="object-cover"
+                          priority={index === 0}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Navigation Buttons */}
+              {advertisements.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setCurrentAdIndex((prev) => (prev - 1 + advertisements.length) % advertisements.length)}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full p-2 shadow-lg transition-all z-10"
+                    aria-label="Previous ad"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentAdIndex((prev) => (prev + 1) % advertisements.length)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full p-2 shadow-lg transition-all z-10"
+                    aria-label="Next ad"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                  {/* Slider Indicators */}
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+                    {advertisements.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentAdIndex(index)}
+                        className={`h-2 rounded-full transition-all ${
+                          index === currentAdIndex
+                            ? 'w-8 bg-white'
+                            : 'w-2 bg-white/50 hover:bg-white/75'
+                        }`}
+                        aria-label={`Go to slide ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -516,7 +580,7 @@ export default function CityCategoryPage() {
           Popular {category.name} in {locationName}
         </h1>
 
-        <div className="bg-white rounded-xl p-4 mb-6 space-y-4">
+        <div className="bg-white rounded-xl mb-6 space-y-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <form
               onSubmit={handleSearchSubmit}
@@ -549,18 +613,6 @@ export default function CityCategoryPage() {
 
             <div className="flex flex-wrap gap-3">
               <select
-                value={filters.rating}
-                onChange={(event) => updateFilters({ rating: event.target.value })}
-                style={{ paddingTop: '0.875rem', paddingBottom: '0.875rem' }}
-                className="px-4 border border-gray-300 rounded-lg text-sm bg-white text-gray-500 focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <option value="">Rating Filter</option>
-                <option value="5">5 Stars</option>
-                <option value="4">4+ Stars</option>
-                <option value="3">3+ Stars</option>
-              </select>
-
-              <select
                 value={filters.sortBy}
                 onChange={(event) => updateFilters({ sortBy: event.target.value })}
                 style={{ paddingTop: '0.875rem', paddingBottom: '0.875rem' }}
@@ -572,6 +624,33 @@ export default function CityCategoryPage() {
                   </option>
                 ))}
               </select>
+
+              <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    viewMode === 'list'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <List className="w-4 h-4 inline mr-1" />
+                  List
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    viewMode === 'grid'
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <LayoutGrid className="w-4 h-4 inline mr-1" />
+                  Grid
+                </button>
+              </div>
             </div>
           </div>
 
@@ -585,23 +664,136 @@ export default function CityCategoryPage() {
         </div>
 
         {businessLoading ? (
-          <div className="space-y-6">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="bg-white rounded-xl p-6 animate-pulse">
-                <div className="h-32 bg-gray-200 rounded"></div>
-              </div>
+          <div
+            className={
+              viewMode === 'grid'
+                ? 'grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                : 'space-y-6'
+            }
+          >
+            {[...Array(viewMode === 'grid' ? 6 : 5)].map((_, i) => (
+              <div key={i} className="bg-white rounded-xl p-6 animate-pulse h-40" />
             ))}
           </div>
         ) : businesses.length > 0 ? (
-          <div className="space-y-6">
-            {businesses.map((business) => (
-              <BusinessListCard key={business.id} business={business} />
-            ))}
-          </div>
+          viewMode === 'grid' ? (
+            <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              {businesses.map((business, index) => {
+                const showAd = advertisements.length > 0 && index > 0 && index % 6 === 0;
+                const adIndex = (index / 6 - 1) % advertisements.length;
+                return (
+                  <div key={business.id}>
+                    <BusinessCard business={business} />
+                    {showAd && advertisements[adIndex] && (
+                      <div className="mt-5 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                        {getResolvedTargetUrl(advertisements[adIndex]) ? (
+                          <Link
+                            href={getResolvedTargetUrl(advertisements[adIndex])!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Image
+                              src={advertisements[adIndex].imageUrl}
+                              alt={advertisements[adIndex].title}
+                              width={400}
+                              height={200}
+                              className="w-full h-48 object-cover"
+                            />
+                          </Link>
+                        ) : (
+                          <Image
+                            src={advertisements[adIndex].imageUrl}
+                            alt={advertisements[adIndex].title}
+                            width={400}
+                            height={200}
+                            className="w-full h-48 object-cover"
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {businesses.map((business, index) => {
+                const showAd = advertisements.length > 0 && index > 0 && index % 5 === 0;
+                const adIndex = (index / 5 - 1) % advertisements.length;
+                return (
+                  <div key={business.id}>
+                    <BusinessListCard business={business} />
+                    {showAd && advertisements[adIndex] && (
+                      <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                        {getResolvedTargetUrl(advertisements[adIndex]) ? (
+                          <Link
+                            href={getResolvedTargetUrl(advertisements[adIndex])!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Image
+                              src={advertisements[adIndex].imageUrl}
+                              alt={advertisements[adIndex].title}
+                              width={1200}
+                              height={300}
+                              className="w-full h-64 object-cover"
+                            />
+                          </Link>
+                        ) : (
+                          <Image
+                            src={advertisements[adIndex].imageUrl}
+                            alt={advertisements[adIndex].title}
+                            width={1200}
+                            height={300}
+                            className="w-full h-64 object-cover"
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
         ) : (
           <div className="text-center py-16 bg-white rounded-xl">
             <h3 className="text-xl font-semibold mb-2">No businesses found</h3>
             <p className="text-gray-600">Check back later for new listings</p>
+          </div>
+        )}
+
+        {/* Bottom Ads */}
+        {!businessLoading && advertisements.length > 0 && (
+          <div className="mt-12 space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900">Featured Advertisements</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {advertisements.slice(0, 3).map((ad) => {
+                const resolvedUrl = getResolvedTargetUrl(ad);
+                return (
+                  <div key={ad.id} className="rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                    {resolvedUrl ? (
+                      <Link href={resolvedUrl} target="_blank" rel="noopener noreferrer">
+                        <Image
+                          src={ad.imageUrl}
+                          alt={ad.title}
+                          width={400}
+                          height={250}
+                          className="w-full h-48 object-cover"
+                        />
+                      </Link>
+                    ) : (
+                      <Image
+                        src={ad.imageUrl}
+                        alt={ad.title}
+                        width={400}
+                        height={250}
+                        className="w-full h-48 object-cover"
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

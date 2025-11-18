@@ -11,7 +11,6 @@ import { useFavorites } from '@/hooks/useFavorites';
 
 export default function FeaturedListings() {
     const { selectedCity, selectedLocation } = useCityStore();
-    const [currentSlide, setCurrentSlide] = useState(0);
     const { isFavorite, toggleFavorite, isLoading: favLoading } = useFavorites();
 
     // Fetch featured businesses using React Query
@@ -26,23 +25,6 @@ export default function FeaturedListings() {
 
     const businesses = data?.businesses ?? [];
     const fallbackContext = data?.locationContext;
-
-    const itemsPerPage = 4;
-    const totalSlides = businesses ? Math.ceil(businesses.length / itemsPerPage) : 0;
-
-    const nextSlide = () => {
-        setCurrentSlide((prev) => (prev + 1) % totalSlides);
-    };
-
-    const prevSlide = () => {
-        setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
-    };
-
-    const getVisibleBusinesses = () => {
-        if (!businesses) return [];
-        const start = currentSlide * itemsPerPage;
-        return businesses.slice(start, start + itemsPerPage);
-    };
 
     const getPriceLevel = (rating: number) => {
         if (rating >= 4.5) return '$$$';
@@ -78,7 +60,7 @@ export default function FeaturedListings() {
         return (
         <div
             key={business.id}
-            className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex-shrink-0 w-72 lg:w-auto ${hasActiveSubscription ? 'ring-2 ring-purple-500 ring-opacity-50' : ''}`}
+            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex-shrink-0 w-72 snap-start"
         >
             <div className="relative h-48 group">
                 <Link href={`/businesses/${business.slug}`}>
@@ -90,18 +72,6 @@ export default function FeaturedListings() {
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                 </Link>
-
-                {/* Featured Badge */}
-                {hasActiveSubscription && (
-                    <div className="absolute top-3 left-3 z-10">
-                        <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                            </svg>
-                            FEATURED
-                        </span>
-                    </div>
-                )}
 
                 <button
                     onClick={() => toggleFavorite(business.id)}
@@ -144,7 +114,7 @@ export default function FeaturedListings() {
 
             <div className="p-4">
                 <Link href={`/businesses/${business.slug}`}>
-                    <h3 className="font-semibold text-md text-gray-900 mb-1 hover:text-primary transition-colors flex items-center gap-2">
+                    <h3 className="font-semibold text-md text-gray-900 mb-1 hover:text-primary transition-colors flex items-center gap-2 flex-wrap">
                         {business.name}
                         {business.isVerified && (
                             <svg
@@ -224,55 +194,11 @@ export default function FeaturedListings() {
                     )}
                 </div>
 
-                {/* Mobile horizontal scroll */}
-                <div className="lg:hidden mb-10">
-                    <div className="flex gap-4 overflow-x-auto pb-4">
+                {/* Horizontal scrollable list for all breakpoints */}
+                <div className="mb-10">
+                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth">
                         {businesses.map((business) => renderBusinessCard(business))}
                     </div>
-                </div>
-
-                {/* Desktop slider */}
-                <div className="hidden lg:block">
-                    <div className="relative">
-                        <div className="grid grid-cols-4 gap-6">
-                            {getVisibleBusinesses().map((business) => renderBusinessCard(business))}
-                        </div>
-
-                        {totalSlides > 1 && (
-                            <>
-                                <button
-                                    onClick={prevSlide}
-                                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-3 shadow-lg transition-colors z-10"
-                                    aria-label="Previous slide"
-                                >
-                                    <ChevronLeft className="w-6 h-6" />
-                                </button>
-                                <button
-                                    onClick={nextSlide}
-                                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-3 shadow-lg transition-colors z-10"
-                                    aria-label="Next slide"
-                                >
-                                    <ChevronRight className="w-6 h-6" />
-                                </button>
-                            </>
-                        )}
-                    </div>
-
-                    {totalSlides > 1 && (
-                        <div className="flex justify-center gap-2 mt-8">
-                            {[...Array(totalSlides)].map((_, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => setCurrentSlide(index)}
-                                    className={`w-2 h-2 rounded-full transition-all ${index === currentSlide
-                                        ? 'bg-primary w-8'
-                                        : 'bg-gray-300 hover:bg-gray-400'
-                                        }`}
-                                    aria-label={`Go to slide ${index + 1}`}
-                                />
-                            ))}
-                        </div>
-                    )}
                 </div>
 
                 <div className="text-center mt-12">

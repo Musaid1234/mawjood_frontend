@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { businessService, Business } from '@/services/business.service';
+import { businessService, Business, ImageObject } from '@/services/business.service';
 import {
   BusinessHeader,
   BusinessGallery,
@@ -43,7 +43,26 @@ export default function BusinessDetailPage() {
 
         // Fetch business data
         const businessData = await businessService.getBusinessBySlug(slug);
-        setBusiness(businessData);
+
+        const normalizedImages = Array.isArray(businessData.images)
+          ? businessData.images
+              .map((image) => {
+                if (!image) return null;
+                if (typeof image === 'string') {
+                  return { url: image } as ImageObject;
+                }
+                if (typeof image === 'object' && image.url) {
+                  return image;
+                }
+                return null;
+              })
+              .filter((image): image is ImageObject => Boolean(image))
+          : businessData.images;
+
+        setBusiness({
+          ...businessData,
+          images: normalizedImages,
+        });
 
         if (businessData?.id) {
           businessService.trackBusinessView(businessData.id);

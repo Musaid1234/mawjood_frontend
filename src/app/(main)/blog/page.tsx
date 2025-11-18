@@ -76,6 +76,13 @@ export function BlogsListing({ initialCategorySlug = null, categoryInfo = null }
     setSelectedCategory((prev) => (prev === slug ? null : slug));
   };
 
+  const handleViewLatest = () => {
+    setSelectedCategory(null);
+    setSearchInput('');
+    setDebouncedSearch('');
+    setCurrentPage(1);
+  };
+
   const hasActiveFilters = Boolean(selectedCategory || debouncedSearch);
 
   return (
@@ -143,7 +150,7 @@ export function BlogsListing({ initialCategorySlug = null, categoryInfo = null }
             </div>
 
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="rounded-2xl overflow-hidden border border-gray-200 bg-white">
                     <div className="h-56 bg-gray-200 animate-pulse" />
@@ -183,7 +190,7 @@ export function BlogsListing({ initialCategorySlug = null, categoryInfo = null }
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 mb-12">
                   {blogs.map((blog) => (
                     <BlogCard key={blog.id} blog={blog} />
                   ))}
@@ -279,11 +286,26 @@ export function BlogsListing({ initialCategorySlug = null, categoryInfo = null }
                 )}
               </div>
             </div>
+            <div className="bg-primary rounded-2xl p-6 text-white shadow-lg">
+              <div className="flex flex-col gap-3">
+                <h3 className="text-xl font-semibold">Latest from the blog</h3>
+                <p className="text-white/80 text-sm">
+                  Stay up to date with fresh insights, tips, and platform news curated by our editorial team.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleViewLatest}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white text-primary font-semibold hover:bg-white/90 transition-colors"
+                >
+                  View latest blogs
+                </button>
+              </div>
+            </div>
           </aside>
         </div>
 
         {/* Mobile categories */}
-        <div className="mt-12 lg:hidden">
+        <div className="mt-12 lg:hidden space-y-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">Categories</h2>
           <div className="flex gap-3 overflow-x-auto pb-2">
             <button
@@ -311,6 +333,21 @@ export function BlogsListing({ initialCategorySlug = null, categoryInfo = null }
                 {category.name}
               </button>
             ))}
+          </div>
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-500 rounded-2xl p-5 text-white shadow-lg">
+            <div className="flex flex-col gap-3">
+              <h3 className="text-xl font-semibold">Latest from the blog</h3>
+              <p className="text-white/80 text-sm">
+                Tap below to explore the most recent stories and updates from our community.
+              </p>
+              <button
+                type="button"
+                onClick={handleViewLatest}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white text-blue-600 font-semibold hover:bg-white/90 transition-colors"
+              >
+                View latest blogs
+              </button>
+            </div>
           </div>
         </div>
       </div>

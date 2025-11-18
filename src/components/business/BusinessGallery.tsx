@@ -15,7 +15,7 @@ interface Business {
   logoAlt?: string;
   coverImage?: string;
   coverImageAlt?: string;
-  images?: ImageObject[] | null;
+  images?: Array<ImageObject | string | null> | null;
 }
 
 interface Props {
@@ -27,8 +27,19 @@ export default function BusinessGallery({ business }: Props) {
   const [showLightbox, setShowLightbox] = useState(false);
 
   // Combine all images with proper url/alt extraction
-  const galleryImages = Array.isArray(business.images) 
-    ? business.images.map(img => ({ url: img.url, alt: img.alt || business.name }))
+  const galleryImages = Array.isArray(business.images)
+    ? business.images
+        .map((img) => {
+          if (!img) return null;
+          if (typeof img === 'string') {
+            return { url: img, alt: business.name };
+          }
+          if (typeof img === 'object' && img.url) {
+            return { url: img.url, alt: img.alt || business.name };
+          }
+          return null;
+        })
+        .filter((img): img is { url: string; alt: string } => Boolean(img))
     : [];
 
   const allImages = [

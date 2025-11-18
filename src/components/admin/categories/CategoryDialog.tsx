@@ -38,6 +38,8 @@ export default function CategoryDialog({ open, onOpenChange, category }: Categor
 
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [iconPreview, setIconPreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Fetch categories for parent selection
   const { data: categoriesResponse } = useQuery({
@@ -57,6 +59,7 @@ export default function CategoryDialog({ open, onOpenChange, category }: Categor
         parentId: category.parentId || '',
       });
       setIconPreview(category.icon);
+      setImagePreview(category.image);
     } else {
       resetForm();
     }
@@ -72,6 +75,8 @@ export default function CategoryDialog({ open, onOpenChange, category }: Categor
     });
     setIconFile(null);
     setIconPreview(null);
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   // Auto-generate slug from name
@@ -129,6 +134,18 @@ export default function CategoryDialog({ open, onOpenChange, category }: Categor
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
 
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -146,6 +163,7 @@ export default function CategoryDialog({ open, onOpenChange, category }: Categor
     if (formData.order) formDataToSend.append('order', formData.order);
     if (formData.parentId) formDataToSend.append('parentId', formData.parentId);
     if (iconFile) formDataToSend.append('icon', iconFile);
+    if (imageFile) formDataToSend.append('image', imageFile);
 
     if (isEditMode && category) {
       updateMutation.mutate({ id: category.id, formDataToSend });
@@ -302,6 +320,55 @@ export default function CategoryDialog({ open, onOpenChange, category }: Categor
                   type="file"
                   accept="image/*"
                   onChange={handleIconChange}
+                  className="hidden"
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Featured Image</label>
+            <p className="text-xs text-gray-500 mb-2">
+              Recommended size 600x400px. This image appears on the home and listing pages.
+            </p>
+            <div className="mt-1 flex items-center gap-3">
+              {imagePreview && (
+                <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-gray-100 border-2 border-gray-300">
+                  <Image
+                    src={imagePreview}
+                    alt="Image preview"
+                    fill
+                    className="object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImagePreview(null);
+                      setImageFile(null);
+                    }}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+              <div className="flex-1">
+                <label
+                  htmlFor="image-upload"
+                  className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#1c4233] transition-colors"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span className="text-sm">
+                    {imagePreview ? 'Change Image' : 'Upload Image'}
+                  </span>
+                </label>
+                <Input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
                   className="hidden"
                   disabled={isLoading}
                 />

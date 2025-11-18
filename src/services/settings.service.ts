@@ -28,6 +28,7 @@ export interface FeaturedSectionCard {
   image?: string;
   slug: string;
   description?: string;
+  categoryId?: string;
 }
 
 export interface FeaturedSectionSettings {

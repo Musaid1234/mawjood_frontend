@@ -81,6 +81,28 @@ export const advertisementService = {
     return payload.data ?? null;
   },
 
+  async getDisplayAdvertisements(query: AdvertisementQuery, limit: number = 5): Promise<Advertisement[]> {
+    const ads: Advertisement[] = [];
+    const seenIds = new Set<string>();
+
+    // Try to fetch multiple ads by calling the display endpoint multiple times
+    // The API should return different ads on each call if multiple are available
+    for (let i = 0; i < limit; i++) {
+      try {
+        const ad = await this.getDisplayAdvertisement(query);
+        if (ad && !seenIds.has(ad.id)) {
+          ads.push(ad);
+          seenIds.add(ad.id);
+        }
+      } catch (err) {
+        // If we can't fetch more, break
+        break;
+      }
+    }
+
+    return ads;
+  },
+
   async createAdvertisement(formData: FormData): Promise<Advertisement> {
     try {
       const response = await axiosInstance.post<ApiResponse<Advertisement>>(

@@ -136,7 +136,7 @@ export default function BusinessesPage() {
         </div>
 
         {/* Filters Bar */}
-        <div className="bg-white rounded-xl p-4 mb-6 space-y-4">
+        <div className="bg-white rounded-xl mb-6 space-y-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <form
               onSubmit={handleSearchSubmit}

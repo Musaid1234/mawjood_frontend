@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Loader2, RefreshCw, RotateCcw, Globe2, Layout, Star, ImageIcon, MapPin, Info } from 'lucide-react';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { settingsService, SiteSettings } from '@/services/settings.service';
+import { categoryService, Category } from '@/services/category.service';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HeroSettingsSection } from '@/components/admin/site-settings/HeroSettingsSection';
@@ -40,12 +41,31 @@ export default function SiteSettingsPage() {
   const [formState, setFormState] = useState<SiteSettings | null>(null);
   const [savingSection, setSavingSection] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<SectionId>('hero');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
 
   useEffect(() => {
     if (data) {
       setFormState(data);
     }
   }, [data]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setCategoriesLoading(true);
+        const response = await categoryService.fetchCategories(1, 500);
+        setCategories(response.data?.categories ?? []);
+      } catch (error) {
+        console.error('Failed to fetch categories for featured sections:', error);
+        toast.error('Unable to load categories for featured sections');
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const updateMutation = useMutation({
     mutationFn: (payload: Partial<SiteSettings>) =>
@@ -250,6 +270,8 @@ export default function SiteSettingsPage() {
                 handlePartialSave('featuredSections', { featuredSections })
               }
               isSaving={isSavingSection('featuredSections')}
+              categories={categories}
+              categoriesLoading={categoriesLoading}
             />
           </TabsContent>
 

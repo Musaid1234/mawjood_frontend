@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { cityService, City, Region } from '@/services/city.service';
+import { cityService, City, Region, Country } from '@/services/city.service';
 
 export type LocationSelection = {
-  type: 'city' | 'region';
+  type: 'city' | 'region' | 'country';
   slug: string;
   name: string;
   id?: string;
@@ -13,6 +13,7 @@ export type LocationSelection = {
 interface CityState {
   cities: City[];
   regions: Region[];
+  countries: Country[];
   selectedCity: City | null;
   selectedLocation: LocationSelection | null;
   loading: boolean;
@@ -20,6 +21,7 @@ interface CityState {
   hasLoaded: boolean;
   fetchCities: () => Promise<void>;
   fetchRegions: () => Promise<void>;
+  fetchCountries: () => Promise<void>;
   setSelectedCity: (city: City | null) => void;
   setSelectedLocation: (location: LocationSelection | null) => void;
 }
@@ -45,6 +47,7 @@ export const useCityStore = create<CityState>()(
       (set, get) => ({
         cities: [],
         regions: [],
+        countries: [],
         selectedCity: null,
         selectedLocation: null,
         loading: false,
@@ -94,6 +97,17 @@ export const useCityStore = create<CityState>()(
           } catch (error) {
             set({
               error: error instanceof Error ? error.message : 'Failed to fetch regions',
+            });
+          }
+        },
+
+        fetchCountries: async () => {
+          try {
+            const countries = await cityService.fetchCountries();
+            set({ countries });
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : 'Failed to fetch countries',
             });
           }
         },

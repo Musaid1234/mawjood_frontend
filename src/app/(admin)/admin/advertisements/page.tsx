@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -8,20 +8,31 @@ import { Input } from '@/components/ui/input';
 import { DateTimePicker } from '@/components/ui/datetime-picker';
 import { businessService, Business } from '@/services/business.service';
 import { advertisementService } from '@/services/advertisement.service';
+import { cityService, Region, Country } from '@/services/city.service';
 import Image from 'next/image';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2, Upload, X } from 'lucide-react';
 
 export default function AdvertisementsPage() {
   const router = useRouter();
+  const businessDropdownRef = useRef<HTMLDivElement>(null);
+  const [selectedBusinessData, setSelectedBusinessData] = useState<Business | null>(null);
 
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [businessesLoading, setBusinessesLoading] = useState(false);
+  const [businessSearchQuery, setBusinessSearchQuery] = useState('');
+  const [showBusinessDropdown, setShowBusinessDropdown] = useState(false);
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [regionsLoading, setRegionsLoading] = useState(false);
+  const [countriesLoading, setCountriesLoading] = useState(false);
 
   const [title, setTitle] = useState('');
   const [selectedBusinessId, setSelectedBusinessId] = useState('');
   const [derivedCategoryId, setDerivedCategoryId] = useState('');
   const [derivedCityId, setDerivedCityId] = useState('');
-  const [businessSearch, setBusinessSearch] = useState('');
+  const [derivedRegionId, setDerivedRegionId] = useState('');
+  const [derivedCountryId, setDerivedCountryId] = useState('');
+  const [locationType, setLocationType] = useState<'city' | 'region' | 'country'>('city');
   const [targetUrl, setTargetUrl] = useState('');
   const [notes, setNotes] = useState('');
   const [isActive, setIsActive] = useState(true);
@@ -32,48 +43,119 @@ export default function AdvertisementsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Fetch regions and countries
   useEffect(() => {
-    const fetchBusinesses = async () => {
+    const fetchRegions = async () => {
       try {
-        setBusinessesLoading(true);
-        const response = await businessService.getMyBusinesses();
-        setBusinesses(response || []);
+        setRegionsLoading(true);
+        const data = await cityService.fetchRegions();
+        setRegions(data);
       } catch (error: any) {
-        console.error('Error fetching businesses for advertisements:', error);
-        toast.error(error?.message || 'Failed to load businesses');
+        console.error('Error fetching regions:', error);
       } finally {
-        setBusinessesLoading(false);
+        setRegionsLoading(false);
       }
     };
 
-    fetchBusinesses();
+    const fetchCountries = async () => {
+      try {
+        setCountriesLoading(true);
+        const data = await cityService.fetchCountries();
+        setCountries(data);
+      } catch (error: any) {
+        console.error('Error fetching countries:', error);
+      } finally {
+        setCountriesLoading(false);
+      }
+    };
+
+    fetchRegions();
+    fetchCountries();
   }, []);
 
-  const filteredBusinesses = useMemo(() => {
-    const query = businessSearch.trim().toLowerCase();
-    if (!query) return businesses;
-    return businesses.filter((b) =>
-      b.name.toLowerCase().includes(query) || b.slug.toLowerCase().includes(query)
-    );
-  }, [businesses, businessSearch]);
-
-  const handleBusinessSelect = (businessId: string) => {
-    setSelectedBusinessId(businessId);
-    const business = businesses.find((b) => b.id === businessId);
-    if (business) {
-      setTargetUrl(business.slug);
-      setDerivedCategoryId(business.category?.id || '');
-      setDerivedCityId(business.city?.id || '');
-      if (!title.trim()) {
-        setTitle(business.name);
-      }
+  // Search businesses with debounce
+  useEffect(() => {
+    if (!businessSearchQuery.trim()) {
+      setBusinesses([]);
+      return;
     }
+
+    const debounceTimer = setTimeout(async () => {
+      try {
+        setBusinessesLoading(true);
+        const response = await businessService.searchBusinesses({
+          search: businessSearchQuery.trim(),
+          limit: 20,
+          page: 1,
+        });
+        setBusinesses(response.businesses || []);
+      } catch (error: any) {
+        console.error('Error searching businesses:', error);
+        toast.error(error?.message || 'Failed to search businesses');
+        setBusinesses([]);
+      } finally {
+        setBusinessesLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [businessSearchQuery]);
+
+  // Click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        businessDropdownRef.current &&
+        !businessDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowBusinessDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleBusinessSelect = async (business: Business) => {
+    setSelectedBusinessId(business.id);
+    setSelectedBusinessData(business);
+    setTargetUrl(business.slug);
+    setDerivedCategoryId(business.category?.id || '');
+    setDerivedCityId(business.city?.id || '');
+    
+    // Fetch full business details to get region and country info
+    try {
+      const fullBusiness = await businessService.getBusinessById(business.id);
+      if (fullBusiness.city) {
+        // Try to find region by matching city name or fetch city details
+        // For now, we'll use the city ID to find the region
+        // This assumes the city has a regionId - if not, we may need to fetch city details
+        const cityWithRegion = await cityService.fetchCityBySlug(fullBusiness.city.slug);
+        if (cityWithRegion?.regionId) {
+          const region = regions.find((r) => r.id === cityWithRegion.regionId);
+          if (region) {
+            setDerivedRegionId(region.id);
+            if (region.countryId) {
+              setDerivedCountryId(region.countryId);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching business details:', error);
+      // Continue without region/country if fetch fails
+    }
+    
+    if (!title.trim()) {
+      setTitle(business.name);
+    }
+    setShowBusinessDropdown(false);
+    setBusinessSearchQuery(business.name);
   };
 
-  const selectedBusiness = useMemo(
-    () => businesses.find((b) => b.id === selectedBusinessId) || null,
-    [businesses, selectedBusinessId]
-  );
+  const selectedBusiness = selectedBusinessData;
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -97,6 +179,16 @@ export default function AdvertisementsPage() {
     if (!title.trim()) newErrors.title = 'Title is required';
     if (!selectedBusinessId) newErrors.businessId = 'Select a business to link this advertisement to';
     if (!derivedCategoryId) newErrors.categoryId = 'Selected business has no category';
+    
+    // Validate location based on selected type
+    if (locationType === 'city' && !derivedCityId) {
+      newErrors.cityId = 'Selected business has no city';
+    } else if (locationType === 'region' && !derivedRegionId) {
+      newErrors.regionId = 'Selected business has no region';
+    } else if (locationType === 'country' && !derivedCountryId) {
+      newErrors.countryId = 'Selected business has no country';
+    }
+    
     if (!imageFile) newErrors.image = 'Advertisement image is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -129,9 +221,16 @@ export default function AdvertisementsPage() {
       if (derivedCategoryId) {
         formData.append('categoryId', derivedCategoryId);
       }
-      if (derivedCityId) {
+      
+      // Add location based on selected location type
+      if (locationType === 'city' && derivedCityId) {
         formData.append('cityId', derivedCityId);
+      } else if (locationType === 'region' && derivedRegionId) {
+        formData.append('regionId', derivedRegionId);
+      } else if (locationType === 'country' && derivedCountryId) {
+        formData.append('countryId', derivedCountryId);
       }
+      
       formData.append('image', imageFile);
 
       await advertisementService.createAdvertisement(formData);
@@ -267,9 +366,55 @@ export default function AdvertisementsPage() {
               Linked Business & Placement
             </h2>
             <p className="text-sm text-gray-500 mb-2">
-              Choose which business this banner belongs to. We&apos;ll automatically use its category
-              and city to decide where to display the advertisement.
+              Choose which business this banner belongs to and select the location scope for display.
             </p>
+
+            {/* Location Type Selector */}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Display Location Scope
+              </label>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setLocationType('city')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    locationType === 'city'
+                      ? 'bg-[#1c4233] text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  City Only
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocationType('region')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    locationType === 'region'
+                      ? 'bg-[#1c4233] text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Entire Region/State
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocationType('country')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    locationType === 'country'
+                      ? 'bg-[#1c4233] text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Entire Country
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                {locationType === 'city' && 'Advertisement will show only in the selected business\'s city'}
+                {locationType === 'region' && 'Advertisement will show across the entire region/state'}
+                {locationType === 'country' && 'Advertisement will show across the entire country'}
+              </p>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Business selector */}
@@ -277,45 +422,74 @@ export default function AdvertisementsPage() {
                 <label className="block text-sm font-medium text-gray-700">
                   Business <span className="text-red-500">*</span>
                 </label>
-                <Input
-                  value={businessSearch}
-                  onChange={(e) => setBusinessSearch(e.target.value)}
-                  placeholder="Search by business name or slug..."
-                  disabled={businessesLoading}
-                />
-                <div className="border border-gray-200 rounded-lg max-h-56 overflow-y-auto mt-2 bg-white">
-                  {businessesLoading ? (
-                    <div className="flex items-center justify-center py-4 text-sm text-gray-500">
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Loading businesses...
+                <div className="relative" ref={businessDropdownRef}>
+                  <Input
+                    value={businessSearchQuery}
+                    onChange={(e) => {
+                      setBusinessSearchQuery(e.target.value);
+                      setShowBusinessDropdown(true);
+                    }}
+                    onFocus={() => setShowBusinessDropdown(true)}
+                    placeholder="Search businesses by name..."
+                    disabled={businessesLoading}
+                  />
+                  {businessSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBusinessSearchQuery('');
+                        setSelectedBusinessId('');
+                        setSelectedBusinessData(null);
+                        setBusinesses([]);
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                  
+                  {showBusinessDropdown && (businessSearchQuery.trim() || businesses.length > 0) && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                      {businessesLoading ? (
+                        <div className="flex items-center justify-center py-4 text-sm text-gray-500">
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          Searching...
+                        </div>
+                      ) : businesses.length === 0 ? (
+                        <div className="py-4 text-center text-sm text-gray-500">
+                          {businessSearchQuery.trim() ? 'No businesses found' : 'Start typing to search...'}
+                        </div>
+                      ) : (
+                        businesses.map((business) => {
+                          const selected = selectedBusinessId === business.id;
+                          return (
+                            <button
+                              key={business.id}
+                              type="button"
+                              onClick={() => handleBusinessSelect(business)}
+                              className={`w-full text-left px-3 py-2 text-sm flex flex-col border-b last:border-b-0 transition-colors ${
+                                selected
+                                  ? 'bg-[#1c4233]/10 text-[#1c4233] font-medium'
+                                  : 'hover:bg-gray-50 text-gray-800'
+                              }`}
+                            >
+                              <span>{business.name}</span>
+                              <span className="text-xs text-gray-500">
+                                {business.category?.name} • {business.city?.name}
+                              </span>
+                            </button>
+                          );
+                        })
+                      )}
                     </div>
-                  ) : filteredBusinesses.length === 0 ? (
-                    <div className="py-4 text-center text-sm text-gray-500">
-                      No businesses found.
-                    </div>
-                  ) : (
-                    filteredBusinesses.map((business) => {
-                      const selected = selectedBusinessId === business.id;
-                      return (
-                        <button
-                          key={business.id}
-                          type="button"
-                          onClick={() => handleBusinessSelect(business.id)}
-                          className={`w-full text-left px-3 py-2 text-sm flex flex-col border-b last:border-b-0 transition-colors ${
-                            selected
-                              ? 'bg-[#1c4233]/10 text-[#1c4233] font-medium'
-                              : 'hover:bg-gray-50 text-gray-800'
-                          }`}
-                        >
-                          <span>{business.name}</span>
-                          <span className="text-xs text-gray-500">
-                            /businesses/{business.slug}
-                          </span>
-                        </button>
-                      );
-                    })
                   )}
                 </div>
+                {selectedBusiness && (
+                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm">
+                    <span className="font-medium text-green-800">Selected: </span>
+                    <span className="text-green-700">{selectedBusiness.name}</span>
+                  </div>
+                )}
                 {errors.businessId && (
                   <p className="text-sm text-red-600">{errors.businessId}</p>
                 )}
@@ -347,11 +521,16 @@ export default function AdvertisementsPage() {
                       <span className="font-medium">
                         {selectedBusiness.category?.name}
                       </span>{' '}
-                      listings in{' '}
-                      <span className="font-medium">
-                        {selectedBusiness.city?.name}
-                      </span>
-                      .
+                      listings{' '}
+                      {locationType === 'city' && (
+                        <>in <span className="font-medium">{selectedBusiness.city?.name}</span>.</>
+                      )}
+                      {locationType === 'region' && (
+                        <>across the entire <span className="font-medium">region/state</span>.</>
+                      )}
+                      {locationType === 'country' && (
+                        <>across the entire <span className="font-medium">country</span>.</>
+                      )}
                     </p>
                   </div>
                 ) : (

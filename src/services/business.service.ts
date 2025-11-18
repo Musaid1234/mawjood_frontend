@@ -19,7 +19,7 @@ export interface Business {
   longitude?: number;
   logo?: string;
   coverImage?: string;
-  images?: ImageObject[] | null;
+  images?: Array<string | ImageObject> | null;
   metaTitle?: string | null;
   metaDescription?: string | null;
   averageRating: number;

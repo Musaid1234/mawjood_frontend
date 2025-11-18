@@ -4,6 +4,7 @@ import {
   FeaturedSectionCard,
   FeaturedSectionSettings,
 } from '@/services/settings.service';
+import { Category } from '@/services/category.service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,8 @@ interface FeaturedSectionsSettingsSectionProps {
   onChange: (value: FeaturedSectionSettings[]) => void;
   onSave: (value: FeaturedSectionSettings[]) => Promise<void>;
   isSaving: boolean;
+  categories: Category[];
+  categoriesLoading?: boolean;
 }
 
 const createEmptySection = (): FeaturedSectionSettings => ({
@@ -45,6 +48,8 @@ export function FeaturedSectionsSettingsSection({
   onChange,
   onSave,
   isSaving,
+  categories,
+  categoriesLoading,
 }: FeaturedSectionsSettingsSectionProps) {
   const sections = value ?? [];
 
@@ -97,6 +102,31 @@ export function FeaturedSectionsSettingsSection({
 
   const handleSave = async () => {
     await onSave(sections);
+  };
+
+  const handleCategorySelect = (
+    sectionIndex: number,
+    itemIndex: number,
+    categoryId: string
+  ) => {
+    if (!categoryId) {
+      updateSectionItem(sectionIndex, itemIndex, { categoryId: undefined });
+      return;
+    }
+
+    const selectedCategory = categories.find((category) => category.id === categoryId);
+    if (!selectedCategory) {
+      updateSectionItem(sectionIndex, itemIndex, { categoryId: undefined });
+      return;
+    }
+
+    updateSectionItem(sectionIndex, itemIndex, {
+      categoryId,
+      name: selectedCategory.name,
+      slug: selectedCategory.slug,
+      image: selectedCategory.image || selectedCategory.icon || '',
+      id: sections[sectionIndex]?.items?.[itemIndex]?.id || selectedCategory.slug,
+    });
   };
 
   return (
@@ -288,6 +318,40 @@ export function FeaturedSectionsSettingsSection({
                           }
                           placeholder="Cleaning Services"
                         />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase text-gray-600">
+                          Linked Category
+                        </label>
+                        <Select
+                          value={item.categoryId ?? 'none'}
+                          onValueChange={(value) =>
+                            handleCategorySelect(sectionIndex, itemIndex, value === 'none' ? '' : value)
+                          }
+                          disabled={categoriesLoading}
+                        >
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                categoriesLoading
+                                  ? 'Loading categories...'
+                                  : 'Select category (optional)'
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">No linked category</SelectItem>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[11px] text-gray-500">
+                          Selecting a category will auto-fill the name, slug, and image for this card.
+                        </p>
                       </div>
 
                       <div className="space-y-2 md:col-span-2">

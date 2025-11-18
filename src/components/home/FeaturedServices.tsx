@@ -178,13 +178,13 @@ export default function FeaturedServices() {
           </Link>
         </div>
 
-        {/* Image Grid */}
-        <div className="flex gap-6 overflow-x-auto pb-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6 md:overflow-visible">
+        {/* Horizontal scrollable cards */}
+        <div className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scroll-smooth flex-nowrap pr-6 scrollbar-thin scrollbar-thumb-primary/70 scrollbar-track-transparent hover:scrollbar-thumb-primary">
           {section.items.map((item) => (
             <Link
               key={item.id}
               href={`/${locationSlug}/${item.slug}`}
-              className="group block relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 flex-shrink-0 w-72 md:w-auto"
+              className="group block relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 flex-shrink-0 w-72 sm:w-80 md:w-96 snap-start"
             >
               {/* Image */}
               <div className="relative h-60 sm:h-64 md:h-72 w-full">

@@ -15,6 +15,8 @@ import {
   Shield,
   Folder,
   CreditCard,
+  Megaphone,
+  BadgePercent 
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -57,17 +59,17 @@ const sidebarItems = [
   {
     name: 'Transactions',
     href: '/admin/transactions',
-    icon: Receipt,
+    icon: CreditCard,
   },
   {
     name: 'Subscription Plans',
     href: '/admin/subscription-plans',
-    icon: CreditCard,
+    icon: BadgePercent,
   },
   {
     name: 'Advertisements',
     href: '/admin/advertisements',
-    icon: FolderTree,
+    icon:  Megaphone,
   },
 ];
 
