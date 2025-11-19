@@ -56,7 +56,9 @@ export default function FeaturedListings() {
     const renderBusinessCard = (business: Business) => {
         // Check if business has active subscription (top placement)
         const hasActiveSubscription = business.promotedUntil && new Date(business.promotedUntil) > new Date();
-
+        const descriptionText = business.description
+        ? business.description.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
+        : '';
         return (
         <div
             key={business.id}
@@ -70,6 +72,9 @@ export default function FeaturedListings() {
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        priority={businesses.indexOf(business) === 0}
+                        fetchPriority={businesses.indexOf(business) === 0 ? 'high' : 'auto'}
+                        loading={businesses.indexOf(business) === 0 ? 'eager' : 'lazy'}
                     />
                 </Link>
 
@@ -115,7 +120,7 @@ export default function FeaturedListings() {
             <div className="p-4">
                 <Link href={`/businesses/${business.slug}`}>
                     <h3 className="font-semibold text-md text-gray-900 mb-1 hover:text-primary transition-colors flex items-center gap-2 flex-wrap">
-                        {business.name}
+                    {business.name.charAt(0).toUpperCase() + business.name.slice(1)}
                         {business.isVerified && (
                             <svg
                                 className="w-5 h-5 text-green-500"
@@ -132,9 +137,14 @@ export default function FeaturedListings() {
                     </h3>
                 </Link>
 
-                <p className="text-xs text-gray-600 mb-3 line-clamp-2">
-                    {business.description}
-                </p>
+                {descriptionText && (
+                    <p className="text-xs text-gray-600 mb-3 line-clamp-2 h-8">
+                        {descriptionText}
+                    </p>
+                )}
+                {!descriptionText && (
+                    <div className="h-10 mb-3"></div>
+                )}
 
                 <div className="space-y-2 mb-3">
                     {business.phone && (
@@ -154,19 +164,24 @@ export default function FeaturedListings() {
                 </div>
 
                 <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                    <div className="flex items-center gap-1">
+                    <Link 
+                      href={`/${selectedLocation?.slug || selectedCity?.slug || 'riyadh'}/${business.category.slug}`}
+                      className="flex items-center gap-1 hover:text-primary transition-colors"
+                    >
                         <div className="relative">
                             🏷️
                         </div>
                         <span className="text-sm font-medium text-gray-700 truncate">
                             {business.category.name}
                         </span>
-                    </div>
+                    </Link>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                        <div className="flex items-center gap-1 bg-yellow-300 text-white px-2 py-1 rounded text-xs font-semibold">
-                            <span>{business.averageRating > 0 ? business.averageRating.toFixed(1) : '5.0'}</span>
-                            <Star className="w-3 h-3 fill-current" />
-                        </div>
+                        {business.totalReviews > 0 && business.averageRating > 0 && (
+                            <div className="flex items-center gap-1 bg-yellow-300 text-white px-2 py-1 rounded text-xs font-semibold">
+                                <span>{business.averageRating.toFixed(1)}</span>
+                                <Star className="w-3 h-3 fill-current" />
+                            </div>
+                        )}
                         <span className="text-xs text-gray-600 ml-1 whitespace-nowrap">
                             {business.totalReviews || 0} Reviews
                         </span>

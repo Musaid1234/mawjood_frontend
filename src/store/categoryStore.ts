@@ -51,7 +51,8 @@ export const useCategoryStore = create<CategoryState>()(
         set({ loading: true, error: null });
 
         try {
-          const response = await categoryService.fetchCategories();
+          // Fetch more categories (50 total)
+          const response = await categoryService.fetchCategories(1, 50);
 
           set({
             categories: response.data.categories as Category[] || [],

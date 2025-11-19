@@ -135,27 +135,32 @@ export default function BusinessListCard({ business, onToggleFavorite }: Busines
 
         {/* Right: Business Info */}
         <div className="flex-1 p-5">
-          <Link href={`/businesses/${business.slug}`}>
+          <div>
             {/* Header */}
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <h3 className="text-xl font-bold text-gray-900 hover:text-primary transition-colors flex items-center gap-2">
-                {business.name}
-                {business.isVerified && (
-                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                )}
-              </h3>
-            </div>
+            <Link href={`/businesses/${business.slug}`}>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <h3 className="text-xl font-bold text-gray-900 hover:text-primary transition-colors flex items-center gap-2">
+                  {business.name.charAt(0).toUpperCase() + business.name.slice(1)}
+                  {business.isVerified && (
+                    <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  )}
+                </h3>
+              </div>
+            </Link>
 
             {/* Category */}
-            <div className="flex items-center gap-2 mb-3">
+            <Link 
+              href={`/${business.city.slug}/${business.category.slug}`}
+              className="flex items-center gap-2 mb-3 hover:text-primary transition-colors"
+            >
               <span className="text-sm text-gray-600">{business.category.name}</span>
-            </div>
+            </Link>
 
             {/* Description */}
             {descriptionText && (
@@ -166,7 +171,7 @@ export default function BusinessListCard({ business, onToggleFavorite }: Busines
 
             {/* Rating & Reviews */}
             <div className="flex items-center gap-3 mb-4 flex-wrap">
-              {business.averageRating > 0 && (
+              {business.totalReviews > 0 && business.averageRating > 0 && (
                 <div className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
                   <Star className="w-3.5 h-3.5 fill-current" />
                   {business.averageRating.toFixed(1)}
@@ -203,11 +208,13 @@ export default function BusinessListCard({ business, onToggleFavorite }: Busines
             </div>
 
             {/* Location */}
-            <div className="flex items-start gap-2 mb-4 text-gray-700">
-              <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              <span className="text-sm">{business.address || business.city.name}</span>
-            </div>
-          </Link>
+            <Link href={`/businesses/${business.slug}`}>
+              <div className="flex items-start gap-2 mb-4 text-gray-700">
+                <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <span className="text-sm">{business.address || business.city.name}</span>
+              </div>
+            </Link>
+          </div>
 
           {/* Action Buttons */}
           <div className="flex gap-2 flex-wrap">

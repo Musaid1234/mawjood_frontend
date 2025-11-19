@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Building2, Users, Award, Target, Heart, TrendingUp, Shield, Zap } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
@@ -185,12 +186,44 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Image Section */}
+      <section className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="relative h-80 rounded-2xl overflow-hidden shadow-lg">
+              <Image
+                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop"
+                alt="Mawjood Team"
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div className="relative h-80 rounded-2xl overflow-hidden shadow-lg">
+              <Image
+                src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop"
+                alt="Mawjood Platform"
+                fill
+                className="object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Our Story Section */}
       <section className="py-20 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">{aboutContent.story.title}</h2>
             <div className="w-24 h-1 bg-primary mx-auto"></div>
+          </div>
+          <div className="mb-8 relative h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg">
+            <Image
+              src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&h=600&fit=crop"
+              alt="Our Story"
+              fill
+              className="object-cover"
+            />
           </div>
           <div className="prose prose-lg max-w-none text-gray-600">
             {aboutContent.story.paragraphs.map((paragraph, index) => (

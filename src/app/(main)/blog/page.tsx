@@ -6,8 +6,9 @@ import { blogService, BlogCategory } from '@/services/blog.service';
 import BlogCard from '@/components/blog/BlogCard';
 import { Input } from '@/components/ui/input';
 import { Loader2, Search, X } from 'lucide-react';
+import AdvertisementBanner from '@/components/home/AdvertisementBanner';
 
-const BLOGS_PER_PAGE = 12;
+const BLOGS_PER_PAGE = 10;
 
 interface BlogsListingProps {
   initialCategorySlug?: string | null;
@@ -87,6 +88,7 @@ export function BlogsListing({ initialCategorySlug = null, categoryInfo = null }
 
   return (
     <div className="min-h-screen bg-gray-50 py-16">
+      <AdvertisementBanner />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-12 space-y-4">
           <h1 className="text-4xl font-bold text-gray-900">

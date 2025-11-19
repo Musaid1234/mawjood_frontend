@@ -98,7 +98,7 @@ export const blogService = {
     };
   }> {
     try {
-      const { limit = 12, page = 1, ...filters } = params ?? {};
+      const { limit = 10, page = 1, ...filters } = params ?? {};
       const response = await axiosInstance.get<ApiResponse<{
         blogs: Blog[];
         pagination: any;

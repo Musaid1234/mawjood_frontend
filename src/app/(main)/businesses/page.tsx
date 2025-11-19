@@ -7,7 +7,7 @@ import { useCityStore } from '@/store/cityStore';
 import { Category, categoryService } from '@/services/category.service';
 import BusinessCard from '@/components/business/BusinessCard';
 import BusinessListCard from '@/components/business/BusinessListCard';
-import { LayoutGrid, List } from 'lucide-react';
+import { LayoutGrid, List, ChevronDown } from 'lucide-react';
 import CategoryDropdown from '@/components/dashboard/add-listing/CategoryDropdown';
 
 type FiltersState = {
@@ -148,7 +148,7 @@ export default function BusinessesPage() {
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Search businesses or services"
                 style={{ paddingTop: '0.875rem', paddingBottom: '0.875rem' }}
-                className="flex-1 px-4  border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="flex-1 px-4  border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               />
               {filters.search && (
                 <button
@@ -203,18 +203,21 @@ export default function BusinessesPage() {
                 <option value="3">3+ Stars</option>
               </select> */}
 
-              <select
-                value={filters.sortBy}
-                onChange={(event) => updateFilters({ sortBy: event.target.value })}
-                style={{ paddingTop: '0.875rem', paddingBottom: '0.875rem' }}
-                className="px-4 border border-gray-300 rounded-lg text-sm bg-white text-gray-500 focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={filters.sortBy}
+                  onChange={(event) => updateFilters({ sortBy: event.target.value })}
+                  style={{ paddingTop: '0.875rem', paddingBottom: '0.875rem', paddingRight: '2.5rem' }}
+                  className="px-4 pr-10 border border-gray-300 rounded-lg bg-white text-gray-500 focus:ring-2 focus:ring-primary focus:border-transparent appearance-none cursor-pointer"
+                >
+                  {SORT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+              </div>
               <div style={{ padding: '0.40rem' }} className="flex items-center gap-2 bg-gray-100 rounded-lg self-start sm:self-auto">
               <button
                 onClick={() => setViewMode('list')}
@@ -243,7 +246,6 @@ export default function BusinessesPage() {
           </div>
         </div>
 
-        {/* Loading State */}
         {isLoading ? (
           <div className={`grid gap-6 ${
             viewMode === 'grid' 

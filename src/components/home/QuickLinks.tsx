@@ -1,36 +1,13 @@
 "use client";
 
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useCategoryStore } from '@/store/categoryStore';
 import { useCityStore } from '@/store/cityStore';
 
 const POPULAR_COUNT = 8;
-const QUICK_LIST_COUNT = 40;
-const TRENDING_COUNT = 40;
-
-const joinWithSeparators = (
-  items: { id: string; name: string; href: string }[],
-  separator = '|'
-) =>
-  items.flatMap((item, index) => [
-    <Link
-      key={item.id}
-      href={item.href}
-      className="text-sm text-gray-700 hover:text-primary transition-colors"
-    >
-      {item.name}
-    </Link>,
-    index < items.length - 1 ? (
-      <span
-        key={`${item.id}-separator`}
-        className="text-gray-300 mx-2"
-        aria-hidden="true"
-      >
-        {separator}
-      </span>
-    ) : null,
-  ]);
+const QUICK_LIST_COUNT = 50;
+const TRENDING_COUNT = 50;
 
 export default function QuickLinks() {
   const { categories, fetchCategories, loading } = useCategoryStore();
@@ -84,12 +61,12 @@ export default function QuickLinks() {
             Quick Links
           </h2>
 
-          <div className="flex gap-3 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible">
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide scroll-smooth">
             {popular.map((category) => (
               <Link
                 key={category.id}
                 href={category.href}
-                className="flex-shrink-0 px-4 py-2 rounded-full border border-gray-200 text-gray-800 font-medium hover:border-primary hover:text-primary transition-colors"
+                className="flex-shrink-0 px-4 py-2 rounded-full border border-gray-200 text-gray-800 font-medium hover:border-primary hover:text-primary transition-colors whitespace-nowrap"
               >
                 {category.name}
               </Link>
@@ -98,8 +75,22 @@ export default function QuickLinks() {
 
           {quickList.length > 0 && (
             <div className="mt-6">
-              <div className="flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible text-sm leading-7 text-gray-700">
-                {joinWithSeparators(quickList)}
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide scroll-smooth text-sm leading-7 text-gray-700 flex-nowrap">
+                {quickList.map((category, index) => (
+                  <React.Fragment key={category.id}>
+                    {index > 0 && (
+                      <span className="text-gray-300 mx-2 flex-shrink-0" aria-hidden="true">
+                        |
+                      </span>
+                    )}
+                    <Link
+                      href={category.href}
+                      className="text-sm text-gray-700 hover:text-primary transition-colors whitespace-nowrap flex-shrink-0"
+                    >
+                      {category.name}
+                    </Link>
+                  </React.Fragment>
+                ))}
               </div>
             </div>
           )}
@@ -111,8 +102,22 @@ export default function QuickLinks() {
             <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">
               Trending Searches
             </h3>
-            <div className="flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible text-sm leading-7 text-gray-700">
-              {joinWithSeparators(trending)}
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide scroll-smooth text-sm leading-7 text-gray-700 flex-nowrap">
+              {trending.map((category, index) => (
+                <React.Fragment key={category.id}>
+                  {index > 0 && (
+                    <span className="text-gray-300 mx-2 flex-shrink-0" aria-hidden="true">
+                      |
+                    </span>
+                  )}
+                  <Link
+                    href={category.href}
+                    className="text-sm text-gray-700 hover:text-primary transition-colors whitespace-nowrap flex-shrink-0"
+                  >
+                    {category.name}
+                  </Link>
+                </React.Fragment>
+              ))}
             </div>
           </div>
         )}

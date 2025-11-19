@@ -102,12 +102,7 @@ export default function Navbar() {
             </div>
 
             <div className="hidden md:flex items-center space-x-4">
-              <button
-                onClick={toggleLanguage}
-                className="text-primary px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200"
-              >
-                {i18n.language === 'en' ? 'العربية' : 'English'}
-              </button>
+              {/* GTranslate Language Switcher */}
 
               <button
                 onClick={handleAddBusiness}
@@ -251,6 +246,8 @@ export default function Navbar() {
 
                 <div className="pt-4 pb-3 border-t border-gray-200">
                   <div className="flex items-center justify-between px-3">
+                    {/* GTranslate Language Switcher for Mobile */}
+                    <div className="gtranslate_wrapper"></div>
                     <button
                       onClick={toggleLanguage}
                       className="bg-primary text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors duration-200"

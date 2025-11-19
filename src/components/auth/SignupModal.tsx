@@ -698,17 +698,19 @@ export default function SignupModal({
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 flex flex-col items-center">
               <div
                 id="google-signup-button"
                 className={`flex justify-center ${!googleClientId ? 'cursor-not-allowed opacity-50' : ''}`}
+                style={{ width: '320px', maxWidth: '100%' }}
               />
               {!googleButtonRendered && (
                 <button
                   type="button"
                   onClick={handleGoogleSignup}
                   disabled={loading || !googleClientId}
-                  className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex items-center justify-center gap-3 rounded-lg border border-gray-300 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 bg-white"
+                  style={{ width: '320px', maxWidth: '100%' }}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 533.5 544.3" className="h-5 w-5">
                     <path
@@ -735,15 +737,16 @@ export default function SignupModal({
                 type="button"
                 onClick={handleFacebookSignup}
                 disabled={loading || !facebookAppId}
-                className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ width: '320px', maxWidth: '100%' }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5 text-[#1877f2]">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5">
                   <path
                     d="M22.675 0h-21.35C.596 0 0 .596 0 1.326v21.348C0 23.404.596 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.894-4.788 4.659-4.788 1.325 0 2.464.099 2.795.143v3.24l-1.918.001c-1.504 0-1.796.715-1.796 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116C23.403 24 24 23.404 24 22.674V1.326C24 .596 23.403 0 22.675 0z"
-                    fill="currentColor"
+                    fill="#1877f2"
                   />
                 </svg>
-                <span className="text-gray-800">Continue with Facebook</span>
+                Continue with Facebook
               </button>
             </div>
 

@@ -34,7 +34,7 @@ export default function AppDownloadBanner() {
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
+        <div className="flex flex-row items-center justify-center gap-3 sm:gap-8">
           {/* App Store Button */}
           <Link
             href={appStoreUrl}

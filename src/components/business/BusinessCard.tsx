@@ -77,7 +77,7 @@ export default function BusinessCard({ business, onToggleFavorite }: BusinessCar
       <div className="p-4">
         <Link href={`/businesses/${business.slug}`}>
             <h3 className="font-semibold text-lg text-gray-900 mb-2 hover:text-primary transition-colors flex items-center gap-2 flex-wrap">
-            {business.name}
+            {business.name.charAt(0).toUpperCase() + business.name.slice(1)}
               {hasActiveSubscription && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700">
                   <Sparkles className="w-3.5 h-3.5" />
@@ -88,9 +88,12 @@ export default function BusinessCard({ business, onToggleFavorite }: BusinessCar
         </Link>
 
         {descriptionText && (
-          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+          <p className="text-sm text-gray-600 mb-3 line-clamp-2 h-10">
             {descriptionText}
           </p>
+        )}
+        {!descriptionText && (
+          <div className="h-10 mb-3"></div>
         )}
 
         {/* Contact & Location */}
@@ -113,20 +116,25 @@ export default function BusinessCard({ business, onToggleFavorite }: BusinessCar
 
         {/* Footer - Category & Rating */}
         <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-          <div className="flex items-center gap-2">
+          <Link 
+            href={`/${business.city.slug}/${business.category.slug}`}
+            className="flex items-center gap-2 hover:text-primary transition-colors"
+          >
             <div className="w-8 h-8 rounded flex items-center justify-center">
               <span className="text-lg">🏷️</span>
             </div>
             <span className="text-sm font-medium text-gray-700">
               {business.category.name}
             </span>
-          </div>
+          </Link>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-yellow-300 text-white px-2 py-1 rounded text-xs font-semibold">
-              <span>{business.averageRating > 0 ? business.averageRating.toFixed(1) : '5.0'}</span>
-              <Star className="w-3 h-3 fill-current" />
-            </div>
+            {business.totalReviews > 0 && business.averageRating > 0 && (
+              <div className="flex items-center gap-1 bg-yellow-300 text-white px-2 py-1 rounded text-xs font-semibold">
+                <span>{business.averageRating.toFixed(1)}</span>
+                <Star className="w-3 h-3 fill-current" />
+              </div>
+            )}
             <span className="text-xs text-gray-600 whitespace-nowrap">
               {business.totalReviews || 0} Reviews
             </span>

@@ -178,16 +178,16 @@ export default function FeaturedServices() {
           </Link>
         </div>
 
-        {/* Horizontal scrollable cards */}
-        <div className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scroll-smooth flex-nowrap pr-6 scrollbar-thin scrollbar-thumb-primary/70 scrollbar-track-transparent hover:scrollbar-thumb-primary">
+        {/* 6 columns grid - scrollable on mobile */}
+        <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-hide scroll-smooth sm:flex-nowrap lg:grid lg:grid-cols-6 lg:gap-6 lg:overflow-visible lg:pb-0">
           {section.items.map((item) => (
             <Link
               key={item.id}
               href={`/${locationSlug}/${item.slug}`}
-              className="group block relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 flex-shrink-0 w-72 sm:w-80 md:w-96 snap-start"
+              className="group block relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 flex-shrink-0 w-40 lg:w-auto"
             >
               {/* Image */}
-              <div className="relative h-60 sm:h-64 md:h-72 w-full">
+              <div className="relative h-48 sm:h-56 md:h-64 w-full aspect-square">
                 <Image
                   src={item.image}
                   alt={item.name}
@@ -198,11 +198,11 @@ export default function FeaturedServices() {
               </div>
 
               {/* Text Overlay */}
-              <div className="absolute bottom-0 left-0 p-4 sm:p-5 text-white">
-                <h4 className="text-lg sm:text-xl font-semibold mb-1 drop-shadow-md">
+              <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 text-white">
+                <h4 className="text-sm sm:text-base font-semibold mb-1 drop-shadow-md line-clamp-2">
                   {item.name}
                 </h4>
-                <p className="text-sm text-gray-200">Explore top {item.name.toLowerCase()} near you</p>
+                <p className="text-xs text-gray-200 line-clamp-1">Explore top {item.name.toLowerCase()} near you</p>
               </div>
             </Link>
           ))}

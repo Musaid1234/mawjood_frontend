@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Optimize performance
+  compress: true,
+  poweredByHeader: false,
   images: {
     remotePatterns: [
       // ✅ Allow all hosts (wildcard)
