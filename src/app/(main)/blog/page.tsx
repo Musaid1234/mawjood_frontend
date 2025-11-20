@@ -7,6 +7,10 @@ import BlogCard from '@/components/blog/BlogCard';
 import { Input } from '@/components/ui/input';
 import { Loader2, Search, X } from 'lucide-react';
 import AdvertisementBanner from '@/components/home/AdvertisementBanner';
+import Link from 'next/link';
+import Image from 'next/image';
+import { format } from 'date-fns';
+import SidebarAd from '@/components/common/SidebarAd';
 
 const BLOGS_PER_PAGE = 10;
 
@@ -73,15 +77,18 @@ export function BlogsListing({ initialCategorySlug = null, categoryInfo = null }
   const blogs = data?.blogs ?? [];
   const pagination = data?.pagination;
 
+  // Fetch top 5 blogs for sidebar
+  const { data: topBlogsData } = useQuery({
+    queryKey: ['top-blogs-sidebar'],
+    queryFn: () => blogService.getBlogs({ limit: 5 }),
+    staleTime: 60_000,
+  });
+
+  const topBlogs = topBlogsData ?? [];
+
+
   const handleCategoryClick = (slug: string | null) => {
     setSelectedCategory((prev) => (prev === slug ? null : slug));
-  };
-
-  const handleViewLatest = () => {
-    setSelectedCategory(null);
-    setSearchInput('');
-    setDebouncedSearch('');
-    setCurrentPage(1);
   };
 
   const hasActiveFilters = Boolean(selectedCategory || debouncedSearch);
@@ -288,21 +295,48 @@ export function BlogsListing({ initialCategorySlug = null, categoryInfo = null }
                 )}
               </div>
             </div>
-            <div className="bg-primary rounded-2xl p-6 text-white shadow-lg">
-              <div className="flex flex-col gap-3">
-                <h3 className="text-xl font-semibold">Latest from the blog</h3>
-                <p className="text-white/80 text-sm">
-                  Stay up to date with fresh insights, tips, and platform news curated by our editorial team.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleViewLatest}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white text-primary font-semibold hover:bg-white/90 transition-colors"
-                >
-                  View latest blogs
-                </button>
+
+            {/* Top 5 Blogs */}
+            {topBlogs.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Latest Blogs</h2>
+                <div className="space-y-4">
+                  {topBlogs.slice(0, 5).map((blog) => (
+                    <Link
+                      key={blog.id}
+                      href={`/blog/${blog.slug}`}
+                      className="flex gap-3 group hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                    >
+                      <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
+                        <Image
+                          src={blog.image || 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&q=80'}
+                          alt={blog.title}
+                          fill
+                          className="object-cover"
+                          sizes="80px"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        {blog.categories && blog.categories.length > 0 && (
+                          <span className="text-xs text-primary font-medium">
+                            {blog.categories[0].name}
+                          </span>
+                        )}
+                        <h3 className="text-sm font-semibold text-gray-900 group-hover:text-primary transition-colors line-clamp-2 mt-1">
+                          {blog.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {format(new Date(blog.createdAt), 'MMM d, yyyy')}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Sidebar Ad */}
+            <SidebarAd queryKey="sidebar-ad-blog" height="h-96" />
           </aside>
         </div>
 
@@ -336,21 +370,47 @@ export function BlogsListing({ initialCategorySlug = null, categoryInfo = null }
               </button>
             ))}
           </div>
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-500 rounded-2xl p-5 text-white shadow-lg">
-            <div className="flex flex-col gap-3">
-              <h3 className="text-xl font-semibold">Latest from the blog</h3>
-              <p className="text-white/80 text-sm">
-                Tap below to explore the most recent stories and updates from our community.
-              </p>
-              <button
-                type="button"
-                onClick={handleViewLatest}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white text-blue-600 font-semibold hover:bg-white/90 transition-colors"
-              >
-                View latest blogs
-              </button>
+          {/* Top 5 Blogs Mobile */}
+          {topBlogs.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-200 p-5">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Top Blogs</h2>
+              <div className="space-y-4">
+                {topBlogs.slice(0, 5).map((blog) => (
+                  <Link
+                    key={blog.id}
+                    href={`/blog/${blog.slug}`}
+                    className="flex gap-3 group hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                  >
+                    <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
+                      <Image
+                        src={blog.image || 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=1200&q=80'}
+                        alt={blog.title}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {blog.categories && blog.categories.length > 0 && (
+                        <span className="text-xs text-primary font-medium">
+                          {blog.categories[0].name}
+                        </span>
+                      )}
+                      <h3 className="text-sm font-semibold text-gray-900 group-hover:text-primary transition-colors line-clamp-2 mt-1">
+                        {blog.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {format(new Date(blog.createdAt), 'MMM d, yyyy')}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Sidebar Ad Mobile */}
+          <SidebarAd queryKey="sidebar-ad-blog-mobile" height="h-64" />
         </div>
       </div>
     </div>

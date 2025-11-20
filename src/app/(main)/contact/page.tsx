@@ -323,28 +323,6 @@ export default function ContactPage() {
         </div>
       </div>
 
-      {/* Newsletter Section */}
-      <div className="bg-primary py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="text-white">
-              <h2 className="text-3xl font-bold mb-2">Subscribe Our Newsletter!</h2>
-              <p className="text-white/90">Subscribe our marketing platforms for latest updates</p>
-            </div>
-            <div className="flex gap-3 w-full md:w-auto">
-              <input
-                type="email"
-                placeholder="Your Email Here..."
-                className="flex-1 md:w-80 px-6 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-white"
-              />
-              <button className="bg-white hover:bg-gray-100 text-primary font-semibold px-6 py-3 rounded-lg transition-colors flex items-center gap-2">
-                <Send className="w-5 h-5" />
-                Subscribe
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

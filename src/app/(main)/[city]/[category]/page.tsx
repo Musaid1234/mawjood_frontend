@@ -12,6 +12,7 @@ import { useCityStore } from '@/store/cityStore';
 import BusinessListCard from '@/components/business/BusinessListCard';
 import BusinessCard from '@/components/business/BusinessCard';
 import { LayoutGrid, List, ChevronLeft, ChevronRight } from 'lucide-react';
+import SidebarAd from '@/components/common/SidebarAd';
 
 type FiltersState = {
   search: string;
@@ -573,7 +574,7 @@ export default function CityCategoryPage() {
           <span className="mx-1.5">&gt;</span>
           <span className="text-gray-800">{category.name}</span>
           <span className="mx-1.5">&gt;</span>
-          <span>{totalResults} Listings</span>
+          <span>{totalResults} {totalResults === 1 ? 'Listing' : 'Listings'}</span>
         </nav>
 
         <h1 className="text-3xl font-bold mb-8">
@@ -664,97 +665,57 @@ export default function CityCategoryPage() {
         </div>
 
         {businessLoading ? (
-          <div
-            className={
-              viewMode === 'grid'
-                ? 'grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+          <div className={`grid gap-6 ${
+            viewMode === 'grid'
+              ? 'lg:grid-cols-3'
+              : 'lg:grid-cols-4'
+          }`}>
+            <div className={viewMode === 'grid' ? 'lg:col-span-2' : 'lg:col-span-3'}>
+              <div className={viewMode === 'grid' 
+                ? 'grid gap-6 grid-cols-1 sm:grid-cols-2'
                 : 'space-y-6'
-            }
-          >
-            {[...Array(viewMode === 'grid' ? 6 : 5)].map((_, i) => (
-              <div key={i} className="bg-white rounded-xl p-6 animate-pulse h-40" />
-            ))}
+              }>
+                {[...Array(viewMode === 'grid' ? 4 : 5)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl p-6 animate-pulse h-40" />
+                ))}
+              </div>
+            </div>
+            <div className={viewMode === 'grid' ? 'lg:col-span-1' : 'lg:col-span-1'}>
+              <div className="bg-white rounded-xl p-6 animate-pulse h-96" />
+            </div>
           </div>
         ) : businesses.length > 0 ? (
-          viewMode === 'grid' ? (
-            <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {businesses.map((business, index) => {
-                const showAd = advertisements.length > 0 && index > 0 && index % 6 === 0;
-                const adIndex = (index / 6 - 1) % advertisements.length;
-                return (
-                  <div key={business.id}>
-                    <BusinessCard business={business} />
-                    {showAd && advertisements[adIndex] && (
-                      <div className="mt-5 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-                        {getResolvedTargetUrl(advertisements[adIndex]) ? (
-                          <Link
-                            href={getResolvedTargetUrl(advertisements[adIndex])!}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Image
-                              src={advertisements[adIndex].imageUrl}
-                              alt={advertisements[adIndex].title}
-                              width={400}
-                              height={200}
-                              className="w-full h-48 object-cover"
-                            />
-                          </Link>
-                        ) : (
-                          <Image
-                            src={advertisements[adIndex].imageUrl}
-                            alt={advertisements[adIndex].title}
-                            width={400}
-                            height={200}
-                            className="w-full h-48 object-cover"
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+          <div className={`grid gap-6 ${
+            viewMode === 'grid'
+              ? 'lg:grid-cols-3'
+              : 'lg:grid-cols-4'
+          }`}>
+            {/* Main Content */}
+            <div className={viewMode === 'grid' ? 'lg:col-span-2' : 'lg:col-span-3'}>
+              {viewMode === 'grid' ? (
+                <div className="grid gap-5 grid-cols-1 sm:grid-cols-2">
+                  {businesses.map((business) => (
+                    <BusinessCard key={business.id} business={business} />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {businesses.map((business) => (
+                    <div key={business.id} className="max-w-4xl">
+                      <BusinessListCard business={business} />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="space-y-6">
-              {businesses.map((business, index) => {
-                const showAd = advertisements.length > 0 && index > 0 && index % 5 === 0;
-                const adIndex = (index / 5 - 1) % advertisements.length;
-                return (
-                  <div key={business.id}>
-                    <BusinessListCard business={business} />
-                    {showAd && advertisements[adIndex] && (
-                      <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-                        {getResolvedTargetUrl(advertisements[adIndex]) ? (
-                          <Link
-                            href={getResolvedTargetUrl(advertisements[adIndex])!}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Image
-                              src={advertisements[adIndex].imageUrl}
-                              alt={advertisements[adIndex].title}
-                              width={1200}
-                              height={300}
-                              className="w-full h-64 object-cover"
-                            />
-                          </Link>
-                        ) : (
-                          <Image
-                            src={advertisements[adIndex].imageUrl}
-                            alt={advertisements[adIndex].title}
-                            width={1200}
-                            height={300}
-                            className="w-full h-64 object-cover"
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+
+            {/* Sidebar Ad */}
+            <div className={viewMode === 'grid' ? 'lg:col-span-1' : 'lg:col-span-1'}>
+              <div className="sticky top-8">
+                <SidebarAd queryKey="sidebar-ad-category" height="h-96" />
+              </div>
             </div>
-          )
+          </div>
         ) : (
           <div className="text-center py-16 bg-white rounded-xl">
             <h3 className="text-xl font-semibold mb-2">No businesses found</h3>

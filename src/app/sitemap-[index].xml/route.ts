@@ -4,7 +4,6 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3
 
 export async function GET(request: NextRequest) {
   try {
-    // Extract index from URL pathname since Next.js doesn't recognize [index] in folder name
     const url = new URL(request.url);
     const pathname = url.pathname;
     const match = pathname.match(/\/sitemap-([^/]+)\.xml$/);

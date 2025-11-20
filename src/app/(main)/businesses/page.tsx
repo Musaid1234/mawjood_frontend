@@ -9,6 +9,7 @@ import BusinessCard from '@/components/business/BusinessCard';
 import BusinessListCard from '@/components/business/BusinessListCard';
 import { LayoutGrid, List, ChevronDown } from 'lucide-react';
 import CategoryDropdown from '@/components/dashboard/add-listing/CategoryDropdown';
+import SidebarAd from '@/components/common/SidebarAd';
 
 type FiltersState = {
   categoryId: string;
@@ -100,6 +101,7 @@ export default function BusinessesPage() {
         rating: filters.rating ? Number(filters.rating) : undefined,
       }),
   });
+
 
   const toggleFavorite = (businessId: string) => {
     setFavorites((prev) => {
@@ -258,29 +260,46 @@ export default function BusinessesPage() {
           </div>
         ) : (
           <>
-            {/* Business Grid/List */}
+            {/* Business Grid/List with Sidebar */}
             <div className={`grid gap-6 ${
               viewMode === 'grid' 
-                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                : 'grid-cols-1'
+                ? 'lg:grid-cols-3' 
+                : 'lg:grid-cols-4'
             }`}>
-              {data?.businesses.map((business) => (
-                viewMode === 'grid' ? (
-                  <BusinessCard
-                    key={business.id}
-                    business={business}
-                    onToggleFavorite={toggleFavorite}
-                    isFavorite={favorites.has(business.id)}
-                  />
-                ) : (
-                  <BusinessListCard
-                    key={business.id}
-                    business={business}
-                    onToggleFavorite={toggleFavorite}
-                    isFavorite={favorites.has(business.id)}
-                  />
-                )
-              ))}
+              {/* Main Content */}
+              <div className={viewMode === 'grid' ? 'lg:col-span-2' : 'lg:col-span-3'}>
+                <div className={`grid gap-6 ${
+                  viewMode === 'grid' 
+                    ? 'grid-cols-1 md:grid-cols-2' 
+                    : 'grid-cols-1'
+                }`}>
+                  {data?.businesses.map((business) => (
+                    viewMode === 'grid' ? (
+                      <BusinessCard
+                        key={business.id}
+                        business={business}
+                        onToggleFavorite={toggleFavorite}
+                        isFavorite={favorites.has(business.id)}
+                      />
+                    ) : (
+                      <div key={business.id} className="max-w-4xl">
+                        <BusinessListCard
+                          business={business}
+                          onToggleFavorite={toggleFavorite}
+                          isFavorite={favorites.has(business.id)}
+                        />
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+
+              {/* Sidebar Ad */}
+              <div className={viewMode === 'grid' ? 'lg:col-span-1' : 'lg:col-span-1'}>
+                <div className="sticky top-8">
+                  <SidebarAd queryKey="sidebar-ad-businesses" height="h-96" />
+                </div>
+              </div>
             </div>
 
             {/* No Results */}

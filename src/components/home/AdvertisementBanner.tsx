@@ -71,14 +71,7 @@ export default function AdvertisementBanner() {
     return (
       <section className="py-8 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="relative h-40 md:h-48 rounded-2xl bg-gray-200 animate-pulse"
-              />
-            ))}
-          </div>
+          <div className="relative h-40 md:h-48 rounded-2xl bg-gray-200 animate-pulse w-full" />
         </div>
       </section>
     );
@@ -91,23 +84,20 @@ export default function AdvertisementBanner() {
   return (
     <section className="py-8 px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          {displayBanners.slice(0, 3).map((banner) => (
-            <Link
-              key={banner.id}
-              href={banner.targetUrl || '#'}
-              className="group block relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 h-40 md:h-48"
-            >
-              <Image
-                src={banner.imageUrl}
-                alt={banner.title || 'Advertisement'}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </Link>
-          ))}
-        </div>
+        {displayBanners.length > 0 && (
+          <Link
+            href={displayBanners[0].targetUrl || '#'}
+            className="group block relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 h-40 md:h-48 w-full"
+          >
+            <Image
+              src={displayBanners[0].imageUrl}
+              alt={displayBanners[0].title || 'Advertisement'}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </Link>
+        )}
       </div>
     </section>
   );
