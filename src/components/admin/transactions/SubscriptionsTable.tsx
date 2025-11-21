@@ -31,12 +31,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search } from 'lucide-react';
+import { BulkActionsToolbar } from '@/components/admin/common/BulkActionsToolbar';
 
 interface SubscriptionsTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   onSearchChange: (value: string) => void;
   searchValue?: string;
+  onBulkExport?: (selectedRows: TData[]) => void;
 }
 
 export function SubscriptionsTable<TData, TValue>({
@@ -44,6 +46,7 @@ export function SubscriptionsTable<TData, TValue>({
   data,
   onSearchChange,
   searchValue = '',
+  onBulkExport,
 }: SubscriptionsTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -69,8 +72,54 @@ export function SubscriptionsTable<TData, TValue>({
     },
   });
 
+  const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
+  const selectedCount = selectedRows.length;
+
+  const handleExportCSV = () => {
+    if (onBulkExport) {
+      onBulkExport(selectedRows);
+    } else {
+      const headers = ['ID', 'Business', 'Plan', 'Status', 'Start Date', 'End Date'];
+      const rows = selectedRows.length > 0 
+        ? selectedRows.map((row: any) => [
+            row.id,
+            row.business?.name || '',
+            row.plan?.name || '',
+            row.status,
+            new Date(row.startDate).toLocaleDateString(),
+            row.endDate ? new Date(row.endDate).toLocaleDateString() : '',
+          ])
+        : data.map((row: any) => [
+            row.id,
+            row.business?.name || '',
+            row.plan?.name || '',
+            row.status,
+            new Date(row.startDate).toLocaleDateString(),
+            row.endDate ? new Date(row.endDate).toLocaleDateString() : '',
+          ]);
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map((cell: any) => `"${cell}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `subscriptions-${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {/* Bulk Actions Toolbar */}
+      <BulkActionsToolbar
+        selectedCount={selectedCount}
+        onExportCSV={handleExportCSV}
+        exportFileName="subscriptions"
+      />
+
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />

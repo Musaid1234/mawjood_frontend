@@ -104,16 +104,16 @@ export function RegionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>Add New Region</DialogTitle>
+          <DialogTitle>Add New State</DialogTitle>
           <DialogDescription>
-            Create a new region to organize cities.
+            Create a new State to organize cities.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="region-name" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Region Name <span className="text-red-500">*</span>
+              State Name <span className="text-red-500">*</span>
             </label>
             <Input
               id="region-name"
@@ -172,7 +172,7 @@ export function RegionDialog({
             </Select>
             {countries.length === 0 && (
               <p className="text-xs text-red-500 mt-1">
-                Add a country before creating regions.
+                Add a country before creating states.
               </p>
             )}
           </div>
@@ -187,7 +187,7 @@ export function RegionDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || countries.length === 0}>
-              {isSubmitting ? 'Creating...' : 'Create Region'}
+              {isSubmitting ? 'Creating...' : 'Create State'}
             </Button>
           </DialogFooter>
         </form>

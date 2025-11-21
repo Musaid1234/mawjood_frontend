@@ -1,6 +1,7 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { format } from 'date-fns';
 import { Blog } from '@/services/blog.service';
 
@@ -18,6 +20,25 @@ export const createColumns = (
   onEdit: (blog: Blog) => void,
   onDelete: (blogId: string) => void
 ): ColumnDef<Blog>[] => [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: 'image',
     header: 'Image',
@@ -44,10 +65,14 @@ export const createColumns = (
     header: 'Title',
     cell: ({ row }) => (
       <div className="max-w-md">
-        <p className="font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+        <Link
+          href={`/blog/${row.original.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-gray-900 dark:text-gray-100 line-clamp-2 hover:text-blue-600 hover:underline"
+        >
           {row.original.title}
-        </p>
-        <p className="text-xs text-gray-500 mt-1">/{row.original.slug}</p>
+        </Link>
       </div>
     ),
   },

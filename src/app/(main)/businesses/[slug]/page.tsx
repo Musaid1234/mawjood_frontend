@@ -207,29 +207,21 @@ export default function BusinessDetailPage() {
       {/* Gallery */}
       <BusinessGallery business={business} />
 
-      {/* Header with basic info and action buttons */}
       <BusinessHeader business={business} />
 
-      {/* Scrollable Navigation Tabs */}
       <BusinessTabs />
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Overview Section */}
             <OverviewSection business={business} />
 
             <ServicesSection services={services} />
 
-            {/* Working Hours */}
             <WorkingHoursSection workingHours={business.workingHours} />
 
-            {/* Location & Map */}
             <LocationSection business={business} />
 
-            {/* Reviews */}
             <ReviewsSection
               businessId={business.id}
               reviews={business.reviews || []}
@@ -247,6 +239,7 @@ export default function BusinessDetailPage() {
             {business.city?.id && (
               <SimilarBusinesses
                 categoryId={business.category.id}
+                categorySlug={business.category.slug}
                 locationId={business.city.id}
                 locationType="city"
                 currentBusinessId={business.id}

@@ -5,6 +5,7 @@ import { Star, MapPin, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { businessService, LocationType } from '@/services/business.service';
+import { useCityStore } from '@/store/cityStore';
 
 interface Business {
   id: string;
@@ -25,6 +26,7 @@ interface Business {
 
 interface Props {
   categoryId: string;
+  categorySlug: string;
   locationId?: string;
   locationType?: LocationType;
   currentBusinessId: string;
@@ -32,10 +34,12 @@ interface Props {
 
 export default function SimilarBusinesses({
   categoryId,
+  categorySlug,
   locationId,
   locationType = 'city',
   currentBusinessId,
 }: Props) {
+  const { selectedCity, selectedLocation } = useCityStore();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -87,9 +91,7 @@ export default function SimilarBusinesses({
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Similar Businesses</h2>
         <Link
-          href={`/businesses?categoryId=${categoryId}${
-            locationId ? `&locationId=${locationId}&locationType=${locationType}` : ''
-          }`}
+          href={`/${selectedLocation?.slug || selectedCity?.slug || 'riyadh'}/${categorySlug}`}
           className="flex items-center gap-1 text-primary hover:text-primary/80 font-semibold transition-colors text-sm"
         >
           View All

@@ -148,7 +148,7 @@ export default function BusinessesPage() {
                 type="text"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search businesses or services"
+                placeholder="Search businesses"
                 style={{ paddingTop: '0.875rem', paddingBottom: '0.875rem' }}
                 className="flex-1 px-4  border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               />
@@ -260,54 +260,55 @@ export default function BusinessesPage() {
           </div>
         ) : (
           <>
-            {/* Business Grid/List with Sidebar */}
-            <div className={`grid gap-6 ${
-              viewMode === 'grid' 
-                ? 'lg:grid-cols-3' 
-                : 'lg:grid-cols-4'
-            }`}>
-              {/* Main Content */}
-              <div className={viewMode === 'grid' ? 'lg:col-span-2' : 'lg:col-span-3'}>
-                <div className={`grid gap-6 ${
-                  viewMode === 'grid' 
-                    ? 'grid-cols-1 md:grid-cols-2' 
-                    : 'grid-cols-1'
-                }`}>
-                  {data?.businesses.map((business) => (
-                    viewMode === 'grid' ? (
-                      <BusinessCard
-                        key={business.id}
-                        business={business}
-                        onToggleFavorite={toggleFavorite}
-                        isFavorite={favorites.has(business.id)}
-                      />
-                    ) : (
-                      <div key={business.id} className="max-w-4xl">
-                        <BusinessListCard
-                          business={business}
-                          onToggleFavorite={toggleFavorite}
-                          isFavorite={favorites.has(business.id)}
-                        />
-                      </div>
-                    )
-                  ))}
-                </div>
-              </div>
-
-              {/* Sidebar Ad */}
-              <div className={viewMode === 'grid' ? 'lg:col-span-1' : 'lg:col-span-1'}>
-                <div className="sticky top-8">
-                  <SidebarAd queryKey="sidebar-ad-businesses" height="h-96" />
-                </div>
-              </div>
-            </div>
-
-            {/* No Results */}
-            {data?.businesses.length === 0 && (
+            {data?.businesses.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-xl">
                 <h3 className="text-xl font-semibold mb-2">No businesses found</h3>
                 <p className="text-gray-600">Try adjusting your filters</p>
               </div>
+            ) : (
+              <>
+                {/* Business Grid/List with Sidebar */}
+                <div className={`grid gap-6 ${
+                  viewMode === 'grid' 
+                    ? 'lg:grid-cols-3' 
+                    : 'lg:grid-cols-4'
+                }`}>
+                  {/* Main Content */}
+                  <div className={viewMode === 'grid' ? 'lg:col-span-2' : 'lg:col-span-3'}>
+                    <div className={`grid gap-6 ${
+                      viewMode === 'grid' 
+                        ? 'grid-cols-1 md:grid-cols-2' 
+                        : 'grid-cols-1'
+                    }`}>
+                      {data?.businesses.map((business) => (
+                        viewMode === 'grid' ? (
+                          <BusinessCard
+                            key={business.id}
+                            business={business}
+                            onToggleFavorite={toggleFavorite}
+                            isFavorite={favorites.has(business.id)}
+                          />
+                        ) : (
+                          <div key={business.id} className="max-w-4xl">
+                            <BusinessListCard
+                              business={business}
+                              onToggleFavorite={toggleFavorite}
+                              isFavorite={favorites.has(business.id)}
+                            />
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sidebar Ad */}
+                  <div className={viewMode === 'grid' ? 'lg:col-span-1' : 'lg:col-span-1'}>
+                    <div className="sticky top-8">
+                      <SidebarAd queryKey="sidebar-ad-businesses" height="h-96" />
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
 
             {/* Pagination */}

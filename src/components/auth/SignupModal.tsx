@@ -595,8 +595,28 @@ export default function SignupModal({
                   type="tel"
                   name="phone"
                   value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="5XXXXXXXX"
+                  onChange={(e) => {
+                    // Only allow numeric characters
+                    const numericValue = e.target.value.replace(/\D/g, '');
+                    // Limit to 10 digits (9 for Saudi, 10 for others)
+                    const maxLength = countryCode === '+966' ? 9 : 10;
+                    const limitedValue = numericValue.slice(0, maxLength);
+                    setFormData((prev) => ({
+                      ...prev,
+                      phone: limitedValue,
+                    }));
+                    // Clear phone error when user types
+                    if (formErrors.phone) {
+                      setFormErrors((prev) => {
+                        const { phone, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
+                  placeholder={countryCode === '+966' ? '5XXXXXXXX' : 'Enter phone number'}
+                  maxLength={countryCode === '+966' ? 9 : 10}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   className="flex-1 rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-primary"
                   disabled={loading}
                 />

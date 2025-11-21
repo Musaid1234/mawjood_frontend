@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import GTranslate from '@/components/GTranslate';
 
 export const metadata: Metadata = {
   title: 'Mawjood',
@@ -30,7 +29,6 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         {children}
-        <GTranslate />
       </body>
     </html>
   );

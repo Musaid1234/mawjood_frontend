@@ -94,7 +94,6 @@ export default function BusinessCard({
               {hasActiveSubscription && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700">
                   <Sparkles className="w-3.5 h-3.5" />
-                  Featured
                 </span>
               )}
           </h3>

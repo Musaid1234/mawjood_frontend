@@ -3,6 +3,7 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, Building2, MapPin, Calendar, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,7 +31,9 @@ export type Business = {
     id: string;
     name: string;
     region?: {
+      id?: string;
       name: string;
+      countryId?: string;
     };
   };
   user: {
@@ -46,8 +49,28 @@ export const createColumns = (
   onApprove: (businessId: string) => void,
   onReject: (businessId: string) => void,
   onSuspend: (businessId: string) => void,
+  onEdit: (businessId: string) => void,
   currentTab: string
 ): ColumnDef<Business>[] => [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: 'name',
       header: 'Business',
@@ -238,6 +261,12 @@ export const createColumns = (
                 </>
               )}
 
+              <DropdownMenuItem
+                onClick={() => onEdit(business.id)}
+                className="text-blue-600 focus:text-blue-600 focus:bg-blue-50"
+              >
+                Edit Business
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => window.open(`/businesses/${business.slug}`, '_blank')}
               >

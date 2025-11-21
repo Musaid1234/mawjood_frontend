@@ -27,6 +27,7 @@ import { RegionDialog } from '@/components/admin/cities/RegionDialog';
 import { cityService, City, Region, Country } from '@/services/city.service';
 import { toast } from 'sonner';
 import { CountryDialog } from '@/components/admin/cities/CountryDialog';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function CitiesPage() {
   const [cities, setCities] = useState<City[]>([]);
@@ -195,6 +196,25 @@ export default function CitiesPage() {
 
   const cityColumns: ColumnDef<City>[] = [
     {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
       accessorKey: 'name',
       header: 'City Name',
       cell: ({ row }) => (
@@ -271,7 +291,7 @@ export default function CitiesPage() {
         <div>
           <h1 className="text-3xl font-bold">Locations</h1>
           <p className="text-gray-600 mt-1">
-            Manage cities and regions across the platform
+            Manage cities and States across the platform
           </p>
         </div>
       </div>
@@ -284,7 +304,7 @@ export default function CitiesPage() {
           </TabsTrigger>
           <TabsTrigger value="regions" className="gap-2">
             <Map className="w-4 h-4" />
-            Regions ({regions.length})
+            States ({regions.length})
           </TabsTrigger>
           <TabsTrigger value="countries" className="gap-2">
             <Map className="w-4 h-4" />
@@ -328,22 +348,22 @@ export default function CitiesPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>All Regions</CardTitle>
+                  <CardTitle>All States</CardTitle>
                   <CardDescription>
-                    Manage regions to organize cities
+                    Manage states to organize cities
                   </CardDescription>
                 </div>
                 <Button
                   onClick={() => {
                     if (countries.length === 0) {
-                      toast.error('Please create a country before adding regions.');
+                      toast.error('Please create a country before adding States.');
                       return;
                     }
                     setRegionDialogOpen(true);
                   }}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Region
+                  Add State
                 </Button>
               </div>
             </CardHeader>
@@ -389,7 +409,7 @@ export default function CitiesPage() {
 
                 {regions.length === 0 && (
                   <div className="col-span-full text-center py-12 text-gray-500">
-                    No regions yet. Create your first region to get started.
+                    No States yet. Create your first state to get started.
                   </div>
                 )}
               </div>
@@ -397,7 +417,6 @@ export default function CitiesPage() {
           </Card>
         </TabsContent>
 
-        {/* Countries Tab */}
         <TabsContent value="countries" className="space-y-4">
           <Card>
             <CardHeader>
@@ -450,7 +469,7 @@ export default function CitiesPage() {
                         <div className="space-y-2 text-sm text-gray-600">
                           <p>
                             <span className="font-semibold">{countryRegions.length}</span>{' '}
-                            {countryRegions.length === 1 ? 'region' : 'regions'}
+                            {countryRegions.length === 1 ? 'state' : 'states'}
                           </p>
                           <p>
                             <span className="font-semibold">{cityCount}</span>{' '}

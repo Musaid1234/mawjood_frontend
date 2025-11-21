@@ -4,8 +4,28 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Building2, Calendar, CheckCircle2, XCircle, Clock, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { BusinessSubscription, parseDecimal } from '@/services/subscription.service';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export const createSubscriptionColumns = (): ColumnDef<BusinessSubscription>[] => [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: 'business',
     header: 'Business',

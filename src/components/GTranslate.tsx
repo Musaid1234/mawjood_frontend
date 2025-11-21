@@ -1,36 +1,61 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
-export default function GTranslate() {
+interface GTranslateProps {
+  className?: string;
+  id?: string;
+}
+
+// Global flag to ensure script is only loaded once
+let scriptLoaded = false;
+
+export default function GTranslate({ className = '', id = 'gtranslate-navbar' }: GTranslateProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    // Only load GTranslate on client side
-    if (typeof window !== 'undefined') {
-      // Set GTranslate settings
-      (window as any).gtranslateSettings = {
-        default_language: 'en',
-        languages: ['en', 'ar', 'fr', 'es', 'de', 'it', 'ja', 'ko', 'ru', 'hi', 'bn', 'pa', 'ta', 'te', 'th', 'tr', 'ur', 'vi', 'zh-TW'],
-        wrapper_selector: '.gtranslate_wrapper',
-      };
+    // Only run on client side
+    if (typeof window === 'undefined') return;
 
-      // Load GTranslate script
-      const script = document.createElement('script');
-      script.src = 'https://cdn.gtranslate.net/widgets/latest/float.js';
-      script.defer = true;
-      document.body.appendChild(script);
+    const loadScript = () => {
+      // Check if script already exists
+      const existingScript = document.querySelector('script[src*="gtranslate.net"]');
+      
+      if (!existingScript && !scriptLoaded) {
+        scriptLoaded = true;
+        
+        // Set GTranslate settings before loading script
+        (window as any).gtranslateSettings = {
+          default_language: 'en',
+          languages: ['en', 'ar', 'fr', 'es', 'de', 'ja', 'ko', 'ru', 'hi', 'tr', 'ur', 'zh-TW'],
+          wrapper_selector: '.gtranslate_wrapper',
+        };
 
-      return () => {
-        // Cleanup: remove script when component unmounts
-        const existingScript = document.querySelector(
-          'script[src="https://cdn.gtranslate.net/widgets/latest/float.js"]'
-        );
-        if (existingScript) {
-          existingScript.remove();
-        }
-      };
-    }
+        // Load GTranslate script
+        const script = document.createElement('script');
+        script.src = 'https://cdn.gtranslate.net/widgets/latest/dropdown.js';
+        script.defer = true;
+        script.async = true;
+        script.id = 'gtranslate-script';
+        document.body.appendChild(script);
+      }
+    };
+
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(loadScript, 100);
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, []);
 
-  return <div className="gtranslate_wrapper" suppressHydrationWarning></div>;
+  return (
+    <div 
+      ref={containerRef}
+      id={id} 
+      className={`gtranslate_wrapper ${className}`} 
+      suppressHydrationWarning
+    />
+  );
 }
 

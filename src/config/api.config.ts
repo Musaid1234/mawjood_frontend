@@ -132,6 +132,7 @@ export const API_ENDPOINTS = {
     ANALYTICS: '/api/admin/analytics',
     GET_ALL_USERS: '/api/admin/users',
     GET_USER_BY_ID: (id: string) => `/api/admin/users/${id}`,
+    UPDATE_USER: (id: string) => `/api/admin/users/${id}`,
     UPDATE_USER_STATUS: (id: string) => `/api/admin/users/${id}/status`,
     UPDATE_USER_ROLE: (id: string) => `/api/admin/users/${id}/role`,
     DELETE_USER: (id: string) => `/api/admin/users/${id}`,

@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { EditUserModal } from '@/components/admin/users/EditUserModal';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -27,6 +28,10 @@ export default function UsersPage() {
     status: '',
   });
   const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    userId: string | null;
+  }>({ open: false, userId: null });
+  const [editDialog, setEditDialog] = useState<{
     open: boolean;
     userId: string | null;
   }>({ open: false, userId: null });
@@ -143,10 +148,29 @@ export default function UsersPage() {
     setFilters((prev) => ({ ...prev, status: value }));
   };
 
+  const handleEditUser = (userId: string) => {
+    setEditDialog({ open: true, userId });
+  };
+
+  const handleEditSuccess = () => {
+    // Refetch users after successful edit
+    const params: any = { page: 1, limit: 100 };
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (filters.role && filters.role !== 'all') params.role = filters.role;
+    if (filters.status && filters.status !== 'all') params.status = filters.status;
+    adminService.getAllUsers(params).then((response) => {
+      setUsers(response.data.users || []);
+    }).catch((error: any) => {
+      console.error('Error fetching users:', error);
+      toast.error(error.message || 'Failed to fetch users');
+    });
+  };
+
   const columns = createColumns(
     handleUpdateRole,
     handleUpdateStatus,
-    (userId) => setDeleteDialog({ open: true, userId })
+    (userId) => setDeleteDialog({ open: true, userId }),
+    handleEditUser
   );
 
   if (loading && users.length === 0) {
@@ -203,6 +227,14 @@ export default function UsersPage() {
           onStatusFilter={handleStatusFilter}
         />
       </div>
+
+      {/* Edit User Modal */}
+      <EditUserModal
+        open={editDialog.open}
+        onOpenChange={(open) => setEditDialog({ open, userId: null })}
+        userId={editDialog.userId}
+        onSuccess={handleEditSuccess}
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, userId: null })}>

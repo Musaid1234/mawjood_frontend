@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search } from 'lucide-react';
+import { BulkActionsToolbar } from '@/components/admin/common/BulkActionsToolbar';
 
 interface CitiesTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -39,6 +40,8 @@ interface CitiesTableProps<TData, TValue> {
   onRegionFilter: (value: string) => void;
   searchValue?: string;
   regions: Array<{ id: string; name: string }>;
+  onBulkExport?: (selectedRows: TData[]) => void;
+  onBulkDelete?: (selectedRows: TData[]) => void;
 }
 
 export function CitiesTable<TData, TValue>({
@@ -48,6 +51,8 @@ export function CitiesTable<TData, TValue>({
   onRegionFilter,
   searchValue = '',
   regions,
+  onBulkExport,
+  onBulkDelete,
 }: CitiesTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -73,8 +78,59 @@ export function CitiesTable<TData, TValue>({
     },
   });
 
+  const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
+  const selectedCount = selectedRows.length;
+
+  const handleExportCSV = () => {
+    if (onBulkExport) {
+      onBulkExport(selectedRows);
+    } else {
+      const headers = ['ID', 'Name', 'Slug', 'Region', 'Created At'];
+      const rows = selectedRows.length > 0 
+        ? selectedRows.map((row: any) => [
+            row.id,
+            row.name,
+            row.slug,
+            row.region?.name || '',
+            new Date(row.createdAt).toLocaleDateString(),
+          ])
+        : data.map((row: any) => [
+            row.id,
+            row.name,
+            row.slug,
+            row.region?.name || '',
+            new Date(row.createdAt).toLocaleDateString(),
+          ]);
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map((cell: any) => `"${cell}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `cities-${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (onBulkDelete && selectedRows.length > 0) {
+      onBulkDelete(selectedRows);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {/* Bulk Actions Toolbar */}
+      <BulkActionsToolbar
+        selectedCount={selectedCount}
+        onExportCSV={handleExportCSV}
+        onBulkDelete={onBulkDelete ? handleBulkDelete : undefined}
+        exportFileName="cities"
+      />
+
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">

@@ -15,23 +15,23 @@ interface Props {
 }
 
 const daysOfWeek = [
-  'sunday',
   'monday',
   'tuesday',
   'wednesday',
   'thursday',
   'friday',
   'saturday',
+  'sunday',
 ];
 
 const dayLabels: Record<string, string> = {
-  sunday: 'Sunday',
   monday: 'Monday',
   tuesday: 'Tuesday',
   wednesday: 'Wednesday',
   thursday: 'Thursday',
   friday: 'Friday',
   saturday: 'Saturday',
+  sunday: 'Sunday',
 };
 
 export default function WorkingHoursSection({ workingHours }: Props) {

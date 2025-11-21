@@ -10,7 +10,6 @@ interface UseGeolocationProps {
 }
 
 export function useGeolocation({ cities, selectedCity, selectedLocation, setSelectedCity }: UseGeolocationProps) {
-  const [geoAttempted, setGeoAttempted] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
 
   useEffect(() => {
@@ -53,12 +52,56 @@ export function useGeolocation({ cities, selectedCity, selectedLocation, setSele
       return undefined;
     };
 
+    const reverseGeocode = async (latitude: number, longitude: number): Promise<any> => {
+      // Try BigDataCloud API first (free, no API key needed, no rate limits for reasonable use)
+      try {
+        const response = await fetch(
+          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          return {
+            address: {
+              city: data.city || data.locality,
+              town: data.town,
+              village: data.village,
+              municipality: data.municipality,
+              state: data.principalSubdivision,
+              country: data.countryName,
+            },
+          };
+        }
+      } catch (error) {
+        console.warn('BigDataCloud API failed, trying fallback:', error);
+      }
+
+      // Fallback to IP-based geolocation if reverse geocoding fails
+      try {
+        const ipResponse = await fetch('https://ipapi.co/json/');
+        if (ipResponse.ok) {
+          const ipData = await ipResponse.json();
+          return {
+            address: {
+              city: ipData.city,
+              region: ipData.region,
+              country: ipData.country_name,
+            },
+          };
+        }
+      } catch (error) {
+        console.warn('IP geolocation fallback failed:', error);
+      }
+
+      throw new Error('All geocoding APIs failed');
+    };
+
     const selectCityFromAddress = async (address: any) => {
       const possibleCityNames = [
         address?.city,
         address?.town,
         address?.village,
         address?.municipality,
+        address?.region,
       ];
 
       let match: CityType | undefined;
@@ -85,62 +128,164 @@ export function useGeolocation({ cities, selectedCity, selectedLocation, setSele
       }
     };
 
+    if (typeof window === 'undefined' || !cities.length) {
+      return;
+    }
+
+    // Check if geolocation is supported
+    if (!navigator.geolocation) {
+      const riyadh = cities.find((city) =>
+        city.name.toLowerCase().includes('riyadh') || city.name.toLowerCase().includes('الرياض')
+      );
+      if (riyadh && !selectedCity) {
+        setSelectedCity(riyadh);
+      } else if (cities[0] && !selectedCity) {
+        setSelectedCity(cities[0]);
+      }
+      return;
+    }
+
     const isDefaultSelection =
       !selectedLocation ||
+      !selectedCity ||
       (selectedLocation.type === 'city' &&
         (selectedLocation.name.toLowerCase().includes('riyadh') ||
           selectedLocation.name.toLowerCase().includes('الرياض')));
 
-    if (typeof window === 'undefined' || geoAttempted || geoLoading || !cities.length) {
-      return;
-    }
-
-    if (!isDefaultSelection) {
-      setGeoAttempted(true);
-      return;
-    }
-
-    if (!navigator.geolocation) {
-      setGeoAttempted(true);
-      trySelectDefault();
-      return;
-    }
-
-    setGeoAttempted(true);
+    // ALWAYS request location permission on every page load/visit
+    // This ensures the browser prompt appears every time (browser will handle if already granted/denied)
     setGeoLoading(true);
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-          );
-          if (!response.ok) {
-            throw new Error('Failed to reverse geocode location');
-          }
+    let watchId: number | null = null;
+    let fallbackTimeout: NodeJS.Timeout | null = null;
 
-          const data = await response.json();
-          await selectCityFromAddress(data?.address);
-        } catch (error) {
-          console.error('Geolocation lookup error:', error);
-          trySelectDefault();
-        } finally {
-          setGeoLoading(false);
+    // Use watchPosition first to trigger permission prompt, then getCurrentPosition
+    watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        // Stop watching once we get position
+        if (watchId !== null) {
+          navigator.geolocation.clearWatch(watchId);
+          watchId = null;
         }
+        if (fallbackTimeout) {
+          clearTimeout(fallbackTimeout);
+          fallbackTimeout = null;
+        }
+        
+        // Now get the current position with better options
+          navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+              try {
+                const { latitude, longitude } = pos.coords;
+                const geocodeData = await reverseGeocode(latitude, longitude);
+                // Only update city if it's currently default/unset
+                if (isDefaultSelection) {
+                  await selectCityFromAddress(geocodeData?.address);
+                } else {
+                  setGeoLoading(false);
+                }
+              } catch (error) {
+                console.error('Geolocation lookup error:', error);
+                if (isDefaultSelection) {
+                  trySelectDefault();
+                }
+                setGeoLoading(false);
+              } finally {
+                // Ensure loading state is cleared
+                if (!isDefaultSelection) {
+                  setGeoLoading(false);
+                }
+              }
+            },
+          (error) => {
+            console.warn('Geolocation error:', error);
+            setGeoLoading(false);
+            if (isDefaultSelection) {
+              trySelectDefault();
+            }
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 15000,
+            maximumAge: 0, // Always get fresh location
+          }
+        );
       },
-      (error) => {
-        console.warn('Geolocation permission denied or unavailable:', error);
-        setGeoLoading(false);
-        trySelectDefault();
-      },
+        (error) => {
+          // Permission denied or error
+          if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+          }
+          if (fallbackTimeout) {
+            clearTimeout(fallbackTimeout);
+            fallbackTimeout = null;
+          }
+          console.warn('Geolocation permission denied or unavailable:', error);
+          setGeoLoading(false);
+          if (isDefaultSelection) {
+            trySelectDefault();
+          }
+        },
       {
         enableHighAccuracy: false,
-        timeout: 10000,
-        maximumAge: 5 * 60 * 1000,
+        timeout: 15000,
+        maximumAge: 0,
       }
     );
-  }, [cities, selectedCity, selectedLocation, geoAttempted, geoLoading, setSelectedCity]);
 
-  return { geoAttempted, geoLoading };
+    // Fallback timeout - if watchPosition doesn't respond, try getCurrentPosition directly
+    fallbackTimeout = setTimeout(() => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+      if (geoLoading) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              const { latitude, longitude } = position.coords;
+              const geocodeData = await reverseGeocode(latitude, longitude);
+              // Only update city if it's currently default/unset
+              if (isDefaultSelection) {
+                await selectCityFromAddress(geocodeData?.address);
+              } else {
+                setGeoLoading(false);
+              }
+            } catch (error) {
+              console.error('Geolocation lookup error:', error);
+              if (isDefaultSelection) {
+                trySelectDefault();
+              }
+              setGeoLoading(false);
+            }
+          },
+          (error) => {
+            console.warn('Geolocation error:', error);
+            setGeoLoading(false);
+            if (isDefaultSelection) {
+              trySelectDefault();
+            }
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 10000,
+            maximumAge: 0,
+          }
+        );
+      }
+    }, 2000);
+
+    // Cleanup function to clear watch and timeout on unmount or dependency change
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+      if (fallbackTimeout) {
+        clearTimeout(fallbackTimeout);
+      }
+    };
+  }, [cities, selectedCity, selectedLocation, setSelectedCity]);
+
+  return { geoLoading };
 }

@@ -3,6 +3,7 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, Mail, Phone, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,8 +35,28 @@ export type User = {
 export const createColumns = (
   onUpdateRole: (userId: string, role: string) => void,
   onUpdateStatus: (userId: string, status: string) => void,
-  onDelete: (userId: string) => void
+  onDelete: (userId: string) => void,
+  onEdit?: (userId: string) => void
 ): ColumnDef<User>[] => [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: 'name',
     header: 'Name',
@@ -160,7 +181,14 @@ export const createColumns = (
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            
+            {onEdit && (
+              <>
+                <DropdownMenuItem onClick={() => onEdit(user.id)}>
+                  Edit User
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuLabel className="text-xs font-normal text-gray-500">
               Update Role
             </DropdownMenuLabel>

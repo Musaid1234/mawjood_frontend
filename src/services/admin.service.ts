@@ -147,6 +147,18 @@ export const adminService = {
   },
 
   /**
+   * Get user by ID
+   */
+  async getUserById(userId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.GET_USER_BY_ID(userId));
+      return response.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  /**
    * Get pending businesses
    */
   async getPendingBusinesses(params?: { page?: number; limit?: number }): Promise<ApiResponse<any>> {
@@ -182,6 +194,23 @@ export const adminService = {
       const response = await axiosInstance.patch(API_ENDPOINTS.ADMIN.UPDATE_USER_ROLE(userId), {
         role,
       });
+      return response.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  /**
+   * Update user details
+   */
+  async updateUser(userId: string, data: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const response = await axiosInstance.put(API_ENDPOINTS.ADMIN.UPDATE_USER(userId), data);
       return response.data;
     } catch (error) {
       return handleError(error);

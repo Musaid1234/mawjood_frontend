@@ -10,7 +10,7 @@ import { useCityStore } from '@/store/cityStore';
 const DUMMY_BANNERS = [
   {
     id: 'dummy-1',
-    imageUrl: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=1200&h=400&fit=crop',
+    imageUrl: 'https://www.techpluto.com/wp-content/uploads/2021/10/MM_advertisement-examples-1024x316.png',
     targetUrl: '#',
     title: 'Special Offer',
   },

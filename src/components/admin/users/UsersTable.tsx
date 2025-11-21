@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search } from 'lucide-react';
+import { BulkActionsToolbar } from '@/components/admin/common/BulkActionsToolbar';
 
 interface UsersTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -38,6 +39,9 @@ interface UsersTableProps<TData, TValue> {
   onSearchChange: (value: string) => void;
   onRoleFilter: (value: string) => void;
   onStatusFilter: (value: string) => void;
+  onBulkExport?: (selectedRows: TData[]) => void;
+  onBulkDelete?: (selectedRows: TData[]) => void;
+  onBulkStatusChange?: (selectedRows: TData[], status: string) => void;
 }
 
 export function UsersTable<TData, TValue>({
@@ -46,6 +50,9 @@ export function UsersTable<TData, TValue>({
   onSearchChange,
   onRoleFilter,
   onStatusFilter,
+  onBulkExport,
+  onBulkDelete,
+  onBulkStatusChange,
 }: UsersTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -71,8 +78,75 @@ export function UsersTable<TData, TValue>({
     },
   });
 
+  const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
+  const selectedCount = selectedRows.length;
+
+  const handleExportCSV = () => {
+    if (onBulkExport) {
+      onBulkExport(selectedRows);
+    } else {
+      const headers = ['ID', 'Name', 'Email', 'Phone', 'Role', 'Status', 'Created At'];
+      const rows = selectedRows.length > 0 
+        ? selectedRows.map((row: any) => [
+            row.id,
+            `${row.firstName || ''} ${row.lastName || ''}`,
+            row.email,
+            row.phone || '',
+            row.role,
+            row.status,
+            new Date(row.createdAt).toLocaleDateString(),
+          ])
+        : data.map((row: any) => [
+            row.id,
+            `${row.firstName || ''} ${row.lastName || ''}`,
+            row.email,
+            row.phone || '',
+            row.role,
+            row.status,
+            new Date(row.createdAt).toLocaleDateString(),
+          ]);
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map((cell: any) => `"${cell}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `users-${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (onBulkDelete && selectedRows.length > 0) {
+      onBulkDelete(selectedRows);
+    }
+  };
+
+  const handleBulkStatusChange = (status: string) => {
+    if (onBulkStatusChange && selectedRows.length > 0) {
+      onBulkStatusChange(selectedRows, status);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {/* Bulk Actions Toolbar */}
+      <BulkActionsToolbar
+        selectedCount={selectedCount}
+        onExportCSV={handleExportCSV}
+        onBulkDelete={onBulkDelete ? handleBulkDelete : undefined}
+        onBulkStatusChange={onBulkStatusChange ? handleBulkStatusChange : undefined}
+        availableStatuses={[
+          { value: 'ACTIVE', label: 'Activate' },
+          { value: 'INACTIVE', label: 'Deactivate' },
+          { value: 'SUSPENDED', label: 'Suspend' },
+        ]}
+        exportFileName="users"
+      />
+
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">

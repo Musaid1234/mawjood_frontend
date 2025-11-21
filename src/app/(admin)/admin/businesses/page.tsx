@@ -15,9 +15,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Download, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { categoryService, Category } from '@/services/category.service';
+import { cityService, Country, Region, City } from '@/services/city.service';
 
 type TabType = 'all' | 'pending' | 'suspended' | 'approved';
 
@@ -27,12 +37,30 @@ export default function BusinessesPage() {
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [pendingCount, setPendingCount] = useState(0);
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    suspended: 0,
+  });
   const [actionDialog, setActionDialog] = useState<{
     open: boolean;
     type: 'approve' | 'reject' | 'suspend' | null;
     businessId: string | null;
   }>({ open: false, type: null, businessId: null });
+
+  // Filter states
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCountry, setSelectedCountry] = useState<string>('all');
+  const [selectedRegion, setSelectedRegion] = useState<string>('all');
+  const [selectedCity, setSelectedCity] = useState<string>('all');
+
+  // Filter options
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [loadingFilters, setLoadingFilters] = useState(true);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -58,18 +86,136 @@ export default function BusinessesPage() {
 
   useEffect(() => {
     fetchBusinesses();
-  }, [activeTab, debouncedSearch]);
+  }, [activeTab, debouncedSearch, selectedCategory, selectedCountry, selectedRegion, selectedCity]);
+
+  const fetchFilterOptions = async () => {
+    try {
+      setLoadingFilters(true);
+      const [categoriesData, countriesData, regionsData, citiesData] = await Promise.all([
+        categoryService.fetchCategories(1, 1000).then((res) => res.data.categories),
+        cityService.fetchCountries(),
+        cityService.fetchRegions(),
+        cityService.fetchCities(),
+      ]);
+
+      // Flatten categories (include subcategories)
+      const allCategories: Category[] = [];
+      categoriesData.forEach((cat) => {
+        allCategories.push(cat);
+        if (cat.subcategories) {
+          allCategories.push(...cat.subcategories);
+        }
+      });
+
+      setCategories(allCategories);
+      setCountries(countriesData);
+      setRegions(regionsData);
+      setAllRegions(regionsData); // Store all regions for filtering
+      setCities(citiesData);
+      setAllCities(citiesData); // Store all cities for filtering
+
+      if (selectedCountry === 'all') {
+        const saudiArabia = countriesData.find(
+          (c) => c.name.toLowerCase().includes('saudi') || 
+                 c.name.toLowerCase().includes('السعودية') ||
+                 c.slug.toLowerCase().includes('saudi') ||
+                 c.name.toLowerCase() === 'saudi arabia'
+        );
+        if (saudiArabia) {
+          setSelectedCountry(saudiArabia.id);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error fetching filter options:', error);
+      toast.error('Failed to load filter options');
+    } finally {
+      setLoadingFilters(false);
+    }
+  };
 
   useEffect(() => {
-    fetchPendingCount();
+    fetchStats();
+    fetchFilterOptions();
   }, []);
 
-  const fetchPendingCount = async () => {
+  // Store all regions separately (don't overwrite when country changes)
+  const [allRegions, setAllRegions] = useState<Region[]>([]);
+  const [allCities, setAllCities] = useState<City[]>([]);
+
+  // Update regions and cities when country changes (for dropdown options only)
+  useEffect(() => {
+    if (selectedCountry === 'all') {
+      setSelectedRegion('all');
+      setSelectedCity('all');
+      // Show all regions and cities when no country selected
+      setRegions(allRegions);
+      setCities(allCities);
+    } else {
+      const country = countries.find((c) => c.id === selectedCountry);
+      if (country?.regions) {
+        const countryRegions = country.regions;
+        setRegions(countryRegions); // Only update dropdown options
+        // Get all cities from country's regions
+        const countryCities = countryRegions.flatMap((r) => r.cities || []);
+        setCities(countryCities); // Only update dropdown options
+      } else if (allRegions.length > 0) {
+        // If country doesn't have regions in the response, filter from allRegions
+        const countryRegions = allRegions.filter((r) => r.countryId === selectedCountry);
+        setRegions(countryRegions);
+        // Get cities for these regions
+        const countryCities = allCities.filter((c) => {
+          const cityRegion = allRegions.find((r) => r.id === c.regionId);
+          return cityRegion?.countryId === selectedCountry;
+        });
+        setCities(countryCities);
+      }
+      setSelectedRegion('all');
+      setSelectedCity('all');
+    }
+  }, [selectedCountry, countries, allRegions, allCities]);
+
+  // Update cities when region changes
+  useEffect(() => {
+    if (selectedRegion === 'all') {
+      // If no region selected, show all cities (or cities from selected country)
+      if (selectedCountry !== 'all') {
+        const country = countries.find((c) => c.id === selectedCountry);
+        if (country?.regions) {
+          const countryCities = country.regions.flatMap((r) => r.cities || []);
+          setCities(countryCities);
+        }
+      } else {
+        // Show all cities
+        cityService.fetchCities().then(setCities).catch(console.error);
+      }
+      setSelectedCity('all');
+    } else {
+      const region = regions.find((r) => r.id === selectedRegion);
+      if (region?.cities) {
+        setCities(region.cities);
+      } else {
+        // If region doesn't have cities, fetch them
+        cityService.fetchCities().then((allCities) => {
+          const regionCities = allCities.filter((c) => c.regionId === selectedRegion);
+          setCities(regionCities);
+        }).catch(console.error);
+      }
+      setSelectedCity('all');
+    }
+  }, [selectedRegion, regions, selectedCountry, countries]);
+
+  const fetchStats = async () => {
     try {
-      const response = await adminService.getPendingBusinesses({ limit: 1 });
-      setPendingCount(response.data.pagination?.total || 0);
+      const response = await adminService.getDashboardStats();
+      const businessStatus = response.data.businessStatus;
+      setStats({
+        total: response.data.overview.totalBusinesses,
+        pending: businessStatus.pending,
+        approved: businessStatus.approved,
+        suspended: businessStatus.suspended,
+      });
     } catch (error) {
-      console.error('Error fetching pending count:', error);
+      console.error('Error fetching stats:', error);
     }
   };
 
@@ -103,7 +249,7 @@ export default function BusinessesPage() {
       setLoading(true);
       const params: any = {
         page: 1,
-        limit: 100,
+        limit: 1000, // Fetch more to allow client-side filtering
       };
 
       if (debouncedSearch) {
@@ -123,10 +269,89 @@ export default function BusinessesPage() {
         response = await adminService.getAllBusinesses(params);
       }
 
-      setBusinesses(response.data.businesses || []);
-      if (activeTab === 'pending') {
-        setPendingCount(response.data.pagination?.total || 0);
+      let filteredBusinesses = response.data.businesses || [];
+
+      // Client-side filtering
+      if (selectedCategory !== 'all') {
+        filteredBusinesses = filteredBusinesses.filter(
+          (b: Business) => b.category?.id === selectedCategory
+        );
       }
+
+      // Apply location filters (city, region, country)
+      if (selectedCity !== 'all') {
+        filteredBusinesses = filteredBusinesses.filter(
+          (b: Business) => b.city?.id === selectedCity
+        );
+      } else if (selectedRegion !== 'all') {
+        // Filter by region/state - use allRegions for filtering (not just filtered dropdown options)
+        const selectedRegionData = allRegions.find((r) => r.id === selectedRegion);
+        if (selectedRegionData) {
+          filteredBusinesses = filteredBusinesses.filter((b: Business) => {
+            if (!b.city) return false;
+            
+            // Get the region from the business city
+            const businessRegion = (b.city as any)?.region;
+            if (!businessRegion) {
+              // If no region in business data, try to find city's region from our cities list
+              const cityData = allCities.find((c) => c.id === b.city?.id);
+              if (cityData?.regionId) {
+                return cityData.regionId === selectedRegion;
+              }
+              return false;
+            }
+            
+            // Try to match by id first (most reliable)
+            if (businessRegion.id) {
+              return businessRegion.id === selectedRegion;
+            }
+            
+            // Fallback: match by region name (case-insensitive)
+            if (businessRegion.name) {
+              return businessRegion.name.toLowerCase() === selectedRegionData.name.toLowerCase();
+            }
+            
+            // Last resort: check if city's regionId matches
+            const cityData = allCities.find((c) => c.id === b.city?.id);
+            if (cityData?.regionId) {
+              return cityData.regionId === selectedRegion;
+            }
+            
+            return false;
+          });
+        }
+      } else if (selectedCountry !== 'all') {
+        // Filter by country - use allRegions for filtering
+        filteredBusinesses = filteredBusinesses.filter((b: Business) => {
+          if (!b.city) return false;
+          
+          const businessRegion = (b.city as any)?.region;
+          
+          // Try to match by region's countryId if available
+          if (businessRegion?.countryId) {
+            return businessRegion.countryId === selectedCountry;
+          }
+          
+          // Fallback: find region by name and check its countryId
+          if (businessRegion?.name) {
+            const matchingRegion = allRegions.find(
+              (r) => r.name.toLowerCase() === businessRegion.name.toLowerCase() && r.countryId === selectedCountry
+            );
+            return !!matchingRegion;
+          }
+          
+          // Last resort: check city's region and then region's country
+          const cityData = allCities.find((c) => c.id === b.city?.id);
+          if (cityData?.regionId) {
+            const regionData = allRegions.find((r) => r.id === cityData.regionId);
+            return regionData?.countryId === selectedCountry;
+          }
+          
+          return false;
+        });
+      }
+
+      setBusinesses(filteredBusinesses);
     } catch (error: any) {
       console.error('Error fetching businesses:', error);
       toast.error(error.message || 'Failed to fetch businesses');
@@ -140,7 +365,7 @@ export default function BusinessesPage() {
       await adminService.approveBusiness(businessId);
       toast.success('Business approved successfully');
       fetchBusinesses();
-      fetchPendingCount();
+      fetchStats();
     } catch (error: any) {
       console.error('Error approving business:', error);
       toast.error(error.message || 'Failed to approve business');
@@ -155,7 +380,7 @@ export default function BusinessesPage() {
       toast.success('Business rejected successfully');
       setActionDialog({ open: false, type: null, businessId: null });
       fetchBusinesses();
-      fetchPendingCount();
+      fetchStats();
     } catch (error: any) {
       console.error('Error rejecting business:', error);
       toast.error(error.message || 'Failed to reject business');
@@ -170,6 +395,7 @@ export default function BusinessesPage() {
       toast.success('Business suspended successfully');
       setActionDialog({ open: false, type: null, businessId: null });
       fetchBusinesses();
+      fetchStats();
     } catch (error: any) {
       console.error('Error suspending business:', error);
       toast.error(error.message || 'Failed to suspend business');
@@ -180,10 +406,67 @@ export default function BusinessesPage() {
     setSearchInput(value);
   };
 
+  const handleEdit = (businessId: string) => {
+    router.push(`/admin/businesses/edit/${businessId}`);
+  };
+
+  const handleBulkExport = (selectedRows: Business[]) => {
+    const dataToExport = selectedRows.length > 0 ? selectedRows : businesses;
+    
+    const headers = [
+      'ID',
+      'Name',
+      'Slug',
+      'Owner Name',
+      'Owner Email',
+      'Category',
+      'City',
+      'Region',
+      'Status',
+      'Created At',
+    ];
+
+    const rows = dataToExport.map((business) => [
+      business.id,
+      business.name,
+      business.slug,
+      `${business.user?.firstName || ''} ${business.user?.lastName || ''}`,
+      business.user?.email || '',
+      business.category?.name || '',
+      business.city?.name || '',
+      business.city?.region?.name || '',
+      business.status,
+      new Date(business.createdAt).toLocaleDateString(),
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `businesses-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    toast.success(`Exported ${dataToExport.length} business${dataToExport.length !== 1 ? 'es' : ''} to CSV`);
+  };
+
+  const clearFilters = () => {
+    setSelectedCategory('all');
+    setSelectedCountry('all');
+    setSelectedRegion('all');
+    setSelectedCity('all');
+  };
+
+  const hasActiveFilters = selectedCategory !== 'all' || selectedCountry !== 'all' || 
+    selectedRegion !== 'all' || selectedCity !== 'all';
+
   const columns = createColumns(
     (businessId) => handleApprove(businessId),
     (businessId) => setActionDialog({ open: true, type: 'reject', businessId }),
     (businessId) => setActionDialog({ open: true, type: 'suspend', businessId }),
+    handleEdit,
     activeTab
   );
 
@@ -192,7 +475,7 @@ export default function BusinessesPage() {
     {
       id: 'pending',
       label: 'Pending',
-      badge: pendingCount > 0 ? pendingCount : undefined,
+      badge: stats.pending > 0 ? stats.pending : undefined,
     },
     { id: 'suspended', label: 'Suspended' },
     { id: 'approved', label: 'Approved' },
@@ -218,23 +501,19 @@ export default function BusinessesPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-[#1c4233] rounded-lg p-4 text-white">
           <p className="text-sm opacity-90">Total Businesses</p>
-          <p className="text-3xl font-bold mt-1">{businesses.length}</p>
+          <p className="text-3xl font-bold mt-1">{stats.total}</p>
         </div>
         <div className="bg-[#245240] rounded-lg p-4 text-white">
           <p className="text-sm opacity-90">Pending Approvals</p>
-          <p className="text-3xl font-bold mt-1">{pendingCount}</p>
+          <p className="text-3xl font-bold mt-1">{stats.pending}</p>
         </div>
         <div className="bg-[#2d624d] rounded-lg p-4 text-white">
           <p className="text-sm opacity-90">Approved</p>
-          <p className="text-3xl font-bold mt-1">
-            {businesses.filter((b) => b.status === 'APPROVED').length}
-          </p>
+          <p className="text-3xl font-bold mt-1">{stats.approved}</p>
         </div>
         <div className="bg-[#36725a] rounded-lg p-4 text-white">
           <p className="text-sm opacity-90">Suspended</p>
-          <p className="text-3xl font-bold mt-1">
-            {businesses.filter((b) => b.status === 'SUSPENDED').length}
-          </p>
+          <p className="text-3xl font-bold mt-1">{stats.suspended}</p>
         </div>
       </div>
 
@@ -270,6 +549,22 @@ export default function BusinessesPage() {
           data={businesses}
           onSearchChange={handleSearchChange}
           searchValue={searchInput}
+          onBulkExport={handleBulkExport}
+          selectedCategory={selectedCategory}
+          selectedCountry={selectedCountry}
+          selectedRegion={selectedRegion}
+          selectedCity={selectedCity}
+          categories={categories}
+          countries={countries}
+          regions={regions}
+          cities={cities}
+          loadingFilters={loadingFilters}
+          onCategoryChange={setSelectedCategory}
+          onCountryChange={setSelectedCountry}
+          onRegionChange={setSelectedRegion}
+          onCityChange={setSelectedCity}
+          onClearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
         />
       </div>
 

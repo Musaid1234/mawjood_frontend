@@ -77,7 +77,7 @@ export default function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-primary border-r border-gray-700 overflow-y-auto">
+    <aside className="fixed left-0 top-0 h-screen w-64 bg-primary border-r border-gray-700 overflow-y-auto flex flex-col">
       {/* Logo */}
       <div className="py-4 border-b border-primary/20">
         <Link href="/" className="flex pl-12 items-center">
@@ -105,7 +105,7 @@ export default function AdminSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="p-4">
+      <nav className="p-4 flex-1 overflow-y-auto">
         <ul className="space-y-1">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
@@ -131,7 +131,7 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
+      <div className="sticky bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-primary mt-auto">
         <Link
           href="/"
           className="flex items-center justify-center space-x-2 text-white/60 hover:text-white transition-colors text-sm"

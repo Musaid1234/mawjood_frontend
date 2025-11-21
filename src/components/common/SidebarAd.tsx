@@ -12,7 +12,7 @@ interface SidebarAdProps {
   height?: string;
 }
 
-const PLACEHOLDER_AD_IMAGE = 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=400&fit=crop';
+const PLACEHOLDER_AD_IMAGE = 'https://marketplace.canva.com/EAFJFM2El4s/2/0/1131w/canva-blue-modern-business-flyer-portrait-yINAU4kvioI.jpg';
 
 export default function SidebarAd({ queryKey = 'sidebar-ad', className = '', height = 'h-64' }: SidebarAdProps) {
   const { selectedCity, selectedLocation } = useCityStore();

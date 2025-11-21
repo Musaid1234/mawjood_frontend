@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import LoginModal from '@/components/auth/LoginModal';
 import SignupModal from '@/components/auth/SignupModal';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import GTranslate from '@/components/GTranslate';
 
 const NAV_LINKS = [
   { href: '/about', key: 'about' },
@@ -103,6 +104,9 @@ export default function Navbar() {
 
             <div className="hidden md:flex items-center space-x-4">
               {/* GTranslate Language Switcher */}
+              <div className="flex items-center">
+                <GTranslate className="!inline-block" id="gtranslate-desktop" />
+              </div>
 
               <button
                 onClick={handleAddBusiness}
@@ -223,6 +227,11 @@ export default function Navbar() {
           {isMenuOpen && (
             <div className="md:hidden">
               <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
+                {/* GTranslate Language Switcher for Mobile - at top */}
+                <div className="px-3 py-2 border-b border-gray-200 mb-2">
+                  <GTranslate className="!inline-block" id="gtranslate-mobile" />
+                </div>
+
                 {NAV_LINKS.map((link) => (
                   <Link
                     key={link.key}
@@ -245,16 +254,6 @@ export default function Navbar() {
                 </button>
 
                 <div className="pt-4 pb-3 border-t border-gray-200">
-                  <div className="flex items-center justify-between px-3">
-                    {/* GTranslate Language Switcher for Mobile */}
-                    <div className="gtranslate_wrapper"></div>
-                    <button
-                      onClick={toggleLanguage}
-                      className="bg-primary text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors duration-200"
-                    >
-                      {i18n.language === 'en' ? 'العربية' : 'English'}
-                    </button>
-                  </div>
 
                   {showAuthUI && isAuthenticated && user ? (
                     <div className="mt-3 px-3 space-y-2">

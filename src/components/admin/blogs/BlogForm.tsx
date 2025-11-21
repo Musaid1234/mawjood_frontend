@@ -42,8 +42,10 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
   const [categorySearch, setCategorySearch] = useState('');
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [isUpdatingCategory, setIsUpdatingCategory] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [newCategory, setNewCategory] = useState({
     name: '',
     slug: '',
@@ -161,6 +163,7 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
       description: '',
     });
     setSlugManuallyEdited(false);
+    setEditingCategoryId(null);
   };
 
   const handleCategoryDialogChange = (open: boolean) => {
@@ -168,6 +171,17 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
     if (!open) {
       resetCategoryDialogForm();
     }
+  };
+
+  const handleEditCategory = (category: BlogCategory) => {
+    setEditingCategoryId(category.id);
+    setNewCategory({
+      name: category.name,
+      slug: category.slug,
+      description: category.description || '',
+    });
+    setSlugManuallyEdited(true); // Assume slug is already set when editing
+    setIsCategoryDialogOpen(true);
   };
 
   const handleNewCategoryNameChange = (value: string) => {
@@ -207,30 +221,51 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
     }
 
     try {
-      setIsCreatingCategory(true);
-      const createdCategory = await blogService.createCategory({
-        name: trimmedName,
-        slug: trimmedSlug,
-        description: trimmedDescription ? trimmedDescription : undefined,
-      });
+      if (editingCategoryId) {
+        // Update existing category
+        setIsUpdatingCategory(true);
+        const updatedCategory = await blogService.updateCategory(editingCategoryId, {
+          name: trimmedName,
+          slug: trimmedSlug,
+          description: trimmedDescription ? trimmedDescription : undefined,
+        });
 
-      setCategories((prev) => {
-        const next = [...prev, createdCategory];
-        next.sort((a, b) => a.name.localeCompare(b.name));
-        return next;
-      });
+        setCategories((prev) => {
+          const next = prev.map((cat) => (cat.id === editingCategoryId ? updatedCategory : cat));
+          next.sort((a, b) => a.name.localeCompare(b.name));
+          return next;
+        });
 
-      setSelectedCategories((prev) =>
-        prev.includes(createdCategory.id) ? prev : [...prev, createdCategory.id]
-      );
+        toast.success('Blog category updated successfully!');
+      } else {
+        // Create new category
+        setIsCreatingCategory(true);
+        const createdCategory = await blogService.createCategory({
+          name: trimmedName,
+          slug: trimmedSlug,
+          description: trimmedDescription ? trimmedDescription : undefined,
+        });
 
-      toast.success('Blog category created successfully!');
+        setCategories((prev) => {
+          const next = [...prev, createdCategory];
+          next.sort((a, b) => a.name.localeCompare(b.name));
+          return next;
+        });
+
+        setSelectedCategories((prev) =>
+          prev.includes(createdCategory.id) ? prev : [...prev, createdCategory.id]
+        );
+
+        toast.success('Blog category created successfully!');
+      }
+
       handleCategoryDialogChange(false);
     } catch (error: any) {
-      console.error('Error creating blog category:', error);
-      toast.error(error?.message || 'Failed to create blog category');
+      console.error(`Error ${editingCategoryId ? 'updating' : 'creating'} blog category:`, error);
+      toast.error(error?.message || `Failed to ${editingCategoryId ? 'update' : 'create'} blog category`);
     } finally {
       setIsCreatingCategory(false);
+      setIsUpdatingCategory(false);
     }
   };
 
@@ -285,7 +320,7 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
       {/* Title & Slug */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4">Basic Information</h2>
-        
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -414,30 +449,54 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
                     filteredCategories.map((category) => {
                       const isSelected = selectedCategories.includes(category.id);
                       return (
-                        <label
+                        <div
                           key={category.id}
-                          className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors ${
-                            isSelected ? 'bg-[#1c4233]/5' : 'hover:bg-gray-50'
-                          }`}
+                          className={`flex items-start gap-3 px-4 py-3 transition-colors ${isSelected ? 'bg-[#1c4233]/5' : 'hover:bg-gray-50'
+                            }`}
                         >
-                          <input
-                            type="checkbox"
-                            className="mt-1 w-4 h-4 text-[#1c4233] border-gray-300 rounded focus:ring-[#1c4233]"
-                            checked={isSelected}
-                            onChange={() => toggleCategorySelection(category.id)}
-                          />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">{category.name}</p>
-                            {category.description && (
-                              <p className="text-xs text-gray-500 mt-1">{category.description}</p>
-                            )}
-                            {typeof category.blogCount === 'number' && (
-                              <p className="text-xs text-gray-400 mt-1">
-                                {category.blogCount} {category.blogCount === 1 ? 'post' : 'posts'}
-                              </p>
-                            )}
-                          </div>
-                        </label>
+                          <label className="flex items-start gap-3 flex-1 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="mt-1 w-4 h-4 text-[#1c4233] border-gray-300 rounded focus:ring-[#1c4233]"
+                              checked={isSelected}
+                              onChange={() => toggleCategorySelection(category.id)}
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900">{category.name}</p>
+                              {category.description && (
+                                <p className="text-xs text-gray-500 mt-1">{category.description}</p>
+                              )}
+                              {typeof category.blogCount === 'number' && (
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {category.blogCount} {category.blogCount === 1 ? 'post' : 'posts'}
+                                </p>
+                              )}
+                            </div>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditCategory(category);
+                            }}
+                            className="ml-2 p-1.5 text-gray-400 hover:text-[#1c4233] hover:bg-[#1c4233]/10 rounded transition-colors"
+                            title="Edit category"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </button>
+                        </div>
                       );
                     })
                   )}
@@ -466,7 +525,7 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
       {/* Image Upload */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4">Featured Image</h2>
-        
+
         <div className="space-y-4">
           {imagePreview && (
             <div className="relative w-full h-64 rounded-lg overflow-hidden bg-gray-100 border-2 border-gray-300">
@@ -513,7 +572,7 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
       {/* SEO */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4">SEO Settings</h2>
-        
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -544,9 +603,8 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
               maxLength={160}
               rows={3}
               disabled={isSubmitting}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                errors.metaDescription ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed ${errors.metaDescription ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {errors.metaDescription && <p className="mt-1 text-sm text-red-600">{errors.metaDescription}</p>}
             <p className="text-xs text-gray-500 mt-1">{metaDescription.length}/160 characters</p>
@@ -554,57 +612,63 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
         </div>
       </div>
 
-      {/* Publish Status & Submit */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="space-y-3 max-w-md">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Publish Status
-              </label>
-              <Select
-                value={status}
-                onValueChange={(value: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED') => {
-                  setStatus(value);
-                  if (value !== 'SCHEDULED') {
-                    setScheduledAt('');
-                  }
-                }}
-                disabled={isSubmitting}
-              >
-                <SelectTrigger className="w-full md:w-64">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="DRAFT">Draft</SelectItem>
-                  <SelectItem value="PUBLISHED">Published</SelectItem>
-                  <SelectItem value="SCHEDULED">Schedule</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="max-w-md">
+            <div className={`grid gap-4 ${status === 'SCHEDULED' ? 'grid-cols-2' : 'grid-cols-1'}`}>
 
-            {status === 'SCHEDULED' && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <CalendarClock className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700">Schedule at</span>
-                </div>
-                <Input
-                  type="datetime-local"
-                  value={scheduledAt}
-                  onChange={(e) => setScheduledAt(e.target.value)}
+              {/* Publish Status */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Publish Status
+                </label>
+                <Select
+                  value={status}
+                  onValueChange={(value: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED') => {
+                    setStatus(value);
+                    if (value !== 'SCHEDULED') {
+                      setScheduledAt('');
+                    }
+                  }}
                   disabled={isSubmitting}
-                  className={errors.scheduledAt ? 'border-red-500' : ''}
-                />
-                {errors.scheduledAt && (
-                  <p className="mt-1 text-sm text-red-600">{errors.scheduledAt}</p>
-                )}
-                <p className="text-xs text-gray-500">
-                  The blog will be treated as published on or after this date and time.
-                </p>
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DRAFT">Draft</SelectItem>
+                    <SelectItem value="PUBLISHED">Published</SelectItem>
+                    <SelectItem value="SCHEDULED">Schedule</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            )}
+
+              {/* Schedule Date-Time */}
+              {status === 'SCHEDULED' && (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <CalendarClock className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">Schedule at</span>
+                  </div>
+                  <Input
+                    type="datetime-local"
+                    value={scheduledAt}
+                    onChange={(e) => setScheduledAt(e.target.value)}
+                    disabled={isSubmitting}
+                    className={errors.scheduledAt ? 'border-red-500' : ''}
+                  />
+                  {errors.scheduledAt && (
+                    <p className="mt-1 text-sm text-red-600">{errors.scheduledAt}</p>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    The blog will be treated as published on or after this date and time.
+                  </p>
+                </div>
+              )}
+
+            </div>
           </div>
+
 
           <Button
             type="submit"
@@ -631,7 +695,7 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
           <form onSubmit={handleCreateCategory} className="space-y-4">
             <DialogHeader>
               <DialogTitle className="text-xl font-semibold text-gray-900">
-                Add Blog Category
+                {editingCategoryId ? 'Edit Blog Category' : 'Add Blog Category'}
               </DialogTitle>
             </DialogHeader>
 
@@ -644,7 +708,7 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
                 onChange={(e) => handleNewCategoryNameChange(e.target.value)}
                 placeholder="e.g., Entrepreneurship, Marketing"
                 required
-                disabled={isCreatingCategory}
+                disabled={isCreatingCategory || isUpdatingCategory}
               />
             </div>
 
@@ -657,7 +721,7 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
                 onChange={(e) => handleNewCategorySlugChange(e.target.value)}
                 placeholder="e.g., entrepreneurship, marketing"
                 required
-                disabled={isCreatingCategory}
+                disabled={isCreatingCategory || isUpdatingCategory}
               />
               <p className="text-xs text-gray-500 mt-1">
                 Used in the URL. Lowercase letters, numbers, and hyphens only.
@@ -673,7 +737,7 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
                 onChange={(e) => setNewCategory((prev) => ({ ...prev, description: e.target.value }))}
                 placeholder="Optional short description for this category"
                 rows={3}
-                disabled={isCreatingCategory}
+                disabled={isCreatingCategory || isUpdatingCategory}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
               />
             </div>
@@ -683,22 +747,22 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
                 type="button"
                 variant="outline"
                 onClick={() => handleCategoryDialogChange(false)}
-                disabled={isCreatingCategory}
+                disabled={isCreatingCategory || isUpdatingCategory}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={isCreatingCategory}
+                disabled={isCreatingCategory || isUpdatingCategory}
                 className="bg-[#1c4233] hover:bg-[#245240] text-white"
               >
-                {isCreatingCategory ? (
+                {(isCreatingCategory || isUpdatingCategory) ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Creating...
+                    {editingCategoryId ? 'Updating...' : 'Creating...'}
                   </>
                 ) : (
-                  'Create Category'
+                  editingCategoryId ? 'Update Category' : 'Create Category'
                 )}
               </Button>
             </DialogFooter>

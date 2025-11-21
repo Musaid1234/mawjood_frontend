@@ -1,8 +1,11 @@
 'use client';
 
-import { Star, MapPin, Phone, Globe, Heart, Share2, CheckCircle, StarIcon } from 'lucide-react';
+import { Star, MapPin, Phone, Globe, Heart, Share2, StarIcon } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
+import { useFavorites } from '@/hooks/useFavorites';
+import { useAuthStore } from '@/store/authStore';
+import { toast } from 'sonner';
 
 interface Business {
   id: string;
@@ -39,14 +42,17 @@ interface Props {
 }
 
 export default function BusinessHeader({ business }: Props) {
-  const [isSaved, setIsSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { isFavorite, toggleFavorite, isLoading: favLoading } = useFavorites();
+  const { isAuthenticated } = useAuthStore();
   
   const getCurrentDayStatus = () => {
     if (!business.workingHours) return false;
     
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const currentDay = days[new Date().getDay()];
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const jsDayIndex = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const arrayIndex = jsDayIndex === 0 ? 6 : jsDayIndex - 1; // Map Sunday to index 6, others shift by -1
+    const currentDay = days[arrayIndex];
     const todayHours = business.workingHours[currentDay];
     
     if (!todayHours || todayHours.isClosed) return false;
@@ -87,8 +93,31 @@ export default function BusinessHeader({ business }: Props) {
   };
 
   const handleSave = () => {
-    setIsSaved(!isSaved);
-    // TODO: Implement actual save functionality with backend
+    if (!isAuthenticated) {
+      toast.error('Please login to add favorites');
+      return;
+    }
+    toggleFavorite(business.id);
+  };
+
+  const handleWriteReview = () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to write a review');
+      return;
+    }
+    
+    // Scroll to reviews section
+    const reviewsSection = document.getElementById('reviews');
+    if (reviewsSection) {
+      reviewsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Small delay to ensure smooth scroll completes before focusing
+      setTimeout(() => {
+        const reviewForm = reviewsSection.querySelector('textarea, input[type="text"]') as HTMLElement;
+        if (reviewForm) {
+          reviewForm.focus();
+        }
+      }, 500);
+    }
   };
 
   return (
@@ -193,18 +222,23 @@ export default function BusinessHeader({ business }: Props) {
 
               <button 
                 onClick={handleSave}
+                disabled={favLoading}
                 className={`flex items-center gap-2 border-2 ${
-                  isSaved 
+                  isFavorite(business.id)
                     ? 'border-red-500 text-red-500 bg-red-50' 
                     : 'border-gray-300 hover:border-red-500 hover:text-red-500 text-gray-700'
-                } px-4 md:px-6 py-2 md:py-2.5 rounded-lg font-semibold transition-colors text-sm md:text-base`}
+                } px-4 md:px-6 py-2 md:py-2.5 rounded-lg font-semibold transition-colors text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                <Heart className={`w-4 h-4 md:w-5 md:h-5 ${isSaved ? 'fill-current' : ''}`} />
-                <span className="hidden sm:inline">{isSaved ? 'Saved' : 'Save'}</span>
+                {favLoading ? (
+                  <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-gray-300 border-t-red-500 rounded-full animate-spin" />
+                ) : (
+                  <Heart className={`w-4 h-4 md:w-5 md:h-5 ${isFavorite(business.id) ? 'fill-current' : ''}`} />
+                )}
+                <span className="hidden sm:inline">{isFavorite(business.id) ? 'Saved' : 'Save'}</span>
               </button>
 
               <button 
-                onClick={() => {}}
+                onClick={handleWriteReview}
                 className="flex items-center gap-2 border-2 border-gray-300 hover:border-gray-400 text-gray-700 px-4 md:px-6 py-2 md:py-2.5 rounded-lg font-semibold transition-colors text-sm md:text-base relative"
               >
                 <StarIcon className="w-4 h-4 md:w-5 md:h-5" />

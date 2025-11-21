@@ -31,12 +31,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search } from 'lucide-react';
+import { BulkActionsToolbar } from '@/components/admin/common/BulkActionsToolbar';
 
 interface ReviewsTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   onSearchChange: (value: string) => void;
   searchValue?: string;
+  onBulkExport?: (selectedRows: TData[]) => void;
+  onBulkDelete?: (selectedRows: TData[]) => void;
 }
 
 export function ReviewsTable<TData, TValue>({
@@ -44,6 +47,8 @@ export function ReviewsTable<TData, TValue>({
   data,
   onSearchChange,
   searchValue = '',
+  onBulkExport,
+  onBulkDelete,
 }: ReviewsTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -69,8 +74,61 @@ export function ReviewsTable<TData, TValue>({
     },
   });
 
+  const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
+  const selectedCount = selectedRows.length;
+
+  const handleExportCSV = () => {
+    if (onBulkExport) {
+      onBulkExport(selectedRows);
+    } else {
+      const headers = ['ID', 'User', 'Business', 'Rating', 'Comment', 'Created At'];
+      const rows = selectedRows.length > 0 
+        ? selectedRows.map((row: any) => [
+            row.id,
+            `${row.user?.firstName || ''} ${row.user?.lastName || ''}`,
+            row.business?.name || '',
+            row.rating,
+            row.comment || '',
+            new Date(row.createdAt).toLocaleDateString(),
+          ])
+        : data.map((row: any) => [
+            row.id,
+            `${row.user?.firstName || ''} ${row.user?.lastName || ''}`,
+            row.business?.name || '',
+            row.rating,
+            row.comment || '',
+            new Date(row.createdAt).toLocaleDateString(),
+          ]);
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map((cell: any) => `"${cell}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `reviews-${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (onBulkDelete && selectedRows.length > 0) {
+      onBulkDelete(selectedRows);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {/* Bulk Actions Toolbar */}
+      <BulkActionsToolbar
+        selectedCount={selectedCount}
+        onExportCSV={handleExportCSV}
+        onBulkDelete={onBulkDelete ? handleBulkDelete : undefined}
+        exportFileName="reviews"
+      />
+
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">

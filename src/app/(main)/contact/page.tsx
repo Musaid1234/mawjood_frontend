@@ -1,6 +1,6 @@
 'use client';
 
-import { JSX, useState } from 'react';
+import { JSX, useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { Mail, Phone, Globe, Facebook, Instagram, Twitter, Linkedin, Send } from 'lucide-react';
 import { toast } from 'sonner';
@@ -51,6 +51,27 @@ export default function ContactPage() {
     message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fix Leaflet map z-index to prevent overlay on navbar
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .leaflet-container {
+        z-index: 0 !important;
+      }
+      .leaflet-top,
+      .leaflet-bottom {
+        z-index: 1 !important;
+      }
+      .leaflet-pane {
+        z-index: 0 !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   const SOCIAL_ICON_MAP: Record<string, JSX.Element> = {
     Facebook: <Facebook className="w-5 h-5 text-white" />,
@@ -289,12 +310,12 @@ export default function ContactPage() {
           </div>
 
           {/* Map */}
-          <div>
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden h-[600px]">
+          <div className="relative z-0">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden h-[600px] relative z-0">
               <MapContainer
                 center={[officeLocation.lat, officeLocation.lng]}
                 zoom={13}
-                style={{ height: '100%', width: '100%' }}
+                style={{ height: '100%', width: '100%', position: 'relative', zIndex: 0 }}
                 scrollWheelZoom={false}
               >
                 <TileLayer
