@@ -213,7 +213,7 @@ export default function BusinessesPage() {
                 <select
                   value={filters.sortBy}
                   onChange={(event) => updateFilters({ sortBy: event.target.value })}
-                  style={{ paddingTop: '0.875rem', paddingBottom: '0.875rem', paddingRight: '2.5rem' }}
+                  style={{ paddingTop: '0.780rem', paddingBottom: '0.780rem', paddingRight: '2.5rem' }}
                   className="px-4 pr-10 border border-gray-300 rounded-lg bg-white text-gray-500 focus:ring-2 focus:ring-primary focus:border-transparent appearance-none cursor-pointer"
                 >
                   {SORT_OPTIONS.map((option) => (
