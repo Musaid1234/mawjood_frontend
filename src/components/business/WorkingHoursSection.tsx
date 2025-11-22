@@ -1,6 +1,7 @@
 'use client';
 
 import { Clock, CheckCircle, XCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 interface WorkingHours {
   [key: string]: {
@@ -35,6 +36,16 @@ const dayLabels: Record<string, string> = {
 };
 
 export default function WorkingHoursSection({ workingHours }: Props) {
+  // Hooks must be called at the top level, before any early returns
+  const [currentDay, setCurrentDay] = useState<string>('monday');
+
+  useEffect(() => {
+    // Calculate day on client side to avoid hydration mismatches
+    const jsDayIndex = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const arrayIndex = jsDayIndex === 0 ? 6 : jsDayIndex - 1; // Map Sunday to index 6, others shift by -1
+    setCurrentDay(daysOfWeek[arrayIndex]);
+  }, []);
+
   if (!workingHours || Object.keys(workingHours).length === 0) {
     return (
       <section id="hours" className="bg-white rounded-lg shadow-sm p-6 scroll-mt-48">
@@ -48,12 +59,6 @@ export default function WorkingHoursSection({ workingHours }: Props) {
       </section>
     );
   }
-
-  const getCurrentDay = () => {
-    return daysOfWeek[new Date().getDay()];
-  };
-
-  const currentDay = getCurrentDay();
 
   const formatTime = (time: string) => {
     try {

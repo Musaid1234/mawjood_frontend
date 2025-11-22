@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Edit, Archive, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Plus, Edit, Archive, Loader2, CheckCircle2, XCircle, X } from 'lucide-react';
 import { useCurrency } from '@/hooks/useCurrency';
 
 export default function SubscriptionPlansPage() {
@@ -99,6 +99,19 @@ export default function SubscriptionPlansPage() {
     },
   });
 
+  // Auto-generate slug from name
+  useEffect(() => {
+    if (!editingPlan && formData.name) {
+      const generatedSlug = formData.name
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '') // Remove special characters
+        .replace(/[\s_-]+/g, '-') // Replace spaces, underscores, and multiple hyphens with single hyphen
+        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+      setFormData((prev) => ({ ...prev, slug: generatedSlug }));
+    }
+  }, [formData.name, editingPlan]);
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -169,10 +182,6 @@ export default function SubscriptionPlansPage() {
       billingInterval: formData.billingInterval,
       intervalCount: parseInt(formData.intervalCount),
       customIntervalDays: formData.customIntervalDays ? parseInt(formData.customIntervalDays) : undefined,
-      verifiedBadge: formData.verifiedBadge,
-      topPlacement: formData.topPlacement,
-      allowAdvertisements: formData.allowAdvertisements,
-      maxAdvertisements: formData.maxAdvertisements ? parseInt(formData.maxAdvertisements) : undefined,
       couponCode: formData.couponCode || undefined,
       couponType: formData.couponType,
       couponValue: formData.couponValue ? parseFloat(formData.couponValue) : undefined,
@@ -293,24 +302,6 @@ export default function SubscriptionPlansPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 mb-4">
-              {plan.verifiedBadge && (
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                  Verified Badge
-                </span>
-              )}
-              {plan.topPlacement && (
-                <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
-                  Top Placement
-                </span>
-              )}
-              {plan.allowAdvertisements && (
-                <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
-                  Advertisements
-                </span>
-              )}
-            </div>
-
             {plan.description && (
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 {plan.description}
@@ -329,255 +320,228 @@ export default function SubscriptionPlansPage() {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingPlan ? 'Edit Subscription Plan' : 'Create Subscription Plan'}
-            </DialogTitle>
-            <DialogDescription>
-              {editingPlan
-                ? 'Update the subscription plan details'
-                : 'Create a new subscription plan for businesses'}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+        <DialogContent className="max-w-2xl p-0">
+          <DialogTitle className="sr-only">
+            {editingPlan ? 'Edit Subscription Plan' : 'Create Subscription Plan'}
+          </DialogTitle>
+          <div className="p-6 sm:p-8">
+            <header className="flex justify-between items-start mb-6">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Name *
-                </label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
+                <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
+                  {editingPlan ? 'Edit Subscription Plan' : 'Create Subscription Plan'}
+                </h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  {editingPlan
+                    ? 'Update the subscription plan details'
+                    : 'Create a new subscription plan for businesses'}
+                </p>
               </div>
-              <div>
-                <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1">
-                  Slug *
-                </label>
-                <Input
-                  id="slug"
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent"
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-                  Price *
-                </label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="salePrice" className="block text-sm font-medium text-gray-700 mb-1">
-                  Sale Price
-                </label>
-                <Input
-                  id="salePrice"
-                  type="number"
-                  step="0.01"
-                  value={formData.salePrice}
-                  onChange={(e) => setFormData({ ...formData, salePrice: e.target.value })}
-                />
-              </div>
-              <div>
-                <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-1">
-                  Currency
-                </label>
-                <Input
-                  id="currency"
-                  value={formData.currency}
-                  onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label htmlFor="billingInterval" className="block text-sm font-medium text-gray-700 mb-1">
-                  Billing Interval
-                </label>
-                <Select
-                  value={formData.billingInterval}
-                  onValueChange={(value: any) =>
-                    setFormData({ ...formData, billingInterval: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DAY">Day</SelectItem>
-                    <SelectItem value="WEEK">Week</SelectItem>
-                    <SelectItem value="MONTH">Month</SelectItem>
-                    <SelectItem value="YEAR">Year</SelectItem>
-                    <SelectItem value="CUSTOM">Custom</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label htmlFor="intervalCount" className="block text-sm font-medium text-gray-700 mb-1">
-                  Interval Count
-                </label>
-                <Input
-                  id="intervalCount"
-                  type="number"
-                  value={formData.intervalCount}
-                  onChange={(e) => setFormData({ ...formData, intervalCount: e.target.value })}
-                />
-              </div>
-              {formData.billingInterval === 'CUSTOM' && (
-                <div>
-                  <label htmlFor="customIntervalDays" className="block text-sm font-medium text-gray-700 mb-1">
-                    Custom Days
-                  </label>
-                  <Input
-                    id="customIntervalDays"
-                    type="number"
-                    value={formData.customIntervalDays}
-                    onChange={(e) =>
-                      setFormData({ ...formData, customIntervalDays: e.target.value })
-                    }
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-                  Status
-                </label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value: any) => setFormData({ ...formData, status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DRAFT">Draft</SelectItem>
-                    <SelectItem value="ACTIVE">Active</SelectItem>
-                    <SelectItem value="INACTIVE">Inactive</SelectItem>
-                    <SelectItem value="ARCHIVED">Archived</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Features</label>
-              <div className="flex flex-wrap gap-4">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.verifiedBadge}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setFormData({ ...formData, verifiedBadge: e.target.checked })
-                    }
-                  />
-                  <span>Verified Badge</span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.topPlacement}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setFormData({ ...formData, topPlacement: e.target.checked })
-                    }
-                  />
-                  <span>Top Placement</span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.allowAdvertisements}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setFormData({ ...formData, allowAdvertisements: e.target.checked })
-                    }
-                  />
-                  <span>Allow Advertisements</span>
-                </label>
-              </div>
-            </div>
-
-            {formData.allowAdvertisements && (
-              <div>
-                <label htmlFor="maxAdvertisements" className="block text-sm font-medium text-gray-700 mb-1">
-                  Max Advertisements
-                </label>
-                <Input
-                  id="maxAdvertisements"
-                  type="number"
-                  value={formData.maxAdvertisements}
-                  onChange={(e) =>
-                    setFormData({ ...formData, maxAdvertisements: e.target.value })
-                  }
-                />
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
-                Notes
-              </label>
-              <textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, notes: e.target.value })}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent"
-              />
-            </div>
-
-            <DialogFooter>
-              <Button
+              <button
                 type="button"
-                variant="outline"
                 onClick={() => {
                   setIsDialogOpen(false);
                   resetForm();
                 }}
+                className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
               >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="bg-[#1c4233] hover:bg-[#245240]"
-                disabled={createMutation.isPending || updateMutation.isPending}
-              >
-                {(createMutation.isPending || updateMutation.isPending) && (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <X className="w-5 h-5" />
+              </button>
+            </header>
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Name *
+                    </label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                      className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="slug" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Slug *
+                    </label>
+                    <Input
+                      id="slug"
+                      value={formData.slug}
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                      required
+                      className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Description
+                  </label>
+                  <textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={4}
+                    className="mt-1 block w-full rounded-md border border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label htmlFor="price" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Price *
+                    </label>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      required
+                      className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="salePrice" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Sale Price
+                    </label>
+                    <Input
+                      id="salePrice"
+                      type="number"
+                      step="0.01"
+                      value={formData.salePrice}
+                      onChange={(e) => setFormData({ ...formData, salePrice: e.target.value })}
+                      className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="currency" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Currency
+                    </label>
+                    <Input
+                      id="currency"
+                      value={formData.currency}
+                      onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                      className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                  <div className="md:col-span-1">
+                    <label htmlFor="billingInterval" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Billing Interval
+                    </label>
+                    <Select
+                      value={formData.billingInterval}
+                      onValueChange={(value: any) =>
+                        setFormData({ ...formData, billingInterval: value })
+                      }
+                    >
+                      <SelectTrigger className="mt-1 w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="DAY">Day</SelectItem>
+                        <SelectItem value="WEEK">Week</SelectItem>
+                        <SelectItem value="MONTH">Month</SelectItem>
+                        <SelectItem value="YEAR">Year</SelectItem>
+                        <SelectItem value="CUSTOM">Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-1">
+                    <label htmlFor="intervalCount" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Interval Count
+                    </label>
+                    <Input
+                      id="intervalCount"
+                      type="number"
+                      value={formData.intervalCount}
+                      onChange={(e) => setFormData({ ...formData, intervalCount: e.target.value })}
+                      className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
+                    />
+                  </div>
+                  <div className="md:col-span-1">
+                    <label htmlFor="status" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Status
+                    </label>
+                    <Select
+                      value={formData.status}
+                      onValueChange={(value: any) => setFormData({ ...formData, status: value })}
+                    >
+                      <SelectTrigger className="mt-1 w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="DRAFT">Draft</SelectItem>
+                        <SelectItem value="ACTIVE">Active</SelectItem>
+                        <SelectItem value="INACTIVE">Inactive</SelectItem>
+                        <SelectItem value="ARCHIVED">Archived</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {formData.billingInterval === 'CUSTOM' && (
+                  <div>
+                    <label htmlFor="customIntervalDays" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Custom Days
+                    </label>
+                    <Input
+                      id="customIntervalDays"
+                      type="number"
+                      value={formData.customIntervalDays}
+                      onChange={(e) =>
+                        setFormData({ ...formData, customIntervalDays: e.target.value })
+                      }
+                      className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
+                    />
+                  </div>
                 )}
-                {editingPlan ? 'Update' : 'Create'}
-              </Button>
-            </DialogFooter>
-          </form>
+
+                <div>
+                  <label htmlFor="notes" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Notes
+                  </label>
+                  <textarea
+                    id="notes"
+                    value={formData.notes}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, notes: e.target.value })}
+                    rows={3}
+                    className="mt-1 block w-full rounded-md border border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <footer className="mt-8 flex justify-end space-x-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsDialogOpen(false);
+                    resetForm();
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 focus:ring-[#1c4233]"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                  className="px-4 py-2 text-sm font-medium text-white bg-[#1c4233] rounded-md shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 focus:ring-[#1c4233]"
+                >
+                  {(createMutation.isPending || updateMutation.isPending) && (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  )}
+                  {editingPlan ? 'Update' : 'Create'}
+                </Button>
+              </footer>
+            </form>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

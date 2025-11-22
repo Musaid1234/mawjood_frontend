@@ -70,31 +70,31 @@ export default function Navbar() {
     <>
       <nav className="bg-white shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex-shrink-0">
+          <div className="flex justify-between items-center h-14 md:h-14 lg:h-16 overflow-x-auto md:overflow-x-visible scrollbar-hide flex-nowrap">
+            <div className="flex-shrink-0 min-w-fit">
               <Link href="/" className="flex items-center">
                 <Image
                   src={logoSrc}
                   alt="Mawjood Logo"
                   width={40}
                   height={40}
-                  className="h-10 w-auto"
+                  className="h-8 w-auto md:h-8 lg:h-10 flex-shrink-0"
                 />
-                <div className="ml-2">
-                  <h1 className="text-primary hover:text-primary block text-base font-bold leading-tight">
+                <div className="ml-1.5 md:ml-0 lg:ml-2 flex-shrink-0">
+                  <h1 className="text-primary hover:text-primary block md:hidden lg:block text-sm md:text-sm lg:text-base font-bold leading-tight whitespace-nowrap">
                     {brandName}
                   </h1>
                 </div>
               </Link>
             </div>
 
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-8">
+            <div className="hidden md:block flex-shrink-0">
+              <div className="ml-4 md:ml-6 lg:ml-10 flex items-baseline space-x-3 md:space-x-4 lg:space-x-8">
                 {NAV_LINKS.map((link) => (
                   <Link
                     key={link.key}
                     href={link.href}
-                    className="text-primary transition-colors duration-200 px-3 py-2 text-sm font-medium"
+                    className="text-primary transition-colors duration-200 px-2 md:px-2 lg:px-3 py-2 text-xs md:text-xs lg:text-sm font-medium whitespace-nowrap"
                   >
                     {t(`nav.${link.key}`)}
                   </Link>
@@ -102,7 +102,7 @@ export default function Navbar() {
               </div>
             </div>
 
-            <div className="hidden md:flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-2 md:space-x-3 lg:space-x-4 flex-shrink-0">
               {/* GTranslate Language Switcher */}
               <div className="flex items-center">
                 <GTranslate className="!inline-block" id="gtranslate-desktop" />
@@ -110,7 +110,7 @@ export default function Navbar() {
 
               <button
                 onClick={handleAddBusiness}
-                className="text-primary hover:bg-primary/10 border border-primary px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                className="text-primary hover:bg-primary/10 border border-primary px-2 md:px-3 lg:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-xs lg:text-sm font-medium transition-colors duration-200 whitespace-nowrap"
               >
                 + Add Business
               </button>
@@ -118,9 +118,9 @@ export default function Navbar() {
                 <div className="relative">
                   <button
                     onClick={toggleUserMenu}
-                    className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-md transition-colors"
+                    className="flex items-center gap-1 md:gap-1.5 lg:gap-2 bg-gray-100 hover:bg-gray-200 px-2 md:px-2.5 lg:px-3 py-1.5 md:py-2 rounded-md transition-colors whitespace-nowrap"
                   >
-                    <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-semibold overflow-hidden">
+                    <div className="w-7 h-7 md:w-7 md:h-7 lg:w-8 lg:h-8 bg-primary text-white rounded-full flex items-center justify-center text-xs md:text-xs lg:text-sm font-semibold overflow-hidden">
                       {user.avatar ? (
                         <Image
                           src={user.avatar}
@@ -133,8 +133,8 @@ export default function Navbar() {
                         `${user.firstName[0]}${user.lastName[0]}`
                       )}
                     </div>
-                    <span className="text-sm font-medium">{user.firstName}</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span className="text-xs md:text-xs lg:text-sm font-medium hidden lg:inline">{user.firstName}</span>
+                    <svg className="w-3.5 h-3.5 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
@@ -190,7 +190,7 @@ export default function Navbar() {
                 <>
                   <button
                     onClick={() => setShowLoginModal(true)}
-                    className="text-gray-700 hover:text-primary transition-colors duration-200 px-3 py-2 text-sm font-medium"
+                    className="text-gray-700 hover:text-primary transition-colors duration-200 px-2 md:px-2 lg:px-3 py-2 text-xs md:text-xs lg:text-sm font-medium whitespace-nowrap"
                   >
                     {t('nav.login')}
                   </button>
@@ -199,7 +199,7 @@ export default function Navbar() {
                       setSignupRole('USER');
                       setShowSignupModal(true);
                     }}
-                    className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors duration-200"
+                    className="bg-primary text-white px-3 md:px-3 lg:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-xs lg:text-sm font-medium hover:bg-primary/90 transition-colors duration-200 whitespace-nowrap"
                   >
                     {t('nav.signup')}
                   </button>
@@ -207,7 +207,7 @@ export default function Navbar() {
               ) : null}
             </div>
 
-            <div className="md:hidden">
+            <div className="md:hidden flex-shrink-0 ml-4">
               <button
                 onClick={() => setIsMenuOpen(prev => !prev)}
                 className="text-gray-700 hover:text-primary focus:outline-none focus:text-primary"

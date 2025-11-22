@@ -102,6 +102,8 @@ export default function BusinessesPage() {
       }),
   });
 
+  const locationContext = data?.locationContext;
+
 
   const toggleFavorite = (businessId: string) => {
     setFavorites((prev) => {
@@ -129,11 +131,13 @@ export default function BusinessesPage() {
           <p className="text-gray-600">
             Discover the best local businesses
           </p>
-          {data?.locationContext?.fallbackApplied && data.locationContext.applied && (
-            <p className="text-sm text-gray-500 mt-2">
-              Showing businesses from {data.locationContext.applied.name} due to limited results in the selected
-              area.
-            </p>
+          {locationContext?.fallbackApplied && locationContext.applied && (
+            <div className="mt-2 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <span className="font-semibold">Note:</span> No businesses found in {locationContext.requested?.name || 'the selected location'}. 
+                Showing results from <span className="font-semibold">{locationContext.applied.name}</span> ({locationContext.applied.type}).
+              </p>
+            </div>
           )}
         </div>
 
@@ -260,56 +264,54 @@ export default function BusinessesPage() {
           </div>
         ) : (
           <>
-            {data?.businesses.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-xl">
-                <h3 className="text-xl font-semibold mb-2">No businesses found</h3>
-                <p className="text-gray-600">Try adjusting your filters</p>
-              </div>
-            ) : (
-              <>
-                {/* Business Grid/List with Sidebar */}
-                <div className={`grid gap-6 ${
-                  viewMode === 'grid' 
-                    ? 'lg:grid-cols-3' 
-                    : 'lg:grid-cols-4'
-                }`}>
-                  {/* Main Content */}
-                  <div className={viewMode === 'grid' ? 'lg:col-span-2' : 'lg:col-span-3'}>
-                    <div className={`grid gap-6 ${
-                      viewMode === 'grid' 
-                        ? 'grid-cols-1 md:grid-cols-2' 
-                        : 'grid-cols-1'
-                    }`}>
-                      {data?.businesses.map((business) => (
-                        viewMode === 'grid' ? (
-                          <BusinessCard
-                            key={business.id}
+            {/* Business Grid/List with Sidebar */}
+            <div className={`grid gap-6 ${
+              viewMode === 'grid' 
+                ? 'lg:grid-cols-3' 
+                : 'lg:grid-cols-4'
+            }`}>
+              {/* Main Content */}
+              <div className={viewMode === 'grid' ? 'lg:col-span-2' : 'lg:col-span-3'}>
+                {data?.businesses.length === 0 ? (
+                  <div className="text-center py-16 bg-white rounded-xl">
+                    <h3 className="text-xl font-semibold mb-2">No businesses found</h3>
+                    <p className="text-gray-600">Try adjusting your filters</p>
+                  </div>
+                ) : (
+                  <div className={`grid gap-6 ${
+                    viewMode === 'grid' 
+                      ? 'grid-cols-1 md:grid-cols-2' 
+                      : 'grid-cols-1'
+                  }`}>
+                    {data?.businesses.map((business) => (
+                      viewMode === 'grid' ? (
+                        <BusinessCard
+                          key={business.id}
+                          business={business}
+                          onToggleFavorite={toggleFavorite}
+                          isFavorite={favorites.has(business.id)}
+                        />
+                      ) : (
+                        <div key={business.id} className="max-w-4xl">
+                          <BusinessListCard
                             business={business}
                             onToggleFavorite={toggleFavorite}
                             isFavorite={favorites.has(business.id)}
                           />
-                        ) : (
-                          <div key={business.id} className="max-w-4xl">
-                            <BusinessListCard
-                              business={business}
-                              onToggleFavorite={toggleFavorite}
-                              isFavorite={favorites.has(business.id)}
-                            />
-                          </div>
-                        )
-                      ))}
-                    </div>
+                        </div>
+                      )
+                    ))}
                   </div>
+                )}
+              </div>
 
-                  {/* Sidebar Ad */}
-                  <div className={viewMode === 'grid' ? 'lg:col-span-1' : 'lg:col-span-1'}>
-                    <div className="sticky top-8">
-                      <SidebarAd queryKey="sidebar-ad-businesses" height="h-96" />
-                    </div>
-                  </div>
+              {/* Sidebar Ad - Always shown */}
+              <div className={viewMode === 'grid' ? 'lg:col-span-1' : 'lg:col-span-1'}>
+                <div className="sticky top-8">
+                  <SidebarAd queryKey="sidebar-ad-businesses" height="h-96" />
                 </div>
-              </>
-            )}
+              </div>
+            </div>
 
             {/* Pagination */}
             {data && data.pagination.totalPages > 1 && (

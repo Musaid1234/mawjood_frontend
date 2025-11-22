@@ -70,12 +70,26 @@ export default function TransactionsPage() {
     }
   }, [activeTab, debouncedPaymentSearch, paymentStatusFilter]);
 
-  // Fetch subscriptions
   useEffect(() => {
     if (activeTab === 'subscriptions') {
       fetchSubscriptions();
     }
   }, [activeTab, debouncedSubscriptionSearch, subscriptionStatusFilter]);
+
+  useEffect(() => {
+    const fetchInitialSubscriptions = async () => {
+      try {
+        const response = await adminService.getAllSubscriptions({
+          page: 1,
+          limit: 100,
+        });
+        setSubscriptions(response.data.subscriptions || []);
+      } catch (error: any) {
+        console.error('Error fetching initial subscriptions:', error);
+      }
+    };
+    fetchInitialSubscriptions();
+  }, []);
 
   const fetchPayments = async () => {
     try {

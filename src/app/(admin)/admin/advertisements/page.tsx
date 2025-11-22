@@ -245,349 +245,325 @@ export default function AdvertisementsPage() {
   };
 
   return (
-    <div className="py-6 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              Create Advertisement
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1 max-w-2xl">
-              Highlight one of your businesses with a wide banner that appears on relevant listing pages.
-            </p>
-          </div>
-        </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 sm:p-8 space-y-8 shadow-sm"
-        >
-          {/* Top: Banner + basic info */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Banner image (2/3) */}
-            <div className="lg:col-span-2 space-y-3">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Banner Image
-              </h2>
-              <p className="text-sm text-gray-500">
-                Recommended size around <span className="font-semibold">1278 × 184</span> pixels (wide
-                horizontal banner).
-              </p>
-              {imagePreview && (
-                <div className="relative w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
-                  <div className="aspect-[1278/184] relative">
-                    <Image
-                      src={imagePreview}
-                      alt="Advertisement preview"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                </div>
-              )}
-              <label
-                className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#1c4233] hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex flex-col items-center justify-center pt-4 pb-5">
-                  <Upload className="w-7 h-7 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600">
-                    <span className="font-semibold">Click to upload</span> banner image
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">JPG, PNG up to 5MB</p>
-                </div>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                  disabled={submitting}
-                />
-              </label>
-              {errors.image && <p className="text-sm text-red-600">{errors.image}</p>}
-            </div>
-
-            {/* Basic info (1/3) */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Title <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., Featured: Test Restaurant"
-                  disabled={submitting}
-                  className={errors.title ? 'border-red-500' : ''}
-                />
-                {errors.title && <p className="text-sm text-red-600">{errors.title}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Target page
-                </label>
-                <Input
-                  value={targetUrl}
-                  onChange={(e) => setTargetUrl(e.target.value)}
-                  disabled
-                  placeholder="Will be filled from selected business"
-                  className="bg-gray-50 cursor-not-allowed text-sm"
-                />
-                <p className="text-xs text-gray-500">
-                  Users will be redirected to the selected business detail page.
+    <div className="flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8">
+      <div className="w-full max-w-7xl mx-auto bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 sm:p-8 lg:p-12">
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-12 gap-y-10">
+            {/* Left Column - 2/3 width */}
+            <div className="lg:col-span-2 space-y-10">
+              {/* Banner Image Section */}
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Banner Image
+                </h2>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Recommended size around <span className="font-semibold">1278 × 184</span> pixels (wide horizontal banner).
                 </p>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Active
-                </label>
-                <div className="flex items-center gap-2 rounded-md border border-gray-200 px-3 py-2">
-                  <input
-                    id="ad-active"
-                    type="checkbox"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                    disabled={submitting}
-                    className="w-4 h-4 text-[#1c4233] border-gray-300 rounded focus:ring-[#1c4233]"
-                  />
-                  <label htmlFor="ad-active" className="text-sm text-gray-700 cursor-pointer">
-                    Show this banner on the site
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Business & placement */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Linked Business & Placement
-            </h2>
-            <p className="text-sm text-gray-500 mb-2">
-              Choose which business this banner belongs to and select the location scope for display.
-            </p>
-
-            {/* Location Type Selector */}
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">
-                Display Location Scope
-              </label>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setLocationType('city')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    locationType === 'city'
-                      ? 'bg-[#1c4233] text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  City Only
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLocationType('region')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    locationType === 'region'
-                      ? 'bg-[#1c4233] text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Entire Region/State
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLocationType('country')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    locationType === 'country'
-                      ? 'bg-[#1c4233] text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Entire Country
-                </button>
-              </div>
-              <p className="text-xs text-gray-500">
-                {locationType === 'city' && 'Advertisement will show only in the selected business\'s city'}
-                {locationType === 'region' && 'Advertisement will show across the entire region/state'}
-                {locationType === 'country' && 'Advertisement will show across the entire country'}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Business selector */}
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-gray-700">
-                  Business <span className="text-red-500">*</span>
-                </label>
-                <div className="relative" ref={businessDropdownRef}>
+                {imagePreview && (
+                  <div className="mt-4 relative w-full rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                    <div className="aspect-[1278/184] relative">
+                      <Image
+                        src={imagePreview}
+                        alt="Advertisement preview"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+                <label className="mt-4 flex justify-center items-center w-full px-6 py-10 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-[#1c4233] dark:hover:border-[#1c4233] transition-colors">
+                  <div className="text-center">
+                    <Upload className="w-10 h-10 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
+                    <p className="mt-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Click to upload banner image
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">JPG, PNG up to 5MB</p>
+                  </div>
                   <Input
-                    value={businessSearchQuery}
-                    onChange={(e) => {
-                      setBusinessSearchQuery(e.target.value);
-                      setShowBusinessDropdown(true);
-                    }}
-                    onFocus={() => setShowBusinessDropdown(true)}
-                    placeholder="Search businesses by name..."
-                    disabled={businessesLoading}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    disabled={submitting}
                   />
-                  {businessSearchQuery && (
+                </label>
+                {errors.image && <p className="mt-2 text-sm text-red-600">{errors.image}</p>}
+              </div>
+
+              {/* Linked Business & Placement Section */}
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Linked Business & Placement
+                </h2>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Choose which business this banner belongs to and select the location scope for display.
+                </p>
+                
+                {/* Location Type Selector */}
+                <div className="mt-6">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Display Location Scope
+                  </label>
+                  <div className="mt-2 flex items-center space-x-2">
                     <button
                       type="button"
-                      onClick={() => {
-                        setBusinessSearchQuery('');
-                        setSelectedBusinessId('');
-                        setSelectedBusinessData(null);
-                        setBusinesses([]);
-                      }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      onClick={() => setLocationType('city')}
+                      className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors ${
+                        locationType === 'city'
+                          ? 'bg-[#1c4233] text-white'
+                          : 'bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-600'
+                      }`}
                     >
-                      <X className="w-4 h-4" />
+                      City Only
                     </button>
-                  )}
-                  
-                  {showBusinessDropdown && (businessSearchQuery.trim() || businesses.length > 0) && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
-                      {businessesLoading ? (
-                        <div className="flex items-center justify-center py-4 text-sm text-gray-500">
-                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                          Searching...
-                        </div>
-                      ) : businesses.length === 0 ? (
-                        <div className="py-4 text-center text-sm text-gray-500">
-                          {businessSearchQuery.trim() ? 'No businesses found' : 'Start typing to search...'}
-                        </div>
-                      ) : (
-                        businesses.map((business) => {
-                          const selected = selectedBusinessId === business.id;
-                          return (
-                            <button
-                              key={business.id}
-                              type="button"
-                              onClick={() => handleBusinessSelect(business)}
-                              className={`w-full text-left px-3 py-2 text-sm flex flex-col border-b last:border-b-0 transition-colors ${
-                                selected
-                                  ? 'bg-[#1c4233]/10 text-[#1c4233] font-medium'
-                                  : 'hover:bg-gray-50 text-gray-800'
-                              }`}
-                            >
-                              <span>{business.name}</span>
-                              <span className="text-xs text-gray-500">
-                                {business.category?.name} • {business.city?.name}
-                              </span>
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => setLocationType('region')}
+                      className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
+                        locationType === 'region'
+                          ? 'bg-[#1c4233] text-white'
+                          : 'bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-600'
+                      }`}
+                    >
+                      Entire Region/State
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLocationType('country')}
+                      className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
+                        locationType === 'country'
+                          ? 'bg-[#1c4233] text-white'
+                          : 'bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-600'
+                      }`}
+                    >
+                      Entire Country
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    {locationType === 'city' && 'Advertisement will show only in the selected business\'s city'}
+                    {locationType === 'region' && 'Advertisement will show across the entire region/state'}
+                    {locationType === 'country' && 'Advertisement will show across the entire country'}
+                  </p>
                 </div>
-                {selectedBusiness && (
-                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm">
-                    <span className="font-medium text-green-800">Selected: </span>
-                    <span className="text-green-700">{selectedBusiness.name}</span>
-                  </div>
-                )}
-                {errors.businessId && (
-                  <p className="text-sm text-red-600">{errors.businessId}</p>
-                )}
-                {errors.categoryId && (
-                  <p className="text-sm text-red-600">{errors.categoryId}</p>
-                )}
-              </div>
 
-              {/* Placement summary */}
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-gray-700">
-                  Placement preview
-                </label>
-                {selectedBusiness ? (
-                  <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-2">
-                    <p className="text-sm font-semibold text-gray-900">
-                      {selectedBusiness.name}
-                    </p>
-                    <div className="flex flex-wrap gap-2 mt-1 text-xs">
-                      <span className="inline-flex items-center rounded-full bg-[#1c4233]/10 text-[#1c4233] px-2 py-1">
-                        Category: {selectedBusiness.category?.name}
-                      </span>
-                      <span className="inline-flex items-center rounded-full bg-gray-200 text-gray-800 px-2 py-1">
-                        City: {selectedBusiness.city?.name}
-                      </span>
+                {/* Business Search and Placement Preview */}
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Business selector */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Business <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative mt-1" ref={businessDropdownRef}>
+                      <Input
+                        value={businessSearchQuery}
+                        onChange={(e) => {
+                          setBusinessSearchQuery(e.target.value);
+                          setShowBusinessDropdown(true);
+                        }}
+                        onFocus={() => setShowBusinessDropdown(true)}
+                        placeholder="Search businesses by name..."
+                        disabled={businessesLoading || submitting}
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] dark:focus:border-[#1c4233] dark:focus:ring-[#1c4233] sm:text-sm"
+                      />
+                      {businessSearchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBusinessSearchQuery('');
+                            setSelectedBusinessId('');
+                            setSelectedBusinessData(null);
+                            setBusinesses([]);
+                            setTargetUrl('');
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                      
+                      {showBusinessDropdown && (businessSearchQuery.trim() || businesses.length > 0) && (
+                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                          {businessesLoading ? (
+                            <div className="flex items-center justify-center py-4 text-sm text-gray-500 dark:text-gray-400">
+                              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                              Searching...
+                            </div>
+                          ) : businesses.length === 0 ? (
+                            <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                              {businessSearchQuery.trim() ? 'No businesses found' : 'Start typing to search...'}
+                            </div>
+                          ) : (
+                            businesses.map((business) => {
+                              const selected = selectedBusinessId === business.id;
+                              return (
+                                <button
+                                  key={business.id}
+                                  type="button"
+                                  onClick={() => handleBusinessSelect(business)}
+                                  className={`w-full text-left px-3 py-2 text-sm flex flex-col border-b last:border-b-0 border-gray-200 dark:border-gray-700 transition-colors ${
+                                    selected
+                                      ? 'bg-[#1c4233]/10 dark:bg-[#1c4233]/20 text-[#1c4233] font-medium'
+                                      : 'hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-800 dark:text-gray-200'
+                                  }`}
+                                >
+                                  <span>{business.name}</span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    {business.category?.name} • {business.city?.name}
+                                  </span>
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      This banner will be eligible to show for{' '}
-                      <span className="font-medium">
-                        {selectedBusiness.category?.name}
-                      </span>{' '}
-                      listings{' '}
-                      {locationType === 'city' && (
-                        <>in <span className="font-medium">{selectedBusiness.city?.name}</span>.</>
-                      )}
-                      {locationType === 'region' && (
-                        <>across the entire <span className="font-medium">region/state</span>.</>
-                      )}
-                      {locationType === 'country' && (
-                        <>across the entire <span className="font-medium">country</span>.</>
-                      )}
+                    {errors.businessId && (
+                      <p className="mt-1 text-sm text-red-600">{errors.businessId}</p>
+                    )}
+                    {errors.categoryId && (
+                      <p className="mt-1 text-sm text-red-600">{errors.categoryId}</p>
+                    )}
+                  </div>
+
+                  {/* Placement preview */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Placement preview
+                    </label>
+                    {selectedBusiness ? (
+                      <div className="mt-1 flex items-center justify-center p-4 h-[5.25rem] text-center bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-gray-700 rounded-md">
+                        <div className="text-sm text-gray-900 dark:text-gray-200">
+                          <p className="font-semibold">{selectedBusiness.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {selectedBusiness.category?.name} • {selectedBusiness.city?.name}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-1 flex items-center justify-center p-4 h-[5.25rem] text-center bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-gray-700 rounded-md">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Select a business on the left to see where this advertisement will appear.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - 1/3 width */}
+            <div className="space-y-8">
+              <div className="space-y-6">
+                {/* Title */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="title">
+                    Title <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g., Featured: Test Restaurant"
+                    disabled={submitting}
+                    className={`mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] dark:focus:border-[#1c4233] dark:focus:ring-[#1c4233] sm:text-sm ${
+                      errors.title ? 'border-red-500' : ''
+                    }`}
+                  />
+                  {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+                </div>
+
+                {/* Target page */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="target-page">
+                    Target page
+                  </label>
+                  <Input
+                    id="target-page"
+                    value={targetUrl}
+                    onChange={(e) => setTargetUrl(e.target.value)}
+                    disabled
+                    placeholder="Will be filled from selected business"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-slate-700 shadow-sm sm:text-sm cursor-not-allowed"
+                  />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Users will be redirected to the selected business detail page.
+                  </p>
+                </div>
+
+                {/* Active checkbox */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Active</label>
+                  <div className="mt-2 flex items-center">
+                    <input
+                      id="active"
+                      name="active"
+                      type="checkbox"
+                      checked={isActive}
+                      onChange={(e) => setIsActive(e.target.checked)}
+                      disabled={submitting}
+                      className="h-4 w-4 rounded border-gray-300 text-[#1c4233] focus:ring-[#1c4233]"
+                    />
+                    <label htmlFor="active" className="ml-2 block text-sm text-gray-900 dark:text-gray-200 cursor-pointer">
+                      Show this banner on the site
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {/* Start and End dates */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <DateTimePicker
+                      label="Start at (optional)"
+                      value={startsAt}
+                      onChange={(e) => setStartsAt((e.target as HTMLInputElement).value)}
+                      disabled={submitting}
+                      className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] dark:focus:border-[#1c4233] dark:focus:ring-[#1c4233] sm:text-sm"
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      If empty, the banner will start showing immediately.
                     </p>
                   </div>
-                ) : (
-                  <div className="border border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 text-sm text-gray-500">
-                    Select a business on the left to see where this advertisement will appear.
+                  <div>
+                    <DateTimePicker
+                      label="End at (optional)"
+                      value={endsAt}
+                      onChange={(e) => setEndsAt((e.target as HTMLInputElement).value)}
+                      disabled={submitting}
+                      className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] dark:focus:border-[#1c4233] dark:focus:ring-[#1c4233] sm:text-sm"
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      If empty, the banner will keep showing until you disable it.
+                    </p>
                   </div>
-                )}
+                </div>
+
+                {/* Internal Notes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="internal-notes">
+                    Internal Notes
+                  </label>
+                  <textarea
+                    id="internal-notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={4}
+                    disabled={submitting}
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] dark:focus:border-[#1c4233] dark:focus:ring-[#1c4233] sm:text-sm resize-none"
+                    placeholder="Optional notes about this advertisement (visible only in admin)."
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Scheduling & notes */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-3 md:col-span-1">
-              <DateTimePicker
-                label="Start at (optional)"
-                value={startsAt}
-                onChange={(e) => setStartsAt((e.target as HTMLInputElement).value)}
-                disabled={submitting}
-              />
-              <p className="text-xs text-gray-500">
-                If empty, the banner will start showing immediately.
-              </p>
-            </div>
-
-            <div className="space-y-3 md:col-span-1">
-              <DateTimePicker
-                label="End at (optional)"
-                value={endsAt}
-                onChange={(e) => setEndsAt((e.target as HTMLInputElement).value)}
-                disabled={submitting}
-              />
-              <p className="text-xs text-gray-500">
-                If empty, the banner will keep showing until you disable it.
-              </p>
-            </div>
-
-            <div className="space-y-3 md:col-span-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Internal Notes
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={4}
-                disabled={submitting}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed text-sm h-full"
-                placeholder="Optional notes about this advertisement (visible only in admin)."
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-2 border-t border-gray-100 mt-2">
+          {/* Submit Button */}
+          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 flex justify-end">
             <Button
               type="submit"
               disabled={submitting}
-              className="bg-[#1c4233] hover:bg-[#245240] text-white px-8"
+              className="inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-sm font-semibold rounded-md text-white bg-[#1c4233] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1c4233] transition-colors"
             >
               {submitting ? (
                 <>

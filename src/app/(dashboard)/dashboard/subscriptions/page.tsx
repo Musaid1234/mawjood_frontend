@@ -80,7 +80,8 @@ export default function SubscriptionsPage() {
       setSelectedBusinessId('');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to create subscription');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to create subscription';
+      toast.error(errorMessage);
     },
   });
 
@@ -100,6 +101,13 @@ export default function SubscriptionsPage() {
   const handleConfirmSubscribe = () => {
     if (!selectedPlan || !selectedBusinessId) {
       toast.error('Please select a business');
+      return;
+    }
+
+    // Check if business is approved
+    const selectedBusiness = businesses?.find(b => b.id === selectedBusinessId);
+    if (selectedBusiness?.status !== 'APPROVED') {
+      toast.error('Business must be approved before purchasing a subscription. Please wait for admin approval.');
       return;
     }
 
@@ -310,10 +318,17 @@ export default function SubscriptionsPage() {
                 <option value="">Select a business</option>
                 {businesses?.map((business) => (
                   <option key={business.id} value={business.id}>
-                    {business.name}
+                    {business.name} {business.status !== 'APPROVED' ? '(Pending Approval)' : ''}
                   </option>
                 ))}
               </select>
+              {selectedBusinessId && businesses?.find(b => b.id === selectedBusinessId)?.status !== 'APPROVED' && (
+                <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-red-800">
+                    <strong>Note:</strong> This business is pending approval. You can only purchase subscriptions for approved businesses.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">

@@ -1,4 +1,5 @@
 import axiosInstance from '@/lib/axios';
+import axios from 'axios';
 import { API_ENDPOINTS } from '@/config/api.config';
 
 export interface SubscriptionPlan {
@@ -101,6 +102,12 @@ export interface PaginatedResponse<T> {
 }
 
 const handleError = (error: unknown): never => {
+  if (axios.isAxiosError(error)) {
+    const message = error.response?.data?.message || error.message || 'An error occurred';
+    const customError = new Error(message);
+    (customError as any).response = error.response;
+    throw customError;
+  }
   if (error instanceof Error) {
     throw error;
   }

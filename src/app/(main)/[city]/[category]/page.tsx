@@ -70,6 +70,11 @@ export default function CityCategoryPage() {
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [adLoading, setAdLoading] = useState(false);
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
+  const [locationContext, setLocationContext] = useState<{
+    requested: { id: string; type: string; name: string } | null;
+    applied: { id: string; type: string; name: string } | null;
+    fallbackApplied: boolean;
+  } | null>(null);
   const [filters, setFilters] = useState<FiltersState>({
     search: '',
     rating: '',
@@ -364,6 +369,7 @@ export default function CityCategoryPage() {
         setBusinesses(response.businesses || []);
         setTotalPages(response.pagination?.totalPages || 1);
         setTotalResults(response.pagination?.total || 0);
+        setLocationContext(response.locationContext || null);
       } catch (err) {
         console.error('Failed to fetch businesses:', err);
         setBusinesses([]);
@@ -684,7 +690,7 @@ export default function CityCategoryPage() {
               <div className="bg-white rounded-xl p-6 animate-pulse h-96" />
             </div>
           </div>
-        ) : businesses.length > 0 ? (
+        ) : (
           <div className={`grid gap-6 ${
             viewMode === 'grid'
               ? 'lg:grid-cols-3'
@@ -692,34 +698,48 @@ export default function CityCategoryPage() {
           }`}>
             {/* Main Content */}
             <div className={viewMode === 'grid' ? 'lg:col-span-2' : 'lg:col-span-3'}>
-              {viewMode === 'grid' ? (
-                <div className="grid gap-5 grid-cols-1 sm:grid-cols-2">
-                  {businesses.map((business) => (
-                    <BusinessCard key={business.id} business={business} />
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {businesses.map((business) => (
-                    <div key={business.id} className="max-w-4xl">
-                      <BusinessListCard business={business} />
+              {businesses.length > 0 ? (
+                <>
+                  {/* Location Context Message */}
+                  {locationContext?.fallbackApplied && locationContext.applied && (
+                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <span className="font-semibold">Note:</span> No businesses found in {locationContext.requested?.name || 'the selected location'}. 
+                        Showing results from <span className="font-semibold">{locationContext.applied.name}</span> ({locationContext.applied.type}).
+                      </p>
                     </div>
-                  ))}
+                  )}
+                  
+                  {viewMode === 'grid' ? (
+                    <div className="grid gap-5 grid-cols-1 sm:grid-cols-2">
+                      {businesses.map((business) => (
+                        <BusinessCard key={business.id} business={business} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {businesses.map((business) => (
+                        <div key={business.id} className="max-w-4xl">
+                          <BusinessListCard business={business} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-16 bg-white rounded-xl">
+                  <h3 className="text-xl font-semibold mb-2">No businesses found</h3>
+                  <p className="text-gray-600">Check back later for new listings</p>
                 </div>
               )}
             </div>
 
-            {/* Sidebar Ad */}
+            {/* Sidebar Ad - Always shown */}
             <div className={viewMode === 'grid' ? 'lg:col-span-1' : 'lg:col-span-1'}>
               <div className="sticky top-8">
                 <SidebarAd queryKey="sidebar-ad-category" height="h-96" />
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="text-center py-16 bg-white rounded-xl">
-            <h3 className="text-xl font-semibold mb-2">No businesses found</h3>
-            <p className="text-gray-600">Check back later for new listings</p>
           </div>
         )}
 
