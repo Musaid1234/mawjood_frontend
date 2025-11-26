@@ -92,7 +92,7 @@ export default function BusinessesPage() {
     queryFn: () =>
       businessService.searchBusinesses({
         page: currentPage,
-        limit: 12,
+        limit: 10,
         locationId: locationFilterId,
         locationType: locationFilterType,
         categoryIds: filters.categoryId ? [filters.categoryId] : undefined,
@@ -265,13 +265,9 @@ export default function BusinessesPage() {
         ) : (
           <>
             {/* Business Grid/List with Sidebar */}
-            <div className={`grid gap-6 ${
-              viewMode === 'grid' 
-                ? 'lg:grid-cols-3' 
-                : 'lg:grid-cols-4'
-            }`}>
+            <div className="flex flex-col lg:flex-row gap-6">
               {/* Main Content */}
-              <div className={viewMode === 'grid' ? 'lg:col-span-2' : 'lg:col-span-3'}>
+              <div className="flex-1 min-w-0">
                 {data?.businesses.length === 0 ? (
                   <div className="text-center py-16 bg-white rounded-xl">
                     <h3 className="text-xl font-semibold mb-2">No businesses found</h3>
@@ -305,8 +301,8 @@ export default function BusinessesPage() {
                 )}
               </div>
 
-              {/* Sidebar Ad - Always shown */}
-              <div className={viewMode === 'grid' ? 'lg:col-span-1' : 'lg:col-span-1'}>
+              {/* Sidebar Ad - Always shown with consistent width */}
+              <div className="lg:w-80 flex-shrink-0">
                 <div className="sticky top-8">
                   <SidebarAd queryKey="sidebar-ad-businesses" height="h-96" />
                 </div>

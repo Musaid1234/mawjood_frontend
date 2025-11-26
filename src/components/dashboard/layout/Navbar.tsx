@@ -21,14 +21,14 @@ export default function DashboardNavbar() {
   const { data: notificationsData } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => notificationService.getNotifications(1, 10),
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 300000, // Refetch every 5 Minutes
   });
 
   // Fetch unread count
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-count'],
     queryFn: () => notificationService.getUnreadCount(),
-    refetchInterval: 500000, // Refetch every 30 seconds
+    refetchInterval: 300000, // Refetch every 5 Minutes
   });
 
   // Mark as read mutation

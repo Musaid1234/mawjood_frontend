@@ -36,6 +36,8 @@ export default function HeroSection() {
     fetchCountries,
     setSelectedCity,
     setSelectedLocation,
+    isUserSelectionLocked,
+    lockUserSelection,
   } = useCityStore();
 
   const { data: siteSettings, isLoading: siteSettingsLoading } = useSiteSettings();
@@ -46,6 +48,7 @@ export default function HeroSection() {
     selectedCity,
     selectedLocation,
     setSelectedCity,
+    isUserSelectionLocked,
   });
 
   // Hero settings from site settings
@@ -188,6 +191,7 @@ export default function HeroSection() {
         id: city.id,
         regionId: city.regionId,
       });
+      lockUserSelection();
     }
   };
 
@@ -200,8 +204,6 @@ export default function HeroSection() {
 
     if (fallbackCity) {
       setSelectedCity(fallbackCity);
-    } else {
-      setSelectedCity(null);
     }
 
     setSelectedLocation({
@@ -210,6 +212,7 @@ export default function HeroSection() {
       name: region.name,
       id: region.id,
     });
+    lockUserSelection();
 
     // Fetch regions if not already loaded
     if (!regions.length) {
@@ -229,8 +232,6 @@ export default function HeroSection() {
 
     if (fallbackCity) {
       setSelectedCity(fallbackCity);
-    } else {
-      setSelectedCity(null);
     }
 
     setSelectedLocation({
@@ -239,6 +240,7 @@ export default function HeroSection() {
       name: country.name,
       id: country.id,
     });
+    lockUserSelection();
 
     if (!countries.length) {
       fetchCountries();

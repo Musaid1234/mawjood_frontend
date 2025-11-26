@@ -512,7 +512,7 @@ export default function AdvertisementsPage() {
 
               <div className="space-y-6">
                 {/* Start and End dates */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className=" gap-6">
                   <div>
                     <DateTimePicker
                       label="Start at (optional)"

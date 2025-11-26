@@ -18,13 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Country } from '@/services/city.service';
+import { Country, Region } from '@/services/city.service';
 
 interface RegionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   countries: Country[];
   defaultCountryId?: string;
+  region?: Region | null;
   onSave: (regionData: { name: string; slug: string; countryId: string }) => Promise<void>;
 }
 
@@ -33,8 +34,10 @@ export function RegionDialog({
   onOpenChange,
   countries,
   defaultCountryId,
+  region,
   onSave,
 }: RegionDialogProps) {
+  const isEditMode = !!region;
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [countryId, setCountryId] = useState('');
@@ -45,11 +48,21 @@ export function RegionDialog({
   useEffect(() => {
     if (open) {
       setCountrySearch('');
-      const initialCountry =
-        defaultCountryId && countries.some((country) => country.id === defaultCountryId)
-          ? defaultCountryId
-          : countries[0]?.id ?? '';
-      setCountryId(initialCountry);
+      if (isEditMode && region) {
+        setName(region.name || '');
+        setSlug(region.slug || '');
+        setCountryId(region.countryId || '');
+        setSlugManuallyEdited(true);
+      } else {
+        const initialCountry =
+          defaultCountryId && countries.some((country) => country.id === defaultCountryId)
+            ? defaultCountryId
+            : countries[0]?.id ?? '';
+        setCountryId(initialCountry);
+        setName('');
+        setSlug('');
+        setSlugManuallyEdited(false);
+      }
     } else {
       setName('');
       setSlug('');
@@ -57,7 +70,7 @@ export function RegionDialog({
       setSlugManuallyEdited(false);
       setCountrySearch('');
     }
-  }, [open, countries, defaultCountryId]);
+  }, [open, countries, defaultCountryId, region, isEditMode]);
 
   const generateSlug = (value: string) =>
     value
@@ -104,9 +117,9 @@ export function RegionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>Add New State</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit State' : 'Add New State'}</DialogTitle>
           <DialogDescription>
-            Create a new State to organize cities.
+            {isEditMode ? 'Update the state information below.' : 'Create a new State to organize cities.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -154,20 +167,24 @@ export function RegionDialog({
               <SelectTrigger className="w-full max-w-xs">
                 <SelectValue placeholder="Select a country" />
               </SelectTrigger>
-              <SelectContent className="w-full max-w-xs max-h-60 overflow-y-auto">
-                <div className="px-2 pb-2 pt-1 sticky top-0 bg-white dark:bg-gray-900">
+              <SelectContent className="w-full max-w-xs p-0">
+                <div className="px-2 pb-2 pt-2 sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
                   <Input
                     placeholder="Search country..."
                     value={countrySearch}
                     onChange={(e) => setCountrySearch(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
                     className="h-8 text-xs"
                   />
                 </div>
-                {filteredCountries.map((country) => (
-                  <SelectItem key={country.id} value={country.id}>
-                    {country.name}
-                  </SelectItem>
-                ))}
+                <div className="max-h-60 overflow-y-auto">
+                  {filteredCountries.map((country) => (
+                    <SelectItem key={country.id} value={country.id}>
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </div>
               </SelectContent>
             </Select>
             {countries.length === 0 && (
@@ -187,7 +204,7 @@ export function RegionDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || countries.length === 0}>
-              {isSubmitting ? 'Creating...' : 'Create State'}
+              {isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update State' : 'Create State')}
             </Button>
           </DialogFooter>
         </form>

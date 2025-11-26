@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, Eye } from 'lucide-react';
 import { BulkActionsToolbar } from '@/components/admin/common/BulkActionsToolbar';
 
 interface BlogsTableProps<TData, TValue> {
@@ -135,6 +135,20 @@ export function BlogsTable<TData, TValue>({
             className="pl-10"
           />
         </div>
+        <Button
+          variant="outline"
+          className="flex items-center gap-2"
+          disabled={selectedRows.length !== 1 || !(selectedRows[0] as any)?.slug}
+          onClick={() => {
+            const slug = (selectedRows[0] as any)?.slug;
+            if (slug) {
+              window.open(`/blog/${slug}`, '_blank');
+            }
+          }}
+        >
+          <Eye className="w-4 h-4" />
+          View Blog
+        </Button>
       </div>
 
       {/* Table */}

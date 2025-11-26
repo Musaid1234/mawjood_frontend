@@ -229,7 +229,7 @@ export default function LocationSelector({
                 locationTab === 'city'
                   ? t('hero.searchCityPlaceholder', { defaultValue: 'Search city' })
                   : locationTab === 'region'
-                  ? t('hero.searchRegionPlaceholder', { defaultValue: 'Search region' })
+                  ? t('hero.searchRegionPlaceholder', { defaultValue: 'Search state' })
                   : t('hero.searchCountryPlaceholder', { defaultValue: 'Search country' })
               }
               className="w-full px-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"

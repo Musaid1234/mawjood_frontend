@@ -4,32 +4,29 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { subscriptionService, SubscriptionPlan, parseDecimal } from '@/services/subscription.service';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Edit, Archive, Loader2, CheckCircle2, XCircle, X } from 'lucide-react';
+import { Plus, Edit, Archive, Loader2 } from 'lucide-react';
 import { useCurrency } from '@/hooks/useCurrency';
+import PlanFormDialog, { PlanFormValues } from '@/components/admin/subscription-plans/PlanFormDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function SubscriptionPlansPage() {
   const { currency } = useCurrency();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
-  const [formData, setFormData] = useState({
+  const [planToArchive, setPlanToArchive] = useState<SubscriptionPlan | null>(null);
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const [formData, setFormData] = useState<PlanFormValues>({
     name: '',
     slug: '',
     description: '',
@@ -93,6 +90,8 @@ export default function SubscriptionPlansPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription-plans'] });
       toast.success('Subscription plan archived successfully');
+      setIsArchiveDialogOpen(false);
+      setPlanToArchive(null);
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to archive subscription plan');
@@ -140,6 +139,13 @@ export default function SubscriptionPlansPage() {
     setEditingPlan(null);
   };
 
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      resetForm();
+    }
+  };
+
   const handleEdit = (plan: SubscriptionPlan) => {
     setEditingPlan(plan);
     setFormData({
@@ -169,7 +175,7 @@ export default function SubscriptionPlansPage() {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data: any = {
       name: formData.name,
@@ -199,10 +205,14 @@ export default function SubscriptionPlansPage() {
     }
   };
 
-  const handleArchive = (id: string) => {
-    if (confirm('Are you sure you want to archive this subscription plan?')) {
-      archiveMutation.mutate(id);
-    }
+  const handleArchiveClick = (plan: SubscriptionPlan) => {
+    setPlanToArchive(plan);
+    setIsArchiveDialogOpen(true);
+  };
+
+  const confirmArchive = () => {
+    if (!planToArchive) return;
+    archiveMutation.mutate(planToArchive.id);
   };
 
   if (isLoading) {
@@ -260,7 +270,7 @@ export default function SubscriptionPlansPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleArchive(plan.id)}
+                  onClick={() => handleArchiveClick(plan)}
                 >
                   <Archive className="w-4 h-4" />
                 </Button>
@@ -319,231 +329,53 @@ export default function SubscriptionPlansPage() {
         </div>
       )}
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl p-0">
-          <DialogTitle className="sr-only">
-            {editingPlan ? 'Edit Subscription Plan' : 'Create Subscription Plan'}
-          </DialogTitle>
-          <div className="p-6 sm:p-8">
-            <header className="flex justify-between items-start mb-6">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
-                  {editingPlan ? 'Edit Subscription Plan' : 'Create Subscription Plan'}
-                </h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  {editingPlan
-                    ? 'Update the subscription plan details'
-                    : 'Create a new subscription plan for businesses'}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsDialogOpen(false);
-                  resetForm();
-                }}
-                className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </header>
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Name *
-                    </label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                      className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="slug" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Slug *
-                    </label>
-                    <Input
-                      id="slug"
-                      value={formData.slug}
-                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                      required
-                      className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
-                    />
-                  </div>
-                </div>
+      <PlanFormDialog
+        open={isDialogOpen}
+        onOpenChange={handleDialogOpenChange}
+        formData={formData}
+        setFormData={setFormData}
+        editingPlan={editingPlan}
+        onSubmit={handleSubmit}
+        onCancel={() => {
+          setIsDialogOpen(false);
+          resetForm();
+        }}
+        isSubmitting={createMutation.isPending || updateMutation.isPending}
+      />
 
-                <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Description
-                  </label>
-                  <textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={4}
-                    className="mt-1 block w-full rounded-md border border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <label htmlFor="price" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Price *
-                    </label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      required
-                      className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="salePrice" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Sale Price
-                    </label>
-                    <Input
-                      id="salePrice"
-                      type="number"
-                      step="0.01"
-                      value={formData.salePrice}
-                      onChange={(e) => setFormData({ ...formData, salePrice: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="currency" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Currency
-                    </label>
-                    <Input
-                      id="currency"
-                      value={formData.currency}
-                      onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-                  <div className="md:col-span-1">
-                    <label htmlFor="billingInterval" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Billing Interval
-                    </label>
-                    <Select
-                      value={formData.billingInterval}
-                      onValueChange={(value: any) =>
-                        setFormData({ ...formData, billingInterval: value })
-                      }
-                    >
-                      <SelectTrigger className="mt-1 w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="DAY">Day</SelectItem>
-                        <SelectItem value="WEEK">Week</SelectItem>
-                        <SelectItem value="MONTH">Month</SelectItem>
-                        <SelectItem value="YEAR">Year</SelectItem>
-                        <SelectItem value="CUSTOM">Custom</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="md:col-span-1">
-                    <label htmlFor="intervalCount" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Interval Count
-                    </label>
-                    <Input
-                      id="intervalCount"
-                      type="number"
-                      value={formData.intervalCount}
-                      onChange={(e) => setFormData({ ...formData, intervalCount: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
-                    />
-                  </div>
-                  <div className="md:col-span-1">
-                    <label htmlFor="status" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Status
-                    </label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value: any) => setFormData({ ...formData, status: value })}
-                    >
-                      <SelectTrigger className="mt-1 w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="DRAFT">Draft</SelectItem>
-                        <SelectItem value="ACTIVE">Active</SelectItem>
-                        <SelectItem value="INACTIVE">Inactive</SelectItem>
-                        <SelectItem value="ARCHIVED">Archived</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {formData.billingInterval === 'CUSTOM' && (
-                  <div>
-                    <label htmlFor="customIntervalDays" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Custom Days
-                    </label>
-                    <Input
-                      id="customIntervalDays"
-                      type="number"
-                      value={formData.customIntervalDays}
-                      onChange={(e) =>
-                        setFormData({ ...formData, customIntervalDays: e.target.value })
-                      }
-                      className="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <label htmlFor="notes" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Notes
-                  </label>
-                  <textarea
-                    id="notes"
-                    value={formData.notes}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, notes: e.target.value })}
-                    rows={3}
-                    className="mt-1 block w-full rounded-md border border-slate-300 dark:border-slate-600 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 sm:text-sm"
-                  />
-                </div>
-              </div>
-
-              <footer className="mt-8 flex justify-end space-x-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setIsDialogOpen(false);
-                    resetForm();
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 focus:ring-[#1c4233]"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={createMutation.isPending || updateMutation.isPending}
-                  className="px-4 py-2 text-sm font-medium text-white bg-[#1c4233] rounded-md shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 focus:ring-[#1c4233]"
-                >
-                  {(createMutation.isPending || updateMutation.isPending) && (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  )}
-                  {editingPlan ? 'Update' : 'Create'}
-                </Button>
-              </footer>
-            </form>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AlertDialog
+        open={isArchiveDialogOpen}
+        onOpenChange={(open) => {
+          setIsArchiveDialogOpen(open);
+          if (!open) {
+            setPlanToArchive(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive subscription plan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will hide {planToArchive?.name ?? 'this plan'} from businesses until you reactivate it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={archiveMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmArchive}
+              disabled={archiveMutation.isPending}
+              className="bg-[#1c4233] hover:bg-[#245240]"
+            >
+              {archiveMutation.isPending && (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              )}
+              Archive
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

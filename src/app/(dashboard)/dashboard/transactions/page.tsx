@@ -43,6 +43,7 @@ export default function TransactionsPage() {
           paymentService.getBusinessPayments(business.id).catch(() => [])
         )
       );
+
       return allPayments.flat();
     },
     enabled: !!businesses && businesses.length > 0,
@@ -223,7 +224,7 @@ export default function TransactionsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Business</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Payment Method</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Amount</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Date</th>
@@ -235,7 +236,7 @@ export default function TransactionsPage() {
                   <tr key={payment.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4">
                       <div className="font-medium text-gray-900">
-                        {payment.business?.name || 'Unknown Business'}
+                        {payment.paymentMethod || 'N/A'}
                       </div>
                     </td>
                     <td className="py-3 px-4">

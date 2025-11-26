@@ -416,21 +416,6 @@ export default function CityCategoryPage() {
     return () => clearInterval(interval);
   }, [advertisements.length]);
 
-  useEffect(() => {
-    if (loadingCategory) return;
-    if (error) return;
-    if (locationType !== 'city') return;
-    if (!effectiveCity && cities.length) {
-      const defaultCity = cities.find((city) =>
-        city.name.toLowerCase().includes('riyadh')
-      ) || cities[0];
-
-      if (defaultCity) {
-        router.replace(`/${defaultCity.slug}/${categorySlug}`);
-      }
-    }
-  }, [effectiveCity, cities, categorySlug, router, loadingCategory, error, locationType]);
-
   if (loadingCategory) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -493,8 +478,9 @@ export default function CityCategoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-white">
+      <div className="py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
       {/* Top Ad Slider */}
       <div className="space-y-6 mb-4">
           {adLoading && (
@@ -518,7 +504,7 @@ export default function CityCategoryPage() {
                             src={ad.imageUrl}
                             alt={ad.title}
                             fill
-                            className="object-cover"
+                            className="object-contain"
                             priority={index === 0}
                           />
                         </Link>
@@ -527,7 +513,7 @@ export default function CityCategoryPage() {
                           src={ad.imageUrl}
                           alt={ad.title}
                           fill
-                          className="object-cover"
+                          className="object-contain"
                           priority={index === 0}
                         />
                       )}
@@ -536,7 +522,6 @@ export default function CityCategoryPage() {
                 })}
               </div>
               
-              {/* Navigation Buttons */}
               {advertisements.length > 1 && (
                 <>
                   <button
@@ -671,12 +656,8 @@ export default function CityCategoryPage() {
         </div>
 
         {businessLoading ? (
-          <div className={`grid gap-6 ${
-            viewMode === 'grid'
-              ? 'lg:grid-cols-3'
-              : 'lg:grid-cols-4'
-          }`}>
-            <div className={viewMode === 'grid' ? 'lg:col-span-2' : 'lg:col-span-3'}>
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="flex-1 min-w-0">
               <div className={viewMode === 'grid' 
                 ? 'grid gap-6 grid-cols-1 sm:grid-cols-2'
                 : 'space-y-6'
@@ -686,18 +667,14 @@ export default function CityCategoryPage() {
                 ))}
               </div>
             </div>
-            <div className={viewMode === 'grid' ? 'lg:col-span-1' : 'lg:col-span-1'}>
+            <div className="lg:w-80 flex-shrink-0">
               <div className="bg-white rounded-xl p-6 animate-pulse h-96" />
             </div>
           </div>
         ) : (
-          <div className={`grid gap-6 ${
-            viewMode === 'grid'
-              ? 'lg:grid-cols-3'
-              : 'lg:grid-cols-4'
-          }`}>
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Main Content */}
-            <div className={viewMode === 'grid' ? 'lg:col-span-2' : 'lg:col-span-3'}>
+            <div className="flex-1 min-w-0">
               {businesses.length > 0 ? (
                 <>
                   {/* Location Context Message */}
@@ -734,50 +711,53 @@ export default function CityCategoryPage() {
               )}
             </div>
 
-            {/* Sidebar Ad - Always shown */}
-            <div className={viewMode === 'grid' ? 'lg:col-span-1' : 'lg:col-span-1'}>
+            {/* Sidebar Ad - Always shown with consistent width */}
+            <div className="lg:w-80 flex-shrink-0">
               <div className="sticky top-8">
                 <SidebarAd queryKey="sidebar-ad-category" height="h-96" />
               </div>
             </div>
           </div>
         )}
+        </div>
+      </div>
 
-        {/* Bottom Ads */}
-        {!businessLoading && advertisements.length > 0 && (
-          <div className="mt-12 space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Featured Advertisements</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {advertisements.slice(0, 3).map((ad) => {
+      {/* Bottom Ad - Full Width */}
+      {!businessLoading && advertisements.length > 0 && (
+        <div className="max-w-7xl mx-auto my-12">
+          <div className="relative overflow-hidden rounded-2xl border-b border-gray-200">
+            <div className="relative h-48 md:h-42 lg:h-52">
+              {(() => {
+                const ad = advertisements[0];
                 const resolvedUrl = getResolvedTargetUrl(ad);
                 return (
-                  <div key={ad.id} className="rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  <>
                     {resolvedUrl ? (
-                      <Link href={resolvedUrl} target="_blank" rel="noopener noreferrer">
+                      <Link href={resolvedUrl} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
                         <Image
                           src={ad.imageUrl}
                           alt={ad.title}
-                          width={400}
-                          height={250}
-                          className="w-full h-48 object-cover"
+                          fill
+                          className="object-contain"
+                          priority
                         />
                       </Link>
                     ) : (
                       <Image
                         src={ad.imageUrl}
                         alt={ad.title}
-                        width={400}
-                        height={250}
-                        className="w-full h-48 object-cover"
+                        fill
+                        className="object-contain"
+                        priority
                       />
                     )}
-                  </div>
+                  </>
                 );
-              })}
+              })()}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }   

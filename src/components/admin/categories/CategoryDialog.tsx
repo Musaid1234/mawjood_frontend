@@ -22,9 +22,15 @@ interface CategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   category?: Category | null;
+  defaultParentId?: string | null;
 }
 
-export default function CategoryDialog({ open, onOpenChange, category }: CategoryDialogProps) {
+export default function CategoryDialog({
+  open,
+  onOpenChange,
+  category,
+  defaultParentId = null,
+}: CategoryDialogProps) {
   const queryClient = useQueryClient();
   const isEditMode = !!category;
 
@@ -71,7 +77,7 @@ export default function CategoryDialog({ open, onOpenChange, category }: Categor
       slug: '',
       description: '',
       order: '',
-      parentId: '',
+      parentId: defaultParentId || '',
     });
     setIconFile(null);
     setIconPreview(null);
@@ -176,9 +182,18 @@ export default function CategoryDialog({ open, onOpenChange, category }: Categor
   const categories = categoriesResponse?.data?.categories || [];
   const parentCategories = categories.filter((cat) => cat.id !== category?.id);
 
+  useEffect(() => {
+    if (!isEditMode && open) {
+      setFormData((prev) => ({
+        ...prev,
+        parentId: defaultParentId || '',
+      }));
+    }
+  }, [defaultParentId, isEditMode, open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg p-6"> 
+      <DialogContent className="sm:max-w-lg w-[95vw] max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader className="pb-3">
           <DialogTitle className="text-xl font-bold text-gray-900">
             {isEditMode ? 'Edit Category' : 'Add New Category'}

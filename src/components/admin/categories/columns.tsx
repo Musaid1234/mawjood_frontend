@@ -23,7 +23,8 @@ type CategoryWithCount = Category & {
 
 export const createColumns = (
   onEdit: (category: CategoryWithCount) => void,
-  onDelete: (categoryId: string) => void
+  onDelete: (categoryId: string) => void,
+  onManageSubcategories: (category: CategoryWithCount) => void
 ): ColumnDef<CategoryWithCount>[] => [
   {
     accessorKey: 'name',
@@ -76,12 +77,14 @@ export const createColumns = (
       const category = row.original as CategoryWithCount;
       const count = category._count?.subcategories || (category.subcategories ? category.subcategories.length : 0);
       return (
-        <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          className="flex items-center gap-2 px-0 text-sm font-medium text-[#1c4233]"
+          onClick={() => onManageSubcategories(category)}
+        >
           <FolderTree className="w-4 h-4 text-gray-400" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {count}
-          </span>
-        </div>
+          <span className="underline">{count}</span>
+        </Button>
       );
     },
   },

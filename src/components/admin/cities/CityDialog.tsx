@@ -139,20 +139,24 @@ export function CityDialog({
               <SelectTrigger className="w-full max-w-xs">
                 <SelectValue placeholder="Select a region" />
               </SelectTrigger>
-              <SelectContent className="w-full max-w-xs max-h-60 overflow-y-auto">
-                <div className="px-2 pb-2 pt-1 sticky top-0 bg-white dark:bg-gray-900">
+              <SelectContent className="w-full max-w-xs p-0">
+                <div className="px-2 pb-2 pt-2 sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
                   <Input
-                    placeholder="Search region..."
+                    placeholder="Search state..."
                     value={regionSearch}
                     onChange={(e) => setRegionSearch(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
                     className="h-8 text-xs"
                   />
                 </div>
-                {filteredRegions.map((region) => (
-                  <SelectItem key={region.id} value={region.id}>
-                    {region.name}
-                  </SelectItem>
-                ))}
+                <div className="max-h-60 overflow-y-auto">
+                  {filteredRegions.map((region) => (
+                    <SelectItem key={region.id} value={region.id}>
+                      {region.name}
+                    </SelectItem>
+                  ))}
+                </div>
               </SelectContent>
             </Select>
           </div>

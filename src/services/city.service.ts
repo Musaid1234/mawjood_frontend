@@ -74,6 +74,15 @@ export const cityService = {
     }
   },
 
+  async updateCountry(id: string, countryData: { name: string; slug: string; code?: string }): Promise<Country> {
+    try {
+      const response = await axiosInstance.put<ApiResponse<Country>>(`/api/cities/countries/${id}`, countryData);
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
   async deleteCountry(id: string): Promise<void> {
     try {
       await axiosInstance.delete(`/api/cities/countries/${id}`);
@@ -142,6 +151,15 @@ export const cityService = {
   async createRegion(regionData: { name: string; slug: string; countryId: string }): Promise<Region> {
     try {
       const response = await axiosInstance.post<ApiResponse<Region>>('/api/cities/regions', regionData);
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async updateRegion(id: string, regionData: { name: string; slug: string; countryId: string }): Promise<Region> {
+    try {
+      const response = await axiosInstance.put<ApiResponse<Region>>(`/api/cities/regions/${id}`, regionData);
       return response.data.data;
     } catch (error) {
       return handleError(error);

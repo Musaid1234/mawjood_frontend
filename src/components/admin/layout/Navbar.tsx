@@ -21,7 +21,7 @@ export default function AdminNavbar() {
   const { data: notificationsData } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => notificationService.getNotifications(1, 10),
-    refetchInterval: 30000,
+    refetchInterval: 300000, // Refetch every 5 Minutes
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     staleTime: 10000, // Consider data fresh for 10 seconds
@@ -31,7 +31,7 @@ export default function AdminNavbar() {
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-count'],
     queryFn: () => notificationService.getUnreadCount(),
-    refetchInterval: 30000,
+    refetchInterval: 300000, // Refetch every 5 Minutes
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     staleTime: 10000, // Consider data fresh for 10 seconds

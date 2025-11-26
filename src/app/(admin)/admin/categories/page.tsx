@@ -6,6 +6,7 @@ import { categoryService, Category } from '@/services/category.service';
 import { CategoriesTable } from '@/components/admin/categories/CategoriesTable';
 import { createColumns } from '@/components/admin/categories/columns';
 import CategoryDialog from '@/components/admin/categories/CategoryDialog';
+import SubcategoryDialog from '@/components/admin/categories/SubcategoryDialog';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -27,7 +28,10 @@ export default function CategoriesPage() {
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogParentId, setDialogParentId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [subDialogOpen, setSubDialogOpen] = useState(false);
+  const [subcategoryParent, setSubcategoryParent] = useState<Category | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
     categoryId: string | null;
@@ -35,7 +39,6 @@ export default function CategoriesPage() {
 
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Debounce search input
   useEffect(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
@@ -114,12 +117,38 @@ export default function CategoriesPage() {
 
   const handleAdd = () => {
     setSelectedCategory(null);
+    setDialogParentId(null);
     setDialogOpen(true);
   };
 
-  const handleEdit = (category: any) => {
-    setSelectedCategory(category as Category);
+  const handleEdit = (category: Category) => {
+    setSelectedCategory(category);
+    setDialogParentId(category.parentId || null);
     setDialogOpen(true);
+  };
+
+  const handleManageSubcategories = (category: Category) => {
+    setSubcategoryParent(category);
+    setSubDialogOpen(true);
+  };
+
+  const handleAddSubcategory = (parent: Category) => {
+    setSubDialogOpen(false);
+    setSelectedCategory(null);
+    setDialogParentId(parent.id);
+    setDialogOpen(true);
+  };
+
+  const handleEditSubcategory = (subcategory: Category) => {
+    setSubDialogOpen(false);
+    setSelectedCategory(subcategory);
+    setDialogParentId(subcategory.parentId || null);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteSubcategory = (subcategoryId: string) => {
+    setSubDialogOpen(false);
+    handleDelete(subcategoryId);
   };
 
   const handleDelete = (categoryId: string) => {
@@ -135,9 +164,10 @@ export default function CategoriesPage() {
   const handleDialogClose = () => {
     setDialogOpen(false);
     setSelectedCategory(null);
+    setDialogParentId(null);
   };
 
-  const columns = createColumns(handleEdit, handleDelete);
+  const columns = createColumns(handleEdit, handleDelete, handleManageSubcategories);
 
   if (loading) {
     return (
@@ -178,6 +208,16 @@ export default function CategoriesPage() {
         open={dialogOpen}
         onOpenChange={handleDialogClose}
         category={selectedCategory}
+        defaultParentId={dialogParentId}
+      />
+
+      <SubcategoryDialog
+        open={subDialogOpen}
+        onOpenChange={setSubDialogOpen}
+        category={subcategoryParent}
+        onAddSubcategory={handleAddSubcategory}
+        onEditSubcategory={handleEditSubcategory}
+        onDeleteSubcategory={handleDeleteSubcategory}
       />
 
       {/* Delete Confirmation Dialog */}

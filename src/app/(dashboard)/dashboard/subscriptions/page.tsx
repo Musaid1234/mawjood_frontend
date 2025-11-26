@@ -43,7 +43,14 @@ export default function SubscriptionsPage() {
     queryFn: () => subscriptionService.getSubscriptions({ limit: 100 }),
   });
 
-  const plans = plansData?.data?.plans || [];
+  const allPlans = plansData?.data?.plans || [];
+  // Filter: Fixed plans (no sale price) should not show under weekly billing interval
+  const plans = allPlans.filter((plan) => {
+    if (plan.billingInterval === 'WEEK' && !plan.salePrice) {
+      return false; // Hide fixed price plans for weekly billing
+    }
+    return true;
+  });
   const subscriptions = subscriptionsData?.data?.subscriptions || [];
 
   const createSubscriptionMutation = useMutation({
@@ -168,7 +175,7 @@ export default function SubscriptionsPage() {
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className="bg-white rounded-lg border-2 border-gray-200 p-6 hover:border-[#1c4233] transition-colors relative"
+            className="bg-white rounded-lg border-2 border-gray-200 p-6 hover:border-[#1c4233] transition-colors relative flex flex-col h-full"
           >
             {plan.topPlacement && (
               <div className="absolute top-4 right-4 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded">
@@ -224,7 +231,7 @@ export default function SubscriptionsPage() {
 
             <Button
               onClick={() => handleSubscribe(plan)}
-              className="w-full bg-[#1c4233] hover:bg-[#245240]"
+              className="w-full bg-[#1c4233] hover:bg-[#245240] mt-auto"
               disabled={!businesses || businesses.length === 0}
             >
               <CreditCard className="w-4 h-4 mr-2" />

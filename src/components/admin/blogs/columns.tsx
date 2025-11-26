@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -69,7 +69,7 @@ export const createColumns = (
           href={`/blog/${row.original.slug}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-medium text-gray-900 dark:text-gray-100 line-clamp-2 hover:text-blue-600 hover:underline"
+          className="font-medium text-gray-900 dark:text-gray-100 line-clamp-2 hover:text-blue-600"
         >
           {row.original.title}
         </Link>
@@ -131,6 +131,18 @@ export const createColumns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem asChild>
+              <Link
+                href={`/blog/${blog.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center"
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                View
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onEdit(blog)}>
               <Edit className="mr-2 h-4 w-4" />
               Edit

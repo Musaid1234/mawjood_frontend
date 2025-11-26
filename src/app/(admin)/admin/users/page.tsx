@@ -20,6 +20,7 @@ import { EditUserModal } from '@/components/admin/users/EditUserModal';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]); // For stats cards - unfiltered
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -55,6 +56,20 @@ export default function UsersPage() {
     };
   }, [searchInput]);
 
+  // Fetch all users for stats (unfiltered) - only on mount and after mutations
+  useEffect(() => {
+    const fetchAllUsers = async () => {
+      try {
+        const response = await adminService.getAllUsers({ page: 1, limit: 1000 });
+        setAllUsers(response.data.users || []);
+      } catch (error: any) {
+        console.error('Error fetching all users:', error);
+      }
+    };
+
+    fetchAllUsers();
+  }, []); // Only fetch on mount
+
   // Fetch users when filters or debouncedSearch change
   useEffect(() => {
     const fetchUsers = async () => {
@@ -86,7 +101,10 @@ export default function UsersPage() {
     try {
       await adminService.updateUserRole(userId, role);
       toast.success(`User role updated to ${role.replace('_', ' ')}`);
-      // Refetch users
+      // Refetch all users for stats
+      const allUsersResponse = await adminService.getAllUsers({ page: 1, limit: 1000 });
+      setAllUsers(allUsersResponse.data.users || []);
+      // Refetch filtered users
       const params: any = { page: 1, limit: 100 };
       if (debouncedSearch) params.search = debouncedSearch;
       if (filters.role && filters.role !== 'all') params.role = filters.role;
@@ -103,7 +121,10 @@ export default function UsersPage() {
     try {
       await adminService.updateUserStatus(userId, status);
       toast.success(`User status updated to ${status}`);
-      // Refetch users
+      // Refetch all users for stats
+      const allUsersResponse = await adminService.getAllUsers({ page: 1, limit: 1000 });
+      setAllUsers(allUsersResponse.data.users || []);
+      // Refetch filtered users
       const params: any = { page: 1, limit: 100 };
       if (debouncedSearch) params.search = debouncedSearch;
       if (filters.role && filters.role !== 'all') params.role = filters.role;
@@ -123,7 +144,10 @@ export default function UsersPage() {
       await adminService.deleteUser(deleteDialog.userId);
       toast.success('User deleted successfully');
       setDeleteDialog({ open: false, userId: null });
-      // Refetch users
+      // Refetch all users for stats
+      const allUsersResponse = await adminService.getAllUsers({ page: 1, limit: 1000 });
+      setAllUsers(allUsersResponse.data.users || []);
+      // Refetch filtered users
       const params: any = { page: 1, limit: 100 };
       if (debouncedSearch) params.search = debouncedSearch;
       if (filters.role && filters.role !== 'all') params.role = filters.role;
@@ -153,7 +177,13 @@ export default function UsersPage() {
   };
 
   const handleEditSuccess = () => {
-    // Refetch users after successful edit
+    // Refetch all users for stats
+    adminService.getAllUsers({ page: 1, limit: 1000 }).then((response) => {
+      setAllUsers(response.data.users || []);
+    }).catch((error: any) => {
+      console.error('Error fetching all users:', error);
+    });
+    // Refetch filtered users
     const params: any = { page: 1, limit: 100 };
     if (debouncedSearch) params.search = debouncedSearch;
     if (filters.role && filters.role !== 'all') params.role = filters.role;
@@ -195,24 +225,24 @@ export default function UsersPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-[#1c4233] rounded-lg p-4 text-white">
           <p className="text-sm opacity-90">Total Users</p>
-          <p className="text-3xl font-bold mt-1">{users.length}</p>
+          <p className="text-3xl font-bold mt-1">{allUsers.length}</p>
         </div>
         <div className="bg-[#245240] rounded-lg p-4 text-white">
           <p className="text-sm opacity-90">Active Users</p>
           <p className="text-3xl font-bold mt-1">
-            {users.filter((u) => u.status === 'ACTIVE').length}
+            {allUsers.filter((u) => u.status === 'ACTIVE').length}
           </p>
         </div>
         <div className="bg-[#2d624d] rounded-lg p-4 text-white">
           <p className="text-sm opacity-90">Business Owners</p>
           <p className="text-3xl font-bold mt-1">
-            {users.filter((u) => u.role === 'BUSINESS_OWNER').length}
+            {allUsers.filter((u) => u.role === 'BUSINESS_OWNER').length}
           </p>
         </div>
         <div className="bg-[#36725a] rounded-lg p-4 text-white">
           <p className="text-sm opacity-90">Admins</p>
           <p className="text-3xl font-bold mt-1">
-            {users.filter((u) => u.role === 'ADMIN').length}
+            {allUsers.filter((u) => u.role === 'ADMIN').length}
           </p>
         </div>
       </div>

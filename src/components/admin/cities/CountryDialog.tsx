@@ -12,13 +12,17 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+import { Country } from '@/services/city.service';
+
 interface CountryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  country?: Country | null;
   onSave: (countryData: { name: string; slug: string; code?: string }) => Promise<void>;
 }
 
-export function CountryDialog({ open, onOpenChange, onSave }: CountryDialogProps) {
+export function CountryDialog({ open, onOpenChange, country, onSave }: CountryDialogProps) {
+  const isEditMode = !!country;
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [code, setCode] = useState('');
@@ -26,14 +30,26 @@ export function CountryDialog({ open, onOpenChange, onSave }: CountryDialogProps
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      if (isEditMode && country) {
+        setName(country.name || '');
+        setSlug(country.slug || '');
+        setCode(country.code || '');
+        setSlugManuallyEdited(true);
+      } else {
+        setName('');
+        setSlug('');
+        setCode('');
+        setSlugManuallyEdited(false);
+      }
+    } else {
       setName('');
       setSlug('');
       setCode('');
       setIsSubmitting(false);
       setSlugManuallyEdited(false);
     }
-  }, [open]);
+  }, [open, country, isEditMode]);
 
   const generateSlug = (value: string) =>
     value
@@ -84,9 +100,9 @@ export function CountryDialog({ open, onOpenChange, onSave }: CountryDialogProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add New Country</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit Country' : 'Add New Country'}</DialogTitle>
           <DialogDescription>
-            Create a new country to organize regions and cities.
+            {isEditMode ? 'Update the country information below.' : 'Create a new country to organize regions and cities.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -147,7 +163,7 @@ export function CountryDialog({ open, onOpenChange, onSave }: CountryDialogProps
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Country'}
+              {isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Country' : 'Create Country')}
             </Button>
           </DialogFooter>
         </form>

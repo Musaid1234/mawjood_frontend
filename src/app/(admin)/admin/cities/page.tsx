@@ -42,6 +42,8 @@ export default function CitiesPage() {
   const [regionDialogOpen, setRegionDialogOpen] = useState(false);
   const [countryDialogOpen, setCountryDialogOpen] = useState(false);
   const [editingCity, setEditingCity] = useState<City | null>(null);
+  const [editingRegion, setEditingRegion] = useState<Region | null>(null);
+  const [editingCountry, setEditingCountry] = useState<Country | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -133,25 +135,45 @@ export default function CitiesPage() {
         throw new Error('Country is required');
       }
 
-      await cityService.createRegion(regionData);
-      toast.success('Region created successfully!');
+      if (editingRegion) {
+        await cityService.updateRegion(editingRegion.id, regionData);
+        toast.success('Region updated successfully!');
+      } else {
+        await cityService.createRegion(regionData);
+        toast.success('Region created successfully!');
+      }
       
       await fetchData();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create region');
+      toast.error(error.message || `Failed to ${editingRegion ? 'update' : 'create'} region`);
       throw error;
     }
   };
 
   const handleSaveCountry = async (countryData: { name: string; slug: string; code?: string }) => {
     try {
-      await cityService.createCountry(countryData);
-      toast.success('Country created successfully!');
+      if (editingCountry) {
+        await cityService.updateCountry(editingCountry.id, countryData);
+        toast.success('Country updated successfully!');
+      } else {
+        await cityService.createCountry(countryData);
+        toast.success('Country created successfully!');
+      }
       await fetchData();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create country');
+      toast.error(error.message || `Failed to ${editingCountry ? 'update' : 'create'} country`);
       throw error;
     }
+  };
+
+  const handleEditRegion = (region: Region) => {
+    setEditingRegion(region);
+    setRegionDialogOpen(true);
+  };
+
+  const handleEditCountry = (country: Country) => {
+    setEditingCountry(country);
+    setCountryDialogOpen(true);
   };
 
   const handleDeleteRegion = async (id: string) => {
@@ -359,6 +381,7 @@ export default function CitiesPage() {
                       toast.error('Please create a country before adding States.');
                       return;
                     }
+                    setEditingRegion(null);
                     setRegionDialogOpen(true);
                   }}
                 >
@@ -384,14 +407,26 @@ export default function CitiesPage() {
                               {region.name}
                             </CardTitle>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleDeleteRegion(region.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => handleEditRegion(region)}>
+                                Edit State
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteRegion(region.id)}
+                                className="text-red-600"
+                              >
+                                Delete State
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                         <code className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded inline-block">
                           {region.slug}
@@ -427,7 +462,12 @@ export default function CitiesPage() {
                     Manage countries available in the platform
                   </CardDescription>
                 </div>
-                <Button onClick={() => setCountryDialogOpen(true)}>
+                <Button
+                  onClick={() => {
+                    setEditingCountry(null);
+                    setCountryDialogOpen(true);
+                  }}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Country
                 </Button>
@@ -455,14 +495,26 @@ export default function CitiesPage() {
                               <p className="text-xs text-gray-500 mt-1">ISO: {country.code}</p>
                             )}
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleDeleteCountry(country.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => handleEditCountry(country)}>
+                                Edit Country
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteCountry(country.id)}
+                                className="text-red-600"
+                              >
+                                Delete Country
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -492,7 +544,6 @@ export default function CitiesPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Dialogs */}
       <CityDialog
         open={cityDialogOpen}
         onOpenChange={setCityDialogOpen}
@@ -503,15 +554,23 @@ export default function CitiesPage() {
 
       <RegionDialog
         open={regionDialogOpen}
-        onOpenChange={setRegionDialogOpen}
+        onOpenChange={(open) => {
+          setRegionDialogOpen(open);
+          if (!open) setEditingRegion(null);
+        }}
         countries={countries}
         defaultCountryId={countries[0]?.id}
+        region={editingRegion}
         onSave={handleSaveRegion}
       />
 
       <CountryDialog
         open={countryDialogOpen}
-        onOpenChange={setCountryDialogOpen}
+        onOpenChange={(open) => {
+          setCountryDialogOpen(open);
+          if (!open) setEditingCountry(null);
+        }}
+        country={editingCountry}
         onSave={handleSaveCountry}
       />
     </div>

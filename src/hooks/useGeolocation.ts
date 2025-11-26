@@ -7,12 +7,23 @@ interface UseGeolocationProps {
   selectedCity: CityType | null;
   selectedLocation: any;
   setSelectedCity: (city: CityType | null) => void;
+  isUserSelectionLocked: boolean;
 }
 
-export function useGeolocation({ cities, selectedCity, selectedLocation, setSelectedCity }: UseGeolocationProps) {
+export function useGeolocation({
+  cities,
+  selectedCity,
+  selectedLocation,
+  setSelectedCity,
+  isUserSelectionLocked,
+}: UseGeolocationProps) {
   const [geoLoading, setGeoLoading] = useState(false);
 
   useEffect(() => {
+    if (isUserSelectionLocked) {
+      return;
+    }
+
     const trySelectDefault = () => {
       const riyadh = cities.find((city) =>
         city.name.toLowerCase().includes('riyadh') || city.name.toLowerCase().includes('الرياض')
@@ -285,7 +296,7 @@ export function useGeolocation({ cities, selectedCity, selectedLocation, setSele
         clearTimeout(fallbackTimeout);
       }
     };
-  }, [cities, selectedCity, selectedLocation, setSelectedCity]);
+  }, [cities, selectedCity, selectedLocation, setSelectedCity, isUserSelectionLocked]);
 
   return { geoLoading };
 }

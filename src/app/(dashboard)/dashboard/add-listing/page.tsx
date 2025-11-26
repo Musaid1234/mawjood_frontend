@@ -21,14 +21,30 @@ const validationSchema = Yup.object({
   name: Yup.string().required('Business name is required').min(3, 'Name must be at least 3 characters'),
   slug: Yup.string().required('Slug is required').matches(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'),
   email: Yup.string().email('Invalid email').required('Email is required'),
-  phone: Yup.string().required('Phone is required'),
+  phoneCountryCode: Yup.string().required('Country code is required'),
+  phone: Yup.string()
+    .required('Phone number is required')
+    .matches(/^[0-9]+$/, 'Phone number can only contain digits')
+    .min(9, 'Phone number must be at least 9 digits')
+    .max(15, 'Phone number cannot exceed 15 digits'),
+  whatsappCountryCode: Yup.string(),
+  whatsapp: Yup.string()
+    .when('whatsappCountryCode', {
+      is: (value: string) => value && value.length > 0,
+      then: (schema) => schema
+        .matches(/^[0-9]+$/, 'WhatsApp number can only contain digits')
+        .min(9, 'WhatsApp number must be at least 9 digits')
+        .max(15, 'WhatsApp number cannot exceed 15 digits'),
+      otherwise: (schema) => schema
+        .matches(/^$|^[0-9]+$/, 'WhatsApp number can only contain digits')
+        .max(15, 'WhatsApp number cannot exceed 15 digits'),
+    }),
   address: Yup.string().required('Address is required'),
   categoryId: Yup.string().required('Category is required'),
   countryId: Yup.string().required('Country is required'),
   regionId: Yup.string().required('Region is required'),
   cityId: Yup.string().required('City is required'),
   description: Yup.string(),
-  whatsapp: Yup.string(),
   website: Yup.string().url('Invalid URL'),
   crNumber: Yup.string(),
   latitude: Yup.number().nullable(),
@@ -42,7 +58,9 @@ const initialValues = {
   slug: '',
   description: '',
   email: '',
+  phoneCountryCode: '+966',
   phone: '',
+  whatsappCountryCode: '+966',
   whatsapp: '',
   website: '',
   address: '',
@@ -108,11 +126,25 @@ export default function AddListingPage() {
         }
       });
 
+      // Combine country code with phone numbers
+      const phoneWithCode = values.phoneCountryCode && values.phone 
+        ? `${values.phoneCountryCode}${values.phone}` 
+        : values.phone;
+      
+      const whatsappWithCode = values.whatsappCountryCode && values.whatsapp 
+        ? `${values.whatsappCountryCode}${values.whatsapp}` 
+        : values.whatsapp;
+
       const submitData = {
         ...values,
+        phone: phoneWithCode,
+        whatsapp: whatsappWithCode || undefined,
         latitude: values.latitude ? parseFloat(values.latitude) : undefined,
         longitude: values.longitude ? parseFloat(values.longitude) : undefined,
         workingHours: Object.keys(filteredWorkingHours).length > 0 ? filteredWorkingHours : undefined,
+        // Remove country code fields from submission
+        phoneCountryCode: undefined,
+        whatsappCountryCode: undefined,
       };
 
       await createMutation.mutateAsync(submitData);

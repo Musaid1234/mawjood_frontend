@@ -63,7 +63,7 @@ export default function SidebarAd({ queryKey = 'sidebar-ad', className = '', hei
           href={targetUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="block"
+          className="block w-full"
         >
           <Image
             src={imageUrl}
@@ -71,16 +71,20 @@ export default function SidebarAd({ queryKey = 'sidebar-ad', className = '', hei
             width={400}
             height={400}
             className={`w-full ${height} object-cover`}
+            style={{ objectFit: 'cover' }}
           />
         </Link>
       ) : (
-        <Image
-          src={imageUrl}
-          alt={ad?.title || 'Advertisement'}
-          width={400}
-          height={400}
-          className={`w-full ${height} object-cover`}
-        />
+        <div className="w-full bg-gray-50 flex items-center justify-center">
+          <Image
+            src={imageUrl}
+            alt={ad?.title || 'Advertisement'}
+            width={400}
+            height={400}
+            className={`w-full ${height} object-contain`}
+            style={{ objectFit: 'contain' }}
+          />
+        </div>
       )}
     </div>
   );
