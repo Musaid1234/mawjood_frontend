@@ -228,9 +228,9 @@ export default function Navbar() {
             <div className="md:hidden">
               <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
                 {/* GTranslate Language Switcher for Mobile - at top */}
-                <div className="px-3 py-2 border-b border-gray-200 mb-2">
+                {/* <div className="px-3 py-2 border-b border-gray-200 mb-2">
                   <GTranslate className="!inline-block" id="gtranslate-mobile" />
-                </div>
+                </div> */}
 
                 {NAV_LINKS.map((link) => (
                   <Link

@@ -40,10 +40,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <QueryProvider>
       <div className="min-h-screen bg-gray-50">
-        {/* Sidebar */}
         <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        {/* Overlay for mobile */}
         {sidebarOpen && (
           <div 
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -51,13 +49,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           />
         )}
 
-        {/* Main Content Area */}
         <div className="lg:ml-64">
-          {/* Navbar */}
           <DashboardNavbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
-          {/* Page Content */}
-          <main className="pt-16 p-4 sm:p-6">
+          <main className="py-16 px-4 sm:px-6">
             {children}
           </main>
         </div>
