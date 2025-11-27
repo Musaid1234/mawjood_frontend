@@ -110,12 +110,12 @@ export default function MyListings() {
   }
 
   return (
-    <div className="space-y-6 my-5">
+    <div className="space-y-4 sm:space-y-6 my-2 sm:my-5">
       {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Listings</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Listings</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Manage all your business listings
             <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#1c4233] text-white">
               {searchTerm ? filteredBusinesses.length : businesses.length} {searchTerm ? (filteredBusinesses.length === 1 ? 'Listing' : 'Listings') : (businesses.length === 1 ? 'Listing' : 'Listings')}
@@ -124,10 +124,11 @@ export default function MyListings() {
         </div>
         <Link
           href="/dashboard/add-listing"
-          className="flex items-center gap-2 px-6 py-3 bg-[#1c4233] hover:bg-[#245240] text-white rounded-lg font-semibold transition-colors shadow-lg hover:shadow-xl"
+          className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-[#1c4233] hover:bg-[#245240] text-white rounded-lg font-semibold transition-colors shadow-lg hover:shadow-xl text-sm sm:text-base"
         >
-          <PlusCircle className="w-5 h-5" />
-          Add New Listing
+          <PlusCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="hidden sm:inline">Add New Listing</span>
+          <span className="sm:hidden">Add Listing</span>
         </Link>
       </div>
 

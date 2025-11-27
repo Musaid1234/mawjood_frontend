@@ -290,7 +290,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
       }
 
       setOtpSent(true);
-      setError('OTP sent successfully! (Use 1234 for testing)');
+      setError('OTP sent successfully!');
     } catch (err: any) {
       setError(err.message || 'Failed to send OTP');
     } finally {

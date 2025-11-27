@@ -50,16 +50,16 @@ export default function Footer() {
       icon: ICON_PATHS[link.icon?.toLowerCase() ?? link.name.toLowerCase()] ?? ICON_PATHS.facebook,
     })) ?? [];
 
-  const socialLinks = dynamicSocialLinks.length
+    const socialLinks = dynamicSocialLinks.length
     ? dynamicSocialLinks
     : [
         { name: 'Facebook', url: '#', icon: ICON_PATHS.facebook },
         { name: 'X', url: '#', icon: ICON_PATHS.x },
         { name: 'Instagram', url: '#', icon: ICON_PATHS.instagram },
         { name: 'LinkedIn', url: '#', icon: ICON_PATHS.linkedin },
-        { name: 'YouTube', url: '#', icon: ICON_PATHS.youtube },
         { name: 'WhatsApp', url: '#', icon: ICON_PATHS.whatsapp },
       ];
+  
 
   return (
     <footer className="bg-gray-900 text-white">

@@ -181,11 +181,11 @@ export default function AddListingPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="my-5">
-        <h1 className="text-3xl font-bold text-gray-900">Add New Listing</h1>
-        <p className="text-gray-600 mt-2">
+      <div className="my-2 sm:my-5">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Add New Listing</h1>
+        <p className="text-sm sm:text-base text-gray-600 mt-2">
           Fill in the details below to create your business listing
         </p>
       </div>
@@ -208,15 +208,15 @@ export default function AddListingPage() {
             <SEOSection />
 
             {/* Submit Button */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600">
+            <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <p className="text-xs sm:text-sm text-gray-600">
                   Your listing will be reviewed by our team before going live
                 </p>
                 <button
                   type="submit"
                   disabled={isSubmitting || createMutation.isPending}
-                  className="flex items-center gap-2 px-8 py-3 bg-[#1c4233] hover:bg-[#245240] text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 bg-[#1c4233] hover:bg-[#245240] text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                 >
                   {isSubmitting || createMutation.isPending ? (
                     <>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Bell, ChevronDown, User, Settings, LogOut, HomeIcon, Shield } from 'lucide-react';
+import { Bell, ChevronDown, User, Settings, LogOut, HomeIcon, Shield, Menu } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -10,7 +10,11 @@ import { notificationService } from '@/services/notification.service';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
 
-export default function AdminNavbar() {
+interface AdminNavbarProps {
+  onMenuClick: () => void;
+}
+
+export default function AdminNavbar({ onMenuClick }: AdminNavbarProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -68,20 +72,28 @@ export default function AdminNavbar() {
   const notifications = notificationsData?.notifications || [];
 
   return (
-    <header className="fixed top-0 right-0 left-64 h-16 bg-white border-b border-gray-200 z-10 shadow-sm">
-      <div className="h-full px-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg">
+    <header className="fixed top-0 right-0 left-0 lg:left-64 h-16 bg-white border-b border-gray-200 z-30 shadow-sm">
+      <div className="h-full px-4 sm:px-6 flex items-center justify-between">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1">
+          {/* Mobile Menu Button */}
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+          >
+            <Menu className="w-6 h-6 text-gray-700" />
+          </button>
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 px-2 sm:px-3 py-1.5 rounded-lg">
             <Shield className="w-4 h-4 text-red-600" />
-            <span className="text-sm font-semibold text-red-600">Admin Dashboard</span>
+            <span className="text-xs sm:text-sm font-semibold text-red-600 hidden sm:inline">Admin Dashboard</span>
+            <span className="text-xs sm:text-sm font-semibold text-red-600 sm:hidden">Admin</span>
           </div>
-          <h2 className="text-lg font-semibold text-gray-800">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800 truncate">
             Welcome, {user?.firstName || 'Admin'}!
           </h2>
         </div>
 
         {/* Right side actions */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           {/* Notifications */}
           <div className="relative">
             <button
@@ -91,9 +103,9 @@ export default function AdminNavbar() {
               }}
               className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <Bell className="w-6 h-6" />
+              <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                <span className="absolute top-1 right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center text-[10px] sm:text-xs">
                   {unreadCount}
                 </span>
               )}
@@ -101,7 +113,7 @@ export default function AdminNavbar() {
 
             {/* Notifications Dropdown */}
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 py-2 max-h-[500px] overflow-hidden flex flex-col">
+              <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-lg shadow-xl border border-gray-200 py-2 max-h-[500px] overflow-hidden flex flex-col">
                 <div className="px-4 py-2 border-b border-gray-200 flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900">Notifications</h3>
                   {notifications.length > 0 && (
@@ -179,13 +191,13 @@ export default function AdminNavbar() {
                   </span>
                 )}
               </div>
-              <div className="text-left hidden md:block">
+              <div className="text-left hidden lg:block">
                 <p className="text-sm font-medium text-gray-900">
                   {user?.firstName} {user?.lastName}
                 </p>
                 <p className="text-xs text-red-600 font-semibold">ADMIN</p>
               </div>
-              <ChevronDown className="w-4 h-4 text-gray-600" />
+              <ChevronDown className="w-4 h-4 text-gray-600 hidden sm:block" />
             </button>
 
             {/* Profile Dropdown */}

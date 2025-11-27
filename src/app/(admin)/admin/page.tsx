@@ -61,11 +61,11 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="py-4 space-y-6">
+    <div className="py-2 sm:py-4 space-y-4 sm:space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
+        <h1 className="text-2xl sm:text-3xl font-bold">Admin Dashboard</h1>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
           Welcome back! Here&apos;s what&apos;s happening with your platform.
         </p>
       </div>

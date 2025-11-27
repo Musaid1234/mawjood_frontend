@@ -12,6 +12,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -39,15 +40,23 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
     <QueryProvider>
       <div className="min-h-screen bg-gray-50">
         {/* Sidebar */}
-        <AdminSidebar />
+        <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+        {/* Overlay for mobile */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
         {/* Main Content Area */}
-        <div className="ml-64">
+        <div className="lg:ml-64">
           {/* Navbar */}
-          <AdminNavbar />
+          <AdminNavbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
           {/* Page Content */}
-          <main className="pt-16 p-6">
+          <main className="py-16 px-4 sm:px-6">
             {children}
           </main>
         </div>

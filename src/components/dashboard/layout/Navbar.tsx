@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Bell, Plus, ChevronDown, User, Settings, LogOut, HomeIcon } from 'lucide-react';
+import { Bell, Plus, ChevronDown, User, Settings, LogOut, HomeIcon, Menu } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -10,7 +10,11 @@ import { notificationService } from '@/services/notification.service';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
 
-export default function DashboardNavbar() {
+interface DashboardNavbarProps {
+  onMenuClick: () => void;
+}
+
+export default function DashboardNavbar({ onMenuClick }: DashboardNavbarProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -62,23 +66,30 @@ export default function DashboardNavbar() {
   const notifications = notificationsData?.notifications || [];
 
   return (
-    <header className="fixed top-0 right-0 left-64 h-16 bg-white border-b border-gray-200 z-10">
-      <div className="h-full px-6 flex items-center justify-between">
-        <div className="flex-1">
-          <h2 className="text-lg font-semibold text-gray-800">
+    <header className="fixed top-0 right-0 left-0 lg:left-64 h-16 bg-white border-b border-gray-200 z-30">
+      <div className="h-full px-4 sm:px-6 flex items-center justify-between">
+        <div className="flex items-center gap-4 flex-1">
+          {/* Mobile Menu Button */}
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+          >
+            <Menu className="w-6 h-6 text-gray-700" />
+          </button>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800 truncate">
             Welcome back, {user?.firstName || 'User'}!
           </h2>
         </div>
 
         {/* Right side actions */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           {/* Add Listing Button */}
           <Link
             href="/dashboard/add-listing"
-            className="flex items-center space-x-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+            className="flex items-center space-x-1 sm:space-x-2 bg-primary text-white px-2 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
           >
-            <Plus className="w-5 h-5" />
-            <span className="font-medium">Add Listing</span>
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="font-medium text-sm sm:text-base hidden sm:inline">Add Listing</span>
           </Link>
 
           {/* Notifications */}
@@ -100,7 +111,7 @@ export default function DashboardNavbar() {
 
             {/* Notifications Dropdown */}
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 max-h-[500px] overflow-hidden flex flex-col">
+              <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 max-h-[500px] overflow-hidden flex flex-col">
                 <div className="px-4 py-2 border-b border-gray-200 flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900">Notifications</h3>
                   {notifications.length > 0 && (
@@ -187,13 +198,13 @@ export default function DashboardNavbar() {
                   </span>
                 )}
               </div>
-              <div className="text-left hidden md:block">
+              <div className="text-left hidden lg:block">
                 <p className="text-sm font-medium text-gray-900">
                   {user?.firstName} {user?.lastName}
                 </p>
                 <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
               </div>
-              <ChevronDown className="w-4 h-4 text-gray-600" />
+              <ChevronDown className="w-4 h-4 text-gray-600 hidden sm:block" />
             </button>
 
             {/* Profile Dropdown */}

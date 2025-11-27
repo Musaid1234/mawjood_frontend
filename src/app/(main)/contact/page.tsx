@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import axiosInstance from '@/lib/axios';
 
 // Fix for default marker icon in react-leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -92,18 +93,28 @@ export default function ContactPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      toast.success('Message Sent Successfully! We Will Get Response Soon.');
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: '',
-      });
+    try {
+      const response = await axiosInstance.post('/api/contact', formData);
+
+      if (response.data.success) {
+        toast.success(response.data.message || 'Message Sent Successfully! We Will Get Response Soon.');
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: '',
+        });
+      } else {
+        toast.error(response.data.message || 'Failed to send message. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Contact form error:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to send message. Please try again.';
+      toast.error(errorMessage);
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (

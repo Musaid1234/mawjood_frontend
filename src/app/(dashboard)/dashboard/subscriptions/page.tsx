@@ -155,10 +155,10 @@ export default function SubscriptionsPage() {
   }
 
   return (
-    <div className="space-y-6 my-5">
+    <div className="space-y-4 sm:space-y-6 my-2 sm:my-5">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Subscription Plans</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Subscription Plans</h1>
+        <p className="text-sm sm:text-base text-gray-600 mt-1">
           Choose a subscription plan to boost your business visibility
         </p>
       </div>
@@ -263,7 +263,7 @@ export default function SubscriptionsPage() {
                   key={business.id}
                   className="bg-white rounded-lg border border-gray-200 p-4"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <Building2 className="w-5 h-5 text-[#1c4233]" />
                       <div>
@@ -274,7 +274,7 @@ export default function SubscriptionsPage() {
                         </p>
                       </div>
                     </div>
-                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium w-fit">
                       Active
                     </span>
                   </div>

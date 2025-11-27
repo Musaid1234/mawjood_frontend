@@ -16,9 +16,15 @@ import {
   Folder,
   CreditCard,
   Megaphone,
-  BadgePercent 
+  BadgePercent,
+  X,
 } from 'lucide-react';
 import Image from 'next/image';
+
+interface AdminSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
 const sidebarItems = [
   {
@@ -73,14 +79,16 @@ const sidebarItems = [
   },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-primary border-r border-gray-700 overflow-y-auto flex flex-col">
+    <aside className={`fixed left-0 top-0 h-screen w-64 bg-primary border-r border-gray-700 overflow-y-auto flex flex-col z-50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+      isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+    }`}>
       {/* Logo */}
-      <div className="py-4 border-b border-primary/20">
-        <Link href="/" className="flex pl-12 items-center">
+      <div className="py-4 border-b border-primary/20 flex items-center justify-between px-4 lg:px-0">
+        <Link href="/" className="flex pl-8 lg:pl-12 items-center" onClick={onClose}>
           <div className="bg-white rounded-lg p-1.5">
             <Image
               src="/logo/logo2.png"
@@ -94,6 +102,12 @@ export default function AdminSidebar() {
             Mawjood
           </span>
         </Link>
+        <button
+          onClick={onClose}
+          className="lg:hidden p-2 hover:bg-white/10 rounded-lg"
+        >
+          <X className="w-5 h-5 text-white" />
+        </button>
       </div>
 
       {/* Admin Badge */}
@@ -115,6 +129,7 @@ export default function AdminSidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  onClick={onClose}
                   className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                     isActive
                       ? 'bg-white text-primary shadow-md'

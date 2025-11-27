@@ -38,13 +38,13 @@ export default function DashboardPage() {
   const stats = data?.overview;
 
   return (
-    <div className="space-y-6 my-4">
+    <div className="space-y-4 sm:space-y-6 my-2 sm:my-4">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           Welcome back, {user?.firstName}!
         </h1>
-        <p className="text-gray-600 mt-1">
+        <p className="text-sm sm:text-base text-gray-600 mt-1">
           Here's what's happening with your listings today.
         </p>
       </div>
@@ -62,7 +62,7 @@ export default function DashboardPage() {
       )}
 
       {/* Views Chart and Recent Activities - Side by Side */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Views Trend Chart - Takes 2/3 width */}
         <div className="lg:col-span-2">
           <ViewsChart data={data?.viewsTrend || []} />

@@ -13,6 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const { isAuthenticated, user } = useAuth();
     const router = useRouter();
     const [checking, setChecking] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
   
     useEffect(() => {
       const timer = setTimeout(() => {
@@ -40,15 +41,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <QueryProvider>
       <div className="min-h-screen bg-gray-50">
         {/* Sidebar */}
-        <DashboardSidebar />
+        <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+        {/* Overlay for mobile */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
         {/* Main Content Area */}
-        <div className="ml-64">
+        <div className="lg:ml-64">
           {/* Navbar */}
-          <DashboardNavbar />
+          <DashboardNavbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
           {/* Page Content */}
-          <main className="pt-16 p-6">
+          <main className="pt-16 p-4 sm:p-6">
             {children}
           </main>
         </div>
