@@ -10,23 +10,27 @@ interface SidebarAdProps {
   queryKey?: string;
   className?: string;
   height?: string;
+  adType?: 'CATEGORY' | 'TOP' | 'FOOTER';
+  categoryId?: string;
 }
 
 const PLACEHOLDER_AD_IMAGE = 'https://marketplace.canva.com/EAFJFM2El4s/2/0/1131w/canva-blue-modern-business-flyer-portrait-yINAU4kvioI.jpg';
 
-export default function SidebarAd({ queryKey = 'sidebar-ad', className = '', height = 'h-64' }: SidebarAdProps) {
+export default function SidebarAd({ queryKey = 'sidebar-ad', className = '', height = 'h-64', adType = 'CATEGORY', categoryId }: SidebarAdProps) {
   const { selectedCity, selectedLocation } = useCityStore();
   const locationFilterId = selectedLocation?.id ?? selectedCity?.id;
   const locationFilterType = selectedLocation?.type ?? 'city';
 
   const { data, isLoading } = useQuery<Advertisement | null>({
-    queryKey: [queryKey, locationFilterId, locationFilterType],
+    queryKey: [queryKey, locationFilterId, locationFilterType, adType, categoryId],
     queryFn: async (): Promise<Advertisement | null> => {
       try {
         if (locationFilterId) {
           return await advertisementService.getDisplayAdvertisement({
             locationId: locationFilterId,
             locationType: locationFilterType as 'city' | 'region' | 'country',
+            adType,
+            categoryId,
           });
         }
         return null;

@@ -77,7 +77,6 @@ export default function SubscriptionsPage() {
     mutationFn: (data: { businessId: string; planId: string }) =>
       subscriptionService.createSubscription(data),
     onSuccess: async (response) => {
-      // Create payment record (temporary solution until PayTabs integration)
       try {
         const subscription = response.data;
         const plan = plans.find((p) => p.id === subscription.planId);
@@ -85,26 +84,26 @@ export default function SubscriptionsPage() {
           ? parseDecimal(subscription.totalAmount)
           : (plan ? parseDecimal(plan.price) : 0);
 
-        await paymentService.createPayment({
+        // Create PayTabs payment page
+        const paymentResponse = await paymentService.createPayment({
           businessId: subscription.businessId,
           amount: amount,
           currency: plan?.currency || currency,
           description: `Subscription payment for ${plan?.name || 'plan'}`,
+          returnUrl: `${window.location.origin}/dashboard/subscriptions`,
         });
 
-        // Update payment status to completed (temporary - in production, this would come from PayTabs webhook)
-        // For now, we'll mark it as completed immediately
-        toast.success('Subscription created successfully! Payment processed.');
+        // Redirect to PayTabs payment page
+        if (paymentResponse.data.redirectUrl) {
+          toast.success('Redirecting to payment gateway...');
+          window.location.href = paymentResponse.data.redirectUrl;
+        } else {
+          toast.error('Failed to get payment redirect URL');
+        }
       } catch (error) {
         console.error('Payment creation error:', error);
-        toast.error('Subscription created but payment recording failed');
+        toast.error('Failed to initiate payment. Please try again.');
       }
-
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
-      queryClient.invalidateQueries({ queryKey: ['my-businesses'] });
-      setIsDialogOpen(false);
-      setSelectedPlan(null);
-      setSelectedBusinessId('');
     },
     onError: (error: any) => {
       const errorMessage = error?.response?.data?.message || error?.message || 'Failed to create subscription';
@@ -357,10 +356,9 @@ export default function SubscriptionsPage() {
               )}
             </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-sm text-yellow-800">
-                <strong>Note:</strong> Payment integration (PayTabs) is pending. For now, the
-                subscription will be activated immediately after confirmation.
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-800">
+                <strong>Secure Payment:</strong> You will be redirected to PayTabs secure payment gateway to complete your purchase.
               </p>
             </div>
           </div>

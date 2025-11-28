@@ -31,6 +31,13 @@ export interface CreatePaymentData {
   amount: number;
   currency?: string;
   description?: string;
+  returnUrl?: string;
+}
+
+export interface PaymentPageResponse {
+  paymentId: string;
+  redirectUrl: string;
+  transactionRef: string;
 }
 
 export interface ApiResponse<T> {
@@ -97,9 +104,9 @@ export const paymentService = {
     }
   },
 
-  async createPayment(data: CreatePaymentData): Promise<ApiResponse<Payment>> {
+  async createPayment(data: CreatePaymentData): Promise<ApiResponse<PaymentPageResponse>> {
     try {
-      const response = await axiosInstance.post<ApiResponse<Payment>>(
+      const response = await axiosInstance.post<ApiResponse<PaymentPageResponse>>(
         API_ENDPOINTS.PAYMENTS.CREATE,
         data
       );

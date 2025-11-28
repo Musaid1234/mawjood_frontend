@@ -247,6 +247,9 @@ export default function BlogDetailPage() {
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 text-center mb-8">
           {blog.title}
         </h1>
+        <p className="text-center text-gray-500 text-sm mb-6">
+          {format(new Date(blog.createdAt), 'dd MMM yyyy')}
+        </p>
 
         {blog.categories && blog.categories.length > 0 && (
           <div className="flex flex-wrap justify-center gap-3 mb-8">

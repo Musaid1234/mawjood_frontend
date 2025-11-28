@@ -67,8 +67,10 @@ export default function CityCategoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
-  const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
-  const [adLoading, setAdLoading] = useState(false);
+  const [topAdvertisements, setTopAdvertisements] = useState<Advertisement[]>([]);
+  const [footerAdvertisement, setFooterAdvertisement] = useState<Advertisement | null>(null);
+  const [topAdLoading, setTopAdLoading] = useState(false);
+  const [footerAdLoading, setFooterAdLoading] = useState(false);
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [locationContext, setLocationContext] = useState<{
     requested: { id: string; type: string; name: string } | null;
@@ -382,39 +384,66 @@ export default function CityCategoryPage() {
     fetchBusinesses();
   }, [category, currentPage, effectiveLocationId, effectiveLocationType, filters]);
 
+  // Fetch TOP advertisements for the top slider
   useEffect(() => {
     if (!category) return;
 
-    const loadAdvertisements = async () => {
+    const loadTopAdvertisements = async () => {
       try {
-        setAdLoading(true);
+        setTopAdLoading(true);
         const ads = await advertisementService.getDisplayAdvertisements({
           categoryId: category.id,
           locationId: effectiveLocationId ?? undefined,
           locationType: effectiveLocationType,
+          adType: 'TOP',
         }, 5);
-        setAdvertisements(ads);
+        setTopAdvertisements(ads);
       } catch (err) {
-        console.error('Failed to fetch advertisements:', err);
-        setAdvertisements([]);
+        console.error('Failed to fetch top advertisements:', err);
+        setTopAdvertisements([]);
       } finally {
-        setAdLoading(false);
+        setTopAdLoading(false);
       }
     };
 
-    loadAdvertisements();
+    loadTopAdvertisements();
+  }, [category, effectiveLocationId, effectiveLocationType]);
+
+  // Fetch FOOTER advertisement for the bottom
+  useEffect(() => {
+    if (!category) return;
+
+    const loadFooterAdvertisement = async () => {
+      try {
+        setFooterAdLoading(true);
+        const ad = await advertisementService.getDisplayAdvertisement({
+          categoryId: category.id,
+          locationId: effectiveLocationId ?? undefined,
+          locationType: effectiveLocationType,
+          adType: 'FOOTER',
+        });
+        setFooterAdvertisement(ad);
+      } catch (err) {
+        console.error('Failed to fetch footer advertisement:', err);
+        setFooterAdvertisement(null);
+      } finally {
+        setFooterAdLoading(false);
+      }
+    };
+
+    loadFooterAdvertisement();
   }, [category, effectiveLocationId, effectiveLocationType]);
 
   // Auto-slide for top ad slider
   useEffect(() => {
-    if (advertisements.length <= 1) return;
+    if (topAdvertisements.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentAdIndex((prev) => (prev + 1) % advertisements.length);
+      setCurrentAdIndex((prev) => (prev + 1) % topAdvertisements.length);
     }, 5000); // Change ad every 5 seconds
 
     return () => clearInterval(interval);
-  }, [advertisements.length]);
+  }, [topAdvertisements.length]);
 
   if (loadingCategory) {
     return (
@@ -483,13 +512,13 @@ export default function CityCategoryPage() {
         <div className="max-w-7xl mx-auto">
       {/* Top Ad Slider */}
       <div className="space-y-6 mb-4">
-          {adLoading && (
+          {topAdLoading && (
             <div className="h-48 bg-gray-200 rounded-2xl animate-pulse" />
           )}
-          {!adLoading && advertisements.length > 0 && (
+          {!topAdLoading && topAdvertisements.length > 0 && (
             <div className="relative overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
               <div className="relative h-48 md:h-42 lg:h-52">
-                {advertisements.map((ad, index) => {
+                {topAdvertisements.map((ad, index) => {
                   const resolvedUrl = getResolvedTargetUrl(ad);
                   return (
                     <div
@@ -522,17 +551,17 @@ export default function CityCategoryPage() {
                 })}
               </div>
               
-              {advertisements.length > 1 && (
+              {topAdvertisements.length > 1 && (
                 <>
                   <button
-                    onClick={() => setCurrentAdIndex((prev) => (prev - 1 + advertisements.length) % advertisements.length)}
+                    onClick={() => setCurrentAdIndex((prev) => (prev - 1 + topAdvertisements.length) % topAdvertisements.length)}
                     className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full p-2 shadow-lg transition-all z-10"
                     aria-label="Previous ad"
                   >
                     <ChevronLeft className="w-6 h-6" />
                   </button>
                   <button
-                    onClick={() => setCurrentAdIndex((prev) => (prev + 1) % advertisements.length)}
+                    onClick={() => setCurrentAdIndex((prev) => (prev + 1) % topAdvertisements.length)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full p-2 shadow-lg transition-all z-10"
                     aria-label="Next ad"
                   >
@@ -540,7 +569,7 @@ export default function CityCategoryPage() {
                   </button>
                   {/* Slider Indicators */}
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
-                    {advertisements.map((_, index) => (
+                    {topAdvertisements.map((_, index) => (
                       <button
                         key={index}
                         onClick={() => setCurrentAdIndex(index)}
@@ -714,7 +743,12 @@ export default function CityCategoryPage() {
             {/* Sidebar Ad - Always shown with consistent width */}
             <div className="lg:w-80 flex-shrink-0">
               <div className="sticky top-8">
-                <SidebarAd queryKey="sidebar-ad-category" height="h-96" />
+                <SidebarAd 
+                  queryKey="sidebar-ad-category" 
+                  height="h-96" 
+                  adType="CATEGORY"
+                  categoryId={category?.id}
+                />
               </div>
             </div>
           </div>
@@ -722,13 +756,13 @@ export default function CityCategoryPage() {
         </div>
       </div>
 
-      {/* Bottom Ad - Full Width */}
-      {!businessLoading && advertisements.length > 0 && (
-        <div className="max-w-7xl mx-auto my-12">
-          <div className="relative overflow-hidden rounded-2xl border-b border-gray-200">
+      {/* Footer Ad */}
+      {!footerAdLoading && footerAdvertisement && (
+        <div className="max-w-7xl mx-auto my-12 px-4 sm:px-6 lg:px-8">
+          <div className="relative overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
             <div className="relative h-48 md:h-42 lg:h-52">
               {(() => {
-                const ad = advertisements[0];
+                const ad = footerAdvertisement;
                 const resolvedUrl = getResolvedTargetUrl(ad);
                 return (
                   <>
@@ -739,7 +773,7 @@ export default function CityCategoryPage() {
                           alt={ad.title}
                           fill
                           className="object-contain"
-                          priority
+                          priority={false}
                         />
                       </Link>
                     ) : (
@@ -748,7 +782,7 @@ export default function CityCategoryPage() {
                         alt={ad.title}
                         fill
                         className="object-contain"
-                        priority
+                        priority={false}
                       />
                     )}
                   </>

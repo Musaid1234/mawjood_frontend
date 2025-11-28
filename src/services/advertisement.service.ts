@@ -15,6 +15,7 @@ export interface Advertisement {
   regionId?: string | null;
   cityId?: string | null;
   categoryId?: string | null;
+  adType?: 'CATEGORY' | 'TOP' | 'FOOTER';
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +24,7 @@ export interface AdvertisementQuery {
   locationId?: string;
   locationType?: 'city' | 'region' | 'country';
   categoryId?: string;
+  adType?: 'CATEGORY' | 'TOP' | 'FOOTER';
 }
 
 interface ApiResponse<T> {
@@ -61,6 +63,7 @@ export const advertisementService = {
       locationId: query.locationId,
       locationType: query.locationType,
       categoryId: query.categoryId,
+      adType: query.adType,
     });
 
     const response = await fetch(url, {
@@ -89,10 +92,16 @@ export const advertisementService = {
     // The API should return different ads on each call if multiple are available
     for (let i = 0; i < limit; i++) {
       try {
-        const ad = await this.getDisplayAdvertisement(query);
+        const ad = await this.getDisplayAdvertisement({
+          ...query,
+          adType: query.adType, // Ensure adType is passed through
+        });
         if (ad && !seenIds.has(ad.id)) {
           ads.push(ad);
           seenIds.add(ad.id);
+        } else if (!ad) {
+          // If no ad is returned, break to avoid unnecessary calls
+          break;
         }
       } catch (err) {
         // If we can't fetch more, break
