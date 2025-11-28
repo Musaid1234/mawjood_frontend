@@ -25,14 +25,14 @@ export default function DashboardNavbar({ onMenuClick }: DashboardNavbarProps) {
   const { data: notificationsData } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => notificationService.getNotifications(1, 10),
-    refetchInterval: 300000, // Refetch every 5 Minutes
+    refetchInterval: 60000, // Refetch every 5 Minutes
   });
 
   // Fetch unread count
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-count'],
     queryFn: () => notificationService.getUnreadCount(),
-    refetchInterval: 300000, // Refetch every 5 Minutes
+    refetchInterval: 60000, // Refetch every 5 Minutes
   });
 
   // Mark as read mutation

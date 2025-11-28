@@ -56,9 +56,15 @@ export const cityService = {
     }
   },
 
-  async fetchCountries(): Promise<Country[]> {
+  async fetchCountries(search?: string): Promise<Country[]> {
     try {
-      const response = await axiosInstance.get<ApiResponse<Country[]>>('/api/cities/countries');
+      const params = new URLSearchParams();
+      if (search && search.trim()) {
+        params.append('search', search.trim());
+      }
+      const queryString = params.toString();
+      const url = `/api/cities/countries${queryString ? `?${queryString}` : ''}`;
+      const response = await axiosInstance.get<ApiResponse<Country[]>>(url);
       return response.data.data;
     } catch (error) {
       return handleError(error);
@@ -139,9 +145,18 @@ export const cityService = {
     }
   },
 
-  async fetchRegions(): Promise<Region[]> {
+  async fetchRegions(countryId?: string, search?: string): Promise<Region[]> {
     try {
-      const response = await axiosInstance.get<ApiResponse<Region[]>>('/api/cities/regions');
+      const params = new URLSearchParams();
+      if (countryId) {
+        params.append('countryId', countryId);
+      }
+      if (search && search.trim()) {
+        params.append('search', search.trim());
+      }
+      const queryString = params.toString();
+      const url = `/api/cities/regions${queryString ? `?${queryString}` : ''}`;
+      const response = await axiosInstance.get<ApiResponse<Region[]>>(url);
       return response.data.data;
     } catch (error) {
       return handleError(error);

@@ -18,6 +18,26 @@ import { toast } from 'sonner';
 import { CreditCard, CheckCircle2, Loader2, Building2 } from 'lucide-react';
 import { useCurrency } from '@/hooks/useCurrency';
 
+const formatBillingFrequency = (intervalCount: number, interval: string) => {
+  if (intervalCount === 1) {
+    switch (interval) {
+      case 'DAY':
+        return 'Daily';
+      case 'WEEK':
+        return 'Weekly';
+      case 'MONTH':
+        return 'Monthly';
+      case 'YEAR':
+        return 'Yearly';
+      default:
+        return `Per ${interval.toLowerCase()}`;
+    }
+  }
+
+  const intervalLabel = interval.toLowerCase();
+  return `Every ${intervalCount} ${intervalLabel}${intervalCount > 1 ? 's' : ''}`;
+};
+
 export default function SubscriptionsPage() {
   const { currency } = useCurrency();
   const queryClient = useQueryClient();
@@ -196,8 +216,7 @@ export default function SubscriptionsPage() {
                 )}
               </div>
               <p className="text-sm text-gray-600 mt-1">
-                per {plan.intervalCount} {plan.billingInterval.toLowerCase()}
-                {plan.intervalCount > 1 ? 's' : ''}
+                {formatBillingFrequency(plan.intervalCount, plan.billingInterval)}
               </p>
             </div>
 

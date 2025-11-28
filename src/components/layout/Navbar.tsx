@@ -108,12 +108,14 @@ export default function Navbar() {
                 <GTranslate className="!inline-block" id="gtranslate-desktop" />
               </div>
 
-              <button
-                onClick={handleAddBusiness}
-                className="text-primary hover:bg-primary/10 border border-primary px-2 md:px-3 lg:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-xs lg:text-sm font-medium transition-colors duration-200 whitespace-nowrap"
-              >
-                + Add Business
-              </button>
+              {(!isAuthenticated || user?.role !== 'USER') && (
+                <button
+                  onClick={handleAddBusiness}
+                  className="text-primary hover:bg-primary/10 border border-primary px-2 md:px-3 lg:px-4 py-1.5 md:py-2 rounded-md text-xs md:text-xs lg:text-sm font-medium transition-colors duration-200 whitespace-nowrap"
+                >
+                  + Add Business
+                </button>
+              )}
               {showAuthUI && isAuthenticated && user ? (
                 <div className="relative">
                   <button
@@ -243,15 +245,17 @@ export default function Navbar() {
                   </Link>
                 ))}
 
-                <button
-                  onClick={() => {
-                    handleAddBusiness();
-                    closeMobileMenu();
-                  }}
-                  className="w-full text-left text-primary hover:bg-primary/10 border border-primary px-3 py-2 rounded-md text-base font-medium"
-                >
-                  + Add Business
-                </button>
+                {(!isAuthenticated || user?.role !== 'USER') && (
+                  <button
+                    onClick={() => {
+                      handleAddBusiness();
+                      closeMobileMenu();
+                    }}
+                    className="w-full text-left text-primary hover:bg-primary/10 border border-primary px-3 py-2 rounded-md text-base font-medium"
+                  >
+                    + Add Business
+                  </button>
+                )}
 
                 <div className="pt-4 pb-3 border-t border-gray-200">
 

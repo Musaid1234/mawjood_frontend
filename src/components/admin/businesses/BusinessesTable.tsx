@@ -179,8 +179,7 @@ export function BusinessesTable<TData, TValue>({
       />
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
+      <div className="relative flex-block">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
             placeholder="Search by business name, owner, or location..."
@@ -189,6 +188,8 @@ export function BusinessesTable<TData, TValue>({
             className="pl-10"
           />
         </div>
+      <div className="flex flex-col md:flex-row gap-4">
+
 
         {onCategoryChange && (
           <Select
@@ -352,8 +353,12 @@ export function BusinessesTable<TData, TValue>({
       {/* Pagination */}
       <div className="flex items-center justify-between px-2">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{' '}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {selectedCount > 0 && (
+            <>
+              {table.getFilteredSelectedRowModel().rows.length} of{' '}
+              {table.getFilteredRowModel().rows.length} row(s) selected.
+            </>
+          )}
         </div>
         <div className="flex items-center space-x-6 lg:space-x-8">
           <div className="flex items-center space-x-2">

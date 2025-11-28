@@ -32,7 +32,7 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'SCHEDULED'>('DRAFT');
-  const [scheduledAt, setScheduledAt] = useState<string>('');
+  const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -59,7 +59,14 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
       setContent(blog.content);
       setMetaTitle(blog.metaTitle || '');
       setMetaDescription(blog.metaDescription || '');
-      const meta: any = (blog as any).tags || {};
+      let meta: any = (blog as any).tags || {};
+      if (typeof meta === 'string') {
+        try {
+          meta = JSON.parse(meta);
+        } catch {
+          meta = {};
+        }
+      }
       let initialStatus: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' = blog.published ? 'PUBLISHED' : 'DRAFT';
       if (meta && typeof meta === 'object' && !Array.isArray(meta) && typeof meta.status === 'string') {
         const upper = (meta.status as string).toUpperCase();
@@ -69,17 +76,14 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
       }
       setStatus(initialStatus);
       if (meta && typeof meta === 'object' && typeof meta.scheduledAt === 'string') {
-        try {
-          const d = new Date(meta.scheduledAt as string);
-          const isoLocal = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-            .toISOString()
-            .slice(0, 16);
-          setScheduledAt(isoLocal);
-        } catch {
-          setScheduledAt('');
+        const parsed = new Date(meta.scheduledAt);
+        if (!isNaN(parsed.getTime())) {
+          setScheduledAt(parsed);
+        } else {
+          setScheduledAt(null);
         }
       } else {
-        setScheduledAt('');
+        setScheduledAt(null);
       }
       if (blog.image) {
         setImagePreview(blog.image);
@@ -89,7 +93,7 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
       }
     } else {
       setStatus('DRAFT');
-      setScheduledAt('');
+      setScheduledAt(null);
     }
   }, [blog]);
 
@@ -303,8 +307,7 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
     formData.append('published', publishFlag.toString());
     formData.append('status', status);
     if (status === 'SCHEDULED' && scheduledAt) {
-      const iso = new Date(scheduledAt).toISOString();
-      formData.append('scheduledAt', iso);
+      formData.append('scheduledAt', scheduledAt.toISOString());
     }
     formData.append('categoryIds', JSON.stringify(selectedCategories));
 
@@ -627,7 +630,7 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
                   onValueChange={(value: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED') => {
                     setStatus(value);
                     if (value !== 'SCHEDULED') {
-                      setScheduledAt('');
+                      setScheduledAt(null);
                     }
                   }}
                   disabled={isSubmitting}
@@ -650,10 +653,9 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
                     <CalendarClock className="w-4 h-4 text-gray-500" />
                     <span className="text-sm font-medium text-gray-700">Schedule at</span>
                   </div>
-                  <Input
-                    type="datetime-local"
+                  <DateTimePicker
                     value={scheduledAt}
-                    onChange={(e) => setScheduledAt(e.target.value)}
+                    onChange={(date) => setScheduledAt(date)}
                     disabled={isSubmitting}
                     className={errors.scheduledAt ? 'border-red-500' : ''}
                   />
@@ -772,4 +774,3 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
     </form>
   );
 }
-

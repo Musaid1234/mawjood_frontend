@@ -9,8 +9,13 @@ import { SubscriptionsTable } from '@/components/admin/transactions/Subscription
 import { createPaymentColumns } from '@/components/admin/transactions/paymentColumns';
 import { createSubscriptionColumns } from '@/components/admin/transactions/subscriptionColumns';
 import { toast } from 'sonner';
-import { Loader2, Receipt, CreditCard } from 'lucide-react';
+import { Loader2, Receipt, CreditCard, CalendarIcon, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 type TabType = 'payments' | 'subscriptions';
 
@@ -25,6 +30,10 @@ export default function TransactionsPage() {
   const [debouncedSubscriptionSearch, setDebouncedSubscriptionSearch] = useState('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('');
   const [subscriptionStatusFilter, setSubscriptionStatusFilter] = useState<string>('');
+  const [paymentStartDate, setPaymentStartDate] = useState<Date | undefined>();
+  const [paymentEndDate, setPaymentEndDate] = useState<Date | undefined>();
+  const [subscriptionStartDate, setSubscriptionStartDate] = useState<Date | undefined>();
+  const [subscriptionEndDate, setSubscriptionEndDate] = useState<Date | undefined>();
 
   const paymentDebounceTimer = useRef<NodeJS.Timeout | null>(null);
   const subscriptionDebounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -68,13 +77,13 @@ export default function TransactionsPage() {
     if (activeTab === 'payments') {
       fetchPayments();
     }
-  }, [activeTab, debouncedPaymentSearch, paymentStatusFilter]);
+  }, [activeTab, debouncedPaymentSearch, paymentStatusFilter, paymentStartDate, paymentEndDate]);
 
   useEffect(() => {
     if (activeTab === 'subscriptions') {
       fetchSubscriptions();
     }
-  }, [activeTab, debouncedSubscriptionSearch, subscriptionStatusFilter]);
+  }, [activeTab, debouncedSubscriptionSearch, subscriptionStatusFilter, subscriptionStartDate, subscriptionEndDate]);
 
   useEffect(() => {
     const fetchInitialSubscriptions = async () => {
@@ -101,6 +110,14 @@ export default function TransactionsPage() {
 
       if (paymentStatusFilter) {
         params.status = paymentStatusFilter;
+      }
+
+      if (paymentStartDate) {
+        params.startDate = format(paymentStartDate, 'yyyy-MM-dd');
+      }
+
+      if (paymentEndDate) {
+        params.endDate = format(paymentEndDate, 'yyyy-MM-dd');
       }
 
       const response = await adminService.getAllPayments(params);
@@ -141,6 +158,14 @@ export default function TransactionsPage() {
 
       if (debouncedSubscriptionSearch) {
         params.search = debouncedSubscriptionSearch;
+      }
+
+      if (subscriptionStartDate) {
+        params.startDate = format(subscriptionStartDate, 'yyyy-MM-dd');
+      }
+
+      if (subscriptionEndDate) {
+        params.endDate = format(subscriptionEndDate, 'yyyy-MM-dd');
       }
 
       const response = await adminService.getAllSubscriptions(params);
@@ -226,19 +251,88 @@ export default function TransactionsPage() {
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-6">
         {activeTab === 'payments' ? (
           <>
-            {/* Payment Status Filter */}
-            <div className="mb-4">
-              <select
-                value={paymentStatusFilter}
-                onChange={(e) => setPaymentStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent"
-              >
-                <option value="">All Statuses</option>
-                <option value="PENDING">Pending</option>
-                <option value="COMPLETED">Completed</option>
-                <option value="FAILED">Failed</option>
-                <option value="REFUNDED">Refunded</option>
-              </select>
+            {/* Payment Filters */}
+            <div className="mb-4 flex flex-wrap gap-4 items-end">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select
+                  value={paymentStatusFilter}
+                  onChange={(e) => setPaymentStatusFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="FAILED">Failed</option>
+                  <option value="REFUNDED">Refunded</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[240px] justify-start text-left font-normal",
+                        !paymentStartDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {paymentStartDate ? format(paymentStartDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={paymentStartDate}
+                      onSelect={setPaymentStartDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[240px] justify-start text-left font-normal",
+                        !paymentEndDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {paymentEndDate ? format(paymentEndDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={paymentEndDate}
+                      onSelect={setPaymentEndDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {(paymentStartDate || paymentEndDate) && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setPaymentStartDate(undefined);
+                    setPaymentEndDate(undefined);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Clear Dates
+                </Button>
+              )}
             </div>
             <PaymentsTable
               columns={paymentColumns}
@@ -249,20 +343,89 @@ export default function TransactionsPage() {
           </>
         ) : (
           <>
-            {/* Subscription Status Filter */}
-            <div className="mb-4">
-              <select
-                value={subscriptionStatusFilter}
-                onChange={(e) => setSubscriptionStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent"
-              >
-                <option value="">All Statuses</option>
-                <option value="ACTIVE">Active</option>
-                <option value="PENDING">Pending</option>
-                <option value="CANCELLED">Cancelled</option>
-                <option value="EXPIRED">Expired</option>
-                <option value="FAILED">Failed</option>
-              </select>
+            {/* Subscription Filters */}
+            <div className="mb-4 flex flex-wrap gap-4 items-end">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select
+                  value={subscriptionStatusFilter}
+                  onChange={(e) => setSubscriptionStatusFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="CANCELLED">Cancelled</option>
+                  <option value="EXPIRED">Expired</option>
+                  <option value="FAILED">Failed</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[240px] justify-start text-left font-normal",
+                        !subscriptionStartDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {subscriptionStartDate ? format(subscriptionStartDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={subscriptionStartDate}
+                      onSelect={setSubscriptionStartDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[240px] justify-start text-left font-normal",
+                        !subscriptionEndDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {subscriptionEndDate ? format(subscriptionEndDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={subscriptionEndDate}
+                      onSelect={setSubscriptionEndDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {(subscriptionStartDate || subscriptionEndDate) && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSubscriptionStartDate(undefined);
+                    setSubscriptionEndDate(undefined);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Clear Dates
+                </Button>
+              )}
             </div>
             <SubscriptionsTable
               columns={subscriptionColumns}

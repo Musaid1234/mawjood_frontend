@@ -261,6 +261,18 @@ export const createColumns = (
                 </>
               )}
 
+              {business.status === 'REJECTED' && (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => onApprove(business.id)}
+                    className="text-green-600 focus:text-green-600 focus:bg-green-50"
+                  >
+                    Re-approve Business
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+
               <DropdownMenuItem
                 onClick={() => onEdit(business.id)}
                 className="text-blue-600 focus:text-blue-600 focus:bg-blue-50"

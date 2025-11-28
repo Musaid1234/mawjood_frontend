@@ -15,15 +15,7 @@ interface Props {
   workingHours?: WorkingHours | null;
 }
 
-const daysOfWeek = [
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-  'sunday',
-];
+const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 const dayLabels: Record<string, string> = {
   monday: 'Monday',
@@ -36,15 +28,70 @@ const dayLabels: Record<string, string> = {
 };
 
 export default function WorkingHoursSection({ workingHours }: Props) {
-  // Hooks must be called at the top level, before any early returns
   const [currentDay, setCurrentDay] = useState<string>('monday');
+  const [isOpenNow, setIsOpenNow] = useState<boolean>(false);
+  const [currentClosingLabel, setCurrentClosingLabel] = useState<string | null>(null);
+
+  const parseTimeToMinutes = (time: string): number => {
+    if (!time) return 0;
+    const [hoursPart, minutesPartRaw = '0'] = time.split(':');
+    let hours = parseInt(hoursPart, 10);
+    const minutesDigits = minutesPartRaw.replace(/[^0-9]/g, '');
+    const minutes = parseInt(minutesDigits || '0', 10);
+    const periodMatch = minutesPartRaw.match(/(am|pm)/i);
+
+    if (periodMatch) {
+      const period = periodMatch[1].toLowerCase();
+      if (period === 'pm' && hours < 12) hours += 12;
+      if (period === 'am' && hours === 12) hours = 0;
+    }
+
+    return hours * 60 + minutes;
+  };
 
   useEffect(() => {
-    // Calculate day on client side to avoid hydration mismatches
-    const jsDayIndex = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const arrayIndex = jsDayIndex === 0 ? 6 : jsDayIndex - 1; // Map Sunday to index 6, others shift by -1
-    setCurrentDay(daysOfWeek[arrayIndex]);
-  }, []);
+    const updateStatus = () => {
+      const now = new Date();
+      const jsDayIndex = now.getDay();
+      const arrayIndex = jsDayIndex === 0 ? 6 : jsDayIndex - 1;
+      const todayKey = daysOfWeek[arrayIndex];
+      setCurrentDay(todayKey);
+
+      if (!workingHours) {
+        setIsOpenNow(false);
+        setCurrentClosingLabel(null);
+        return;
+      }
+
+      const todayHours = workingHours[todayKey];
+      if (!todayHours || todayHours.isClosed) {
+        setIsOpenNow(false);
+        setCurrentClosingLabel(null);
+        return;
+      }
+
+      const minutesNow = now.getHours() * 60 + now.getMinutes();
+      const openMinutes = parseTimeToMinutes(todayHours.open);
+      const closeMinutes = parseTimeToMinutes(todayHours.close);
+
+      let openNow = false;
+      if (closeMinutes === openMinutes) {
+        openNow = false;
+      } else if (closeMinutes > openMinutes) {
+        openNow = minutesNow >= openMinutes && minutesNow < closeMinutes;
+      } else {
+        // Handles schedules that pass midnight (e.g., 22:00 - 02:00)
+        openNow = minutesNow >= openMinutes || minutesNow < closeMinutes;
+      }
+
+      setIsOpenNow(openNow);
+      setCurrentClosingLabel(formatTime(todayHours.close));
+    };
+
+    updateStatus();
+    const interval = setInterval(updateStatus, 60000);
+    return () => clearInterval(interval);
+  }, [workingHours]);
 
   if (!workingHours || Object.keys(workingHours).length === 0) {
     return (
@@ -79,6 +126,34 @@ export default function WorkingHoursSection({ workingHours }: Props) {
           <Clock className="w-5 h-5 text-primary" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900">Working Hours</h2>
+      </div>
+
+            {/* Current Status */}
+            <div className="my-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="flex items-center gap-2">
+          {workingHours[currentDay] && !workingHours[currentDay]?.isClosed && currentClosingLabel ? (
+            <>
+              <div className={`w-2 h-2 rounded-full ${isOpenNow ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+              <span className={`text-sm font-medium ${isOpenNow ? 'text-green-700' : 'text-red-700'}`}>
+                {isOpenNow ? 'Open Now' : 'Closed Now'}
+              </span>
+              {isOpenNow ? (
+                <span className="text-sm text-gray-600 ml-2">
+                  Closes at {currentClosingLabel}
+                </span>
+              ) : (
+                <span className="text-sm text-gray-600 ml-2">
+                  Opens at {formatTime(workingHours[currentDay].open)}
+                </span>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+              <span className="text-sm font-medium text-red-700">Closed Now</span>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -121,32 +196,13 @@ export default function WorkingHoursSection({ workingHours }: Props) {
                     <span className="text-gray-900 font-medium">
                       {formatTime(hours.open)} - {formatTime(hours.close)}
                     </span>
+
                   </>
                 )}
               </div>
             </div>
           );
         })}
-      </div>
-
-      {/* Current Status */}
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <div className="flex items-center gap-2">
-          {workingHours[currentDay] && !workingHours[currentDay]?.isClosed ? (
-            <>
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-green-700">Open Now</span>
-              <span className="text-sm text-gray-600 ml-2">
-                Closes at {formatTime(workingHours[currentDay].close)}
-              </span>
-            </>
-          ) : (
-            <>
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <span className="text-sm font-medium text-red-700">Closed Now</span>
-            </>
-          )}
-        </div>
       </div>
     </section>
   );

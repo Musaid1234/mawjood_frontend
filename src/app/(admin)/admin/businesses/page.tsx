@@ -29,7 +29,7 @@ import { Button } from '@/components/ui/button';
 import { categoryService, Category } from '@/services/category.service';
 import { cityService, Country, Region, City } from '@/services/city.service';
 
-type TabType = 'all' | 'pending' | 'suspended' | 'approved';
+type TabType = 'all' | 'pending' | 'suspended' | 'approved' | 'rejected';
 
 export default function BusinessesPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -42,6 +42,7 @@ export default function BusinessesPage() {
     pending: 0,
     approved: 0,
     suspended: 0,
+    rejected: 0,
   });
   const [actionDialog, setActionDialog] = useState<{
     open: boolean;
@@ -213,6 +214,7 @@ export default function BusinessesPage() {
         pending: businessStatus.pending,
         approved: businessStatus.approved,
         suspended: businessStatus.suspended,
+        rejected: businessStatus.rejected,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -222,7 +224,7 @@ export default function BusinessesPage() {
   // Sync active tab with URL (e.g. ?tab=pending)
   useEffect(() => {
     const tabParam = (searchParams.get('tab') as TabType | null) || 'all';
-    const validTabs: TabType[] = ['all', 'pending', 'suspended', 'approved'];
+    const validTabs: TabType[] = ['all', 'pending', 'suspended', 'approved', 'rejected'];
     const nextTab = validTabs.includes(tabParam) ? tabParam : 'all';
     if (nextTab !== activeTab) {
       setActiveTab(nextTab);
@@ -264,6 +266,7 @@ export default function BusinessesPage() {
           all: '',
           suspended: 'SUSPENDED',
           approved: 'APPROVED',
+          rejected: 'REJECTED',
         };
         params.status = statusMap[activeTab];
         response = await adminService.getAllBusinesses(params);
@@ -479,6 +482,7 @@ export default function BusinessesPage() {
     },
     { id: 'suspended', label: 'Suspended' },
     { id: 'approved', label: 'Approved' },
+    { id: 'rejected', label: 'Rejected' },
   ] as const;
 
   if (loading && businesses.length === 0) {

@@ -2,7 +2,7 @@
 
 import { JSX, useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { Mail, Phone, Globe, Facebook, Instagram, Twitter, Linkedin, Send } from 'lucide-react';
+import { Mail, Phone, Globe, Facebook, Instagram, Linkedin, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -21,6 +21,19 @@ export default function ContactPage() {
   const { data: siteSettings } = useSiteSettings();
   const contactSettings = siteSettings?.contact;
 
+  const XIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+  
+  
+
   const emails = contactSettings?.emails?.length
     ? contactSettings.emails
     : ['info@mawjood.sa', 'support@mawjood.sa'];
@@ -34,9 +47,9 @@ export default function ContactPage() {
     : [
         { name: 'Facebook', url: 'https://facebook.com' },
         { name: 'Instagram', url: 'https://instagram.com' },
-        { name: 'Twitter', url: 'https://twitter.com' },
+        { name: 'Twitter', url: 'https://x.com' },
         { name: 'LinkedIn', url: 'https://linkedin.com' },
-      ];
+      ];  
 
   const officeLocation = {
     lat: contactSettings?.location?.latitude ?? 24.7136,
@@ -77,7 +90,8 @@ export default function ContactPage() {
   const SOCIAL_ICON_MAP: Record<string, JSX.Element> = {
     Facebook: <Facebook className="w-5 h-5 text-white" />,
     Instagram: <Instagram className="w-5 h-5 text-white" />,
-    Twitter: <Twitter className="w-5 h-5 text-white" />,
+    Twitter: <XIcon className="w-5 h-5 text-white" />, // Fixed
+    X: <XIcon className="w-5 h-5 text-white" />,
     Linkedin: <Linkedin className="w-5 h-5 text-white" />,
     LinkedIn: <Linkedin className="w-5 h-5 text-white" />,
   };

@@ -4,7 +4,9 @@ import { ReviewSettings } from '@/services/settings.service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Upload, X } from 'lucide-react';
+import Image from 'next/image';
+import { useState } from 'react';
 
 interface ReviewsSettingsSectionProps {
   value: ReviewSettings[];
@@ -14,7 +16,7 @@ interface ReviewsSettingsSectionProps {
 }
 
 const createEmptyReview = (): ReviewSettings => ({
-  id: `review-${Date.now()}`,
+  id: `review-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
   name: '',
   designation: '',
   rating: 5,
@@ -29,6 +31,7 @@ export function ReviewsSettingsSection({
   isSaving,
 }: ReviewsSettingsSectionProps) {
   const reviews = value ?? [];
+  const [avatarPreviews, setAvatarPreviews] = useState<Record<number, string>>({});
 
   const updateReview = (index: number, data: Partial<ReviewSettings>) => {
     const nextReviews = [...reviews];
@@ -42,6 +45,30 @@ export function ReviewsSettingsSection({
 
   const removeReview = (index: number) => {
     onChange(reviews.filter((_, idx) => idx !== index));
+    const newPreviews = { ...avatarPreviews };
+    delete newPreviews[index];
+    setAvatarPreviews(newPreviews);
+  };
+
+  const handleAvatarChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreviews(prev => ({ ...prev, [index]: reader.result as string }));
+        updateReview(index, { avatar: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeAvatar = (index: number) => {
+    setAvatarPreviews(prev => {
+      const newPreviews = { ...prev };
+      delete newPreviews[index];
+      return newPreviews;
+    });
+    updateReview(index, { avatar: '' });
   };
 
   const handleSave = async () => {
@@ -99,15 +126,6 @@ export function ReviewsSettingsSection({
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Review ID</label>
-                <Input
-                  value={review.id?.toString() ?? ''}
-                  onChange={(event) => updateReview(index, { id: event.target.value })}
-                  placeholder="1"
-                />
-              </div>
-
-              <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Name</label>
                 <Input
                   value={review.name ?? ''}
@@ -132,21 +150,68 @@ export function ReviewsSettingsSection({
                   min={1}
                   max={5}
                   value={review.rating ?? 5}
-                  onChange={(event) =>
-                    updateReview(index, {
-                      rating: Number.parseInt(event.target.value, 10) || 0,
-                    })
-                  }
+                  onChange={(event) => {
+                    const value = Number.parseInt(event.target.value, 10);
+                    if (value >= 1 && value <= 5) {
+                      updateReview(index, { rating: value });
+                    } else if (value > 5) {
+                      updateReview(index, { rating: 5 });
+                    } else if (value < 1) {
+                      updateReview(index, { rating: 1 });
+                    }
+                  }}
+                  onBlur={(event) => {
+                    const value = Number.parseInt(event.target.value, 10);
+                    if (isNaN(value) || value < 1) {
+                      updateReview(index, { rating: 1 });
+                    } else if (value > 5) {
+                      updateReview(index, { rating: 5 });
+                    }
+                  }}
                 />
+                <p className="text-xs text-gray-500">Rating must be between 1 and 5</p>
               </div>
 
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-gray-700">Avatar URL</label>
-                <Input
-                  value={review.avatar ?? ''}
-                  onChange={(event) => updateReview(index, { avatar: event.target.value })}
-                  placeholder="https://..."
-                />
+                <label className="text-sm font-medium text-gray-700">Avatar</label>
+                
+                {(avatarPreviews[index] || review.avatar) && (
+                  <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300 mx-auto">
+                    <Image
+                      src={avatarPreviews[index] || review.avatar || ''}
+                      alt="Avatar preview"
+                      fill
+                      className="object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeAvatar(index)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+
+                <label
+                  htmlFor={`avatar-upload-${index}`}
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#1c4233] transition-colors bg-gray-50"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                    <p className="text-sm text-gray-600">
+                      <span className="font-semibold">Click to upload</span> avatar
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 10MB</p>
+                  </div>
+                  <input
+                    id={`avatar-upload-${index}`}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleAvatarChange(index, e)}
+                    className="hidden"
+                  />
+                </label>
               </div>
 
               <div className="space-y-2 md:col-span-2">

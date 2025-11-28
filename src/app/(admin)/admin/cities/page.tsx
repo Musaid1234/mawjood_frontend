@@ -20,7 +20,9 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MoreHorizontal, Plus, Trash2, MapPin, Map } from 'lucide-react';
+import { MoreHorizontal, Plus, MapPin, Map, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CitiesTable } from '@/components/admin/cities/CitiesTable';
 import { CityDialog } from '@/components/admin/cities/CityDialog';
 import { RegionDialog } from '@/components/admin/cities/RegionDialog';
@@ -28,15 +30,30 @@ import { cityService, City, Region, Country } from '@/services/city.service';
 import { toast } from 'sonner';
 import { CountryDialog } from '@/components/admin/cities/CountryDialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function CitiesPage() {
   const [cities, setCities] = useState<City[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [filteredCities, setFilteredCities] = useState<City[]>([]);
+  const [filteredRegions, setFilteredRegions] = useState<Region[]>([]);
+  const [filteredCountries, setFilteredCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('all');
+  const [regionSearchValue, setRegionSearchValue] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('all');
+  const [countrySearchValue, setCountrySearchValue] = useState('');
   
   const [cityDialogOpen, setCityDialogOpen] = useState(false);
   const [regionDialogOpen, setRegionDialogOpen] = useState(false);
@@ -44,6 +61,20 @@ export default function CitiesPage() {
   const [editingCity, setEditingCity] = useState<City | null>(null);
   const [editingRegion, setEditingRegion] = useState<Region | null>(null);
   const [editingCountry, setEditingCountry] = useState<Country | null>(null);
+  
+  // Delete confirmation dialogs
+  const [deleteCityDialog, setDeleteCityDialog] = useState<{ open: boolean; cityId: string | null }>({
+    open: false,
+    cityId: null,
+  });
+  const [deleteRegionDialog, setDeleteRegionDialog] = useState<{ open: boolean; regionId: string | null }>({
+    open: false,
+    regionId: null,
+  });
+  const [deleteCountryDialog, setDeleteCountryDialog] = useState<{ open: boolean; countryId: string | null }>({
+    open: false,
+    countryId: null,
+  });
 
   useEffect(() => {
     fetchData();
@@ -52,6 +83,14 @@ export default function CitiesPage() {
   useEffect(() => {
     filterCities();
   }, [cities, searchValue, selectedRegion]);
+
+  useEffect(() => {
+    filterRegions();
+  }, [regions, regionSearchValue, selectedCountry]);
+
+  useEffect(() => {
+    filterCountries();
+  }, [countries, countrySearchValue]);
 
   const fetchData = async () => {
     try {
@@ -64,7 +103,7 @@ export default function CitiesPage() {
       setCities(citiesData);
       setRegions(regionsData);
       setCountries(countriesData);
-    } catch (error) {
+    } catch {
       toast.error('Failed to fetch data');
     } finally {
       setLoading(false);
@@ -87,6 +126,39 @@ export default function CitiesPage() {
     }
 
     setFilteredCities(filtered);
+  };
+
+  const filterRegions = () => {
+    let filtered = regions;
+
+    // Filter by search
+    if (regionSearchValue) {
+      filtered = filtered.filter((region) =>
+        region.name.toLowerCase().includes(regionSearchValue.toLowerCase())
+      );
+    }
+
+    // Filter by country
+    if (selectedCountry && selectedCountry !== 'all') {
+      filtered = filtered.filter((region) => region.countryId === selectedCountry);
+    }
+
+    setFilteredRegions(filtered);
+  };
+
+  const filterCountries = () => {
+    let filtered = countries;
+
+    // Filter by search
+    if (countrySearchValue) {
+      filtered = filtered.filter((country) =>
+        country.name.toLowerCase().includes(countrySearchValue.toLowerCase()) ||
+        country.slug.toLowerCase().includes(countrySearchValue.toLowerCase()) ||
+        (country.code && country.code.toLowerCase().includes(countrySearchValue.toLowerCase()))
+      );
+    }
+
+    setFilteredCountries(filtered);
   };
 
   const handleCreateCity = () => {
@@ -116,12 +188,17 @@ export default function CitiesPage() {
     }
   };
 
-  const handleDeleteCity = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this city?')) return;
+  const handleDeleteCity = (id: string) => {
+    setDeleteCityDialog({ open: true, cityId: id });
+  };
+
+  const confirmDeleteCity = async () => {
+    if (!deleteCityDialog.cityId) return;
 
     try {
-      await cityService.deleteCity(id);
+      await cityService.deleteCity(deleteCityDialog.cityId);
       toast.success('City deleted successfully!');
+      setDeleteCityDialog({ open: false, cityId: null });
       await fetchData();
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete city');
@@ -176,8 +253,7 @@ export default function CitiesPage() {
     setCountryDialogOpen(true);
   };
 
-  const handleDeleteRegion = async (id: string) => {
-    const region = regions.find(r => r.id === id);
+  const handleDeleteRegion = (id: string) => {
     const citiesInRegion = cities.filter(c => c.regionId === id).length;
 
     if (citiesInRegion > 0) {
@@ -185,19 +261,23 @@ export default function CitiesPage() {
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete ${region?.name}?`)) return;
+    setDeleteRegionDialog({ open: true, regionId: id });
+  };
+
+  const confirmDeleteRegion = async () => {
+    if (!deleteRegionDialog.regionId) return;
 
     try {
-      await cityService.deleteRegion(id);
+      await cityService.deleteRegion(deleteRegionDialog.regionId);
       toast.success('Region deleted successfully!');
+      setDeleteRegionDialog({ open: false, regionId: null });
       await fetchData();
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete region');
     }
   };
 
-  const handleDeleteCountry = async (id: string) => {
-    const country = countries.find((c) => c.id === id);
+  const handleDeleteCountry = (id: string) => {
     const regionsInCountry = regions.filter((region) => region.countryId === id).length;
 
     if (regionsInCountry > 0) {
@@ -205,11 +285,16 @@ export default function CitiesPage() {
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete ${country?.name ?? 'this country'}?`)) return;
+    setDeleteCountryDialog({ open: true, countryId: id });
+  };
+
+  const confirmDeleteCountry = async () => {
+    if (!deleteCountryDialog.countryId) return;
 
     try {
-      await cityService.deleteCountry(id);
+      await cityService.deleteCountry(deleteCountryDialog.countryId);
       toast.success('Country deleted successfully!');
+      setDeleteCountryDialog({ open: false, countryId: null });
       await fetchData();
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete country');
@@ -391,11 +476,39 @@ export default function CitiesPage() {
               </div>
             </CardHeader>
             <CardContent>
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search states..."
+                    value={regionSearchValue}
+                    onChange={(e) => setRegionSearchValue(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                  <Select
+                  value={selectedCountry}
+                  onValueChange={setSelectedCountry}
+                >
+                  <SelectTrigger className="w-full sm:w-[200px]">
+                    <SelectValue placeholder="Filter by country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Countries</SelectItem>
+                    {countries.map((country) => (
+                      <SelectItem key={country.id} value={country.id}>
+                        {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {regions.map((region) => {
+                {filteredRegions.map((region) => {
                   const citiesCount = cities.filter(
                     (c) => c.regionId === region.id
                   ).length;
+                  const country = countries.find((c) => c.id === region.countryId);
 
                   return (
                     <Card key={region.id} className="relative">
@@ -403,9 +516,16 @@ export default function CitiesPage() {
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-2">
                             <Map className="w-5 h-5 text-primary" />
-                            <CardTitle className="text-lg">
-                              {region.name}
-                            </CardTitle>
+                            <div>
+                              <CardTitle className="text-lg">
+                                {region.name}
+                              </CardTitle>
+                              {country && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {country.name}
+                                </p>
+                              )}
+                            </div>
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -442,9 +562,11 @@ export default function CitiesPage() {
                   );
                 })}
 
-                {regions.length === 0 && (
+                {filteredRegions.length === 0 && (
                   <div className="col-span-full text-center py-12 text-gray-500">
-                    No States yet. Create your first state to get started.
+                    {regions.length === 0 
+                      ? 'No States yet. Create your first state to get started.'
+                      : 'No states found matching your search criteria.'}
                   </div>
                 )}
               </div>
@@ -474,8 +596,19 @@ export default function CitiesPage() {
               </div>
             </CardHeader>
             <CardContent>
+              <div className="mb-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search countries..."
+                    value={countrySearchValue}
+                    onChange={(e) => setCountrySearchValue(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {countries.map((country) => {
+                {filteredCountries.map((country) => {
                   const countryRegions = regions.filter((region) => region.countryId === country.id);
                   const cityCount = countryRegions.reduce(
                     (sum, region) => sum + cities.filter((city) => city.regionId === region.id).length,
@@ -533,9 +666,11 @@ export default function CitiesPage() {
                   );
                 })}
 
-                {countries.length === 0 && (
+                {filteredCountries.length === 0 && (
                   <div className="col-span-full text-center py-12 text-gray-500">
-                    No countries yet. Create your first country to get started.
+                    {countries.length === 0 
+                      ? 'No countries yet. Create your first country to get started.'
+                      : 'No countries found matching your search criteria.'}
                   </div>
                 )}
               </div>
@@ -573,6 +708,78 @@ export default function CitiesPage() {
         country={editingCountry}
         onSave={handleSaveCountry}
       />
+
+      {/* Delete City Confirmation Dialog */}
+      <AlertDialog
+        open={deleteCityDialog.open}
+        onOpenChange={(open) => setDeleteCityDialog({ open, cityId: null })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete City?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this city? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteCity}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Region Confirmation Dialog */}
+      <AlertDialog
+        open={deleteRegionDialog.open}
+        onOpenChange={(open) => setDeleteRegionDialog({ open, regionId: null })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete State?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this state? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteRegion}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Country Confirmation Dialog */}
+      <AlertDialog
+        open={deleteCountryDialog.open}
+        onOpenChange={(open) => setDeleteCountryDialog({ open, countryId: null })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Country?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this country? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteCountry}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

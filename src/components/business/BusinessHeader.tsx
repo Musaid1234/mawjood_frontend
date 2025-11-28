@@ -46,31 +46,6 @@ export default function BusinessHeader({ business }: Props) {
   const { isFavorite, toggleFavorite, isLoading: favLoading } = useFavorites();
   const { isAuthenticated } = useAuthStore();
   
-  const getCurrentDayStatus = () => {
-    if (!business.workingHours) return false;
-    
-    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    const jsDayIndex = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const arrayIndex = jsDayIndex === 0 ? 6 : jsDayIndex - 1; // Map Sunday to index 6, others shift by -1
-    const currentDay = days[arrayIndex];
-    const todayHours = business.workingHours[currentDay];
-    
-    if (!todayHours || todayHours.isClosed) return false;
-    
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
-    
-    const [openHour, openMin] = todayHours.open.split(':').map(Number);
-    const [closeHour, closeMin] = todayHours.close.split(':').map(Number);
-    
-    const openTime = openHour * 60 + openMin;
-    const closeTime = closeHour * 60 + closeMin;
-    
-    return currentTime >= openTime && currentTime <= closeTime;
-  };
-  
-  const isOpen = getCurrentDayStatus();
-
   const handleShare = async () => {
     const url = window.location.href;
     
@@ -164,12 +139,6 @@ export default function BusinessHeader({ business }: Props) {
               </div>
 
 
-              {/* Status */}
-              <span className={`px-3 py-1 rounded-full text-xs md:text-sm font-semibold ${
-                isOpen ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-              }`}>
-                {isOpen ? 'Open' : 'Closed'}
-              </span>
             </div>
 
             {/* Location */}

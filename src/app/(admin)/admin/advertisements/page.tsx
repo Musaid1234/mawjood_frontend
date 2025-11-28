@@ -36,8 +36,8 @@ export default function AdvertisementsPage() {
   const [targetUrl, setTargetUrl] = useState('');
   const [notes, setNotes] = useState('');
   const [isActive, setIsActive] = useState(true);
-  const [startsAt, setStartsAt] = useState('');
-  const [endsAt, setEndsAt] = useState('');
+  const [startsAt, setStartsAt] = useState<Date | null>(null);
+  const [endsAt, setEndsAt] = useState<Date | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -210,10 +210,10 @@ export default function AdvertisementsPage() {
       formData.append('targetUrl', targetUrl.trim());
       formData.append('isActive', String(isActive));
       if (startsAt) {
-        formData.append('startsAt', new Date(startsAt).toISOString());
+        formData.append('startsAt', startsAt.toISOString());
       }
       if (endsAt) {
-        formData.append('endsAt', new Date(endsAt).toISOString());
+        formData.append('endsAt', endsAt.toISOString());
       }
       if (notes.trim()) {
         formData.append('notes', notes.trim());
@@ -514,10 +514,12 @@ export default function AdvertisementsPage() {
                 {/* Start and End dates */}
                 <div className=" gap-6">
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Start at (optional)
+                    </label>
                     <DateTimePicker
-                      label="Start at (optional)"
                       value={startsAt}
-                      onChange={(e) => setStartsAt((e.target as HTMLInputElement).value)}
+                      onChange={(date) => setStartsAt(date)}
                       disabled={submitting}
                       className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] dark:focus:border-[#1c4233] dark:focus:ring-[#1c4233] sm:text-sm"
                     />
@@ -526,10 +528,12 @@ export default function AdvertisementsPage() {
                     </p>
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      End at (optional)
+                    </label>
                     <DateTimePicker
-                      label="End at (optional)"
                       value={endsAt}
-                      onChange={(e) => setEndsAt((e.target as HTMLInputElement).value)}
+                      onChange={(date) => setEndsAt(date)}
                       disabled={submitting}
                       className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] dark:focus:border-[#1c4233] dark:focus:ring-[#1c4233] sm:text-sm"
                     />

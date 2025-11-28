@@ -145,10 +145,10 @@ export function CitiesTable<TData, TValue>({
         
         <Select onValueChange={onRegionFilter}>
           <SelectTrigger className="w-full md:w-[200px]">
-            <SelectValue placeholder="Filter by Region" />
+            <SelectValue placeholder="Filter by States" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Regions</SelectItem>
+            <SelectItem value="all">All States</SelectItem>
             {regions.map((region) => (
               <SelectItem key={region.id} value={region.id}>
                 {region.name}
@@ -214,8 +214,12 @@ export function CitiesTable<TData, TValue>({
       {/* Pagination */}
       <div className="flex items-center justify-between px-2">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{' '}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {selectedCount > 0 && (
+            <>
+              {table.getFilteredSelectedRowModel().rows.length} of{' '}
+              {table.getFilteredRowModel().rows.length} row(s) selected.
+            </>
+          )}
         </div>
         <div className="flex items-center space-x-6 lg:space-x-8">
           <div className="flex items-center space-x-2">

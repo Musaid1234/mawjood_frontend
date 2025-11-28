@@ -4,8 +4,10 @@ import { HeroCardSettings, HeroSettings } from '@/services/settings.service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
+import { useState } from 'react';
 
 interface HeroSettingsSectionProps {
   value: HeroSettings;
@@ -15,7 +17,7 @@ interface HeroSettingsSectionProps {
 }
 
 const createEmptyCard = (): HeroCardSettings => ({
-  id: `card-${Date.now()}`,
+  id: `card-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
   title: '',
   buttonText: '',
   buttonColor: '',
@@ -26,6 +28,7 @@ const createEmptyCard = (): HeroCardSettings => ({
 export function HeroSettingsSection({ value, onChange, onSave, isSaving }: HeroSettingsSectionProps) {
   const hero: HeroSettings = value ?? { title: '', subtitle: '', cards: [] };
   const cards = hero.cards ?? [];
+  const [imagePreviews, setImagePreviews] = useState<Record<number, string>>({});
 
   const updateHeroField = (field: keyof HeroSettings, newValue: HeroSettings[typeof field]) => {
     onChange({ ...hero, [field]: newValue });
@@ -48,6 +51,30 @@ export function HeroSettingsSection({ value, onChange, onSave, isSaving }: HeroS
   const removeCard = (index: number) => {
     const nextCards = cards.filter((_, idx) => idx !== index);
     onChange({ ...hero, cards: nextCards });
+    const newPreviews = { ...imagePreviews };
+    delete newPreviews[index];
+    setImagePreviews(newPreviews);
+  };
+
+  const handleImageChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviews(prev => ({ ...prev, [index]: reader.result as string }));
+        updateCardField(index, 'image', reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImagePreviews(prev => {
+      const newPreviews = { ...prev };
+      delete newPreviews[index];
+      return newPreviews;
+    });
+    updateCardField(index, 'image', '');
   };
 
   const handleSave = async () => {
@@ -131,15 +158,6 @@ export function HeroSettingsSection({ value, onChange, onSave, isSaving }: HeroS
 
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Card ID</label>
-                  <Input
-                    value={card.id ?? ''}
-                    onChange={(event) => updateCardField(index, 'id', event.target.value)}
-                    placeholder="transporters"
-                  />
-                </div>
-
-                <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Title</label>
                   <Input
                     value={card.title ?? ''}
@@ -166,15 +184,6 @@ export function HeroSettingsSection({ value, onChange, onSave, isSaving }: HeroS
                   />
                 </div>
 
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700">Image URL</label>
-                  <Input
-                    value={card.image ?? ''}
-                    onChange={(event) => updateCardField(index, 'image', event.target.value)}
-                    placeholder="https://..."
-                  />
-                </div>
-
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Category Slug</label>
                   <Input
@@ -182,6 +191,48 @@ export function HeroSettingsSection({ value, onChange, onSave, isSaving }: HeroS
                     onChange={(event) => updateCardField(index, 'slug', event.target.value)}
                     placeholder="real-estate"
                   />
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-medium text-gray-700">Card Image</label>
+                  
+                  {(imagePreviews[index] || card.image) && (
+                    <div className="relative w-full h-48 rounded-lg overflow-hidden bg-gray-100 border-2 border-gray-300">
+                      <Image
+                        src={imagePreviews[index] || card.image || ''}
+                        alt="Card preview"
+                        fill
+                        className="object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  <label
+                    htmlFor={`card-image-${index}`}
+                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#1c4233] transition-colors bg-gray-50"
+                  >
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-600">
+                        <span className="font-semibold">Click to upload</span> card image
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 10MB</p>
+                    </div>
+                    <input
+                      id={`card-image-${index}`}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageChange(index, e)}
+                      className="hidden"
+                    />
+                  </label>
                 </div>
               </div>
             </div>

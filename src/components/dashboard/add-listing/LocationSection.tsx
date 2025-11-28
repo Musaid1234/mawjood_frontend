@@ -175,6 +175,8 @@ export default function LocationSection() {
     handleBlur,
     setFieldValue,
     setFieldTouched,
+    setFieldError,
+    validateField,
   } = useFormikContext<any>();
   const [showCoordinates, setShowCoordinates] = useState(false);
 
@@ -271,24 +273,40 @@ export default function LocationSection() {
   const isCityDisabled = !values.regionId || availableCities.length === 0;
 
   const handleCountrySelect = (countryId: string) => {
-    setFieldValue('countryId', countryId);
-    setFieldTouched('countryId', true, false);
-    setFieldValue('regionId', '');
-    setFieldValue('cityId', '');
+    // Clear error immediately
+    setFieldError('countryId', undefined);
+    // Set value and trigger validation
+    setFieldValue('countryId', countryId, true);
+    setFieldTouched('countryId', true, true);
+    // Reset dependent fields
+    setFieldValue('regionId', '', false);
+    setFieldValue('cityId', '', false);
     setFieldTouched('regionId', false, false);
     setFieldTouched('cityId', false, false);
+    // Clear errors for dependent fields
+    setFieldError('regionId', undefined);
+    setFieldError('cityId', undefined);
   };
 
   const handleRegionSelect = (regionId: string) => {
-    setFieldValue('regionId', regionId);
-    setFieldTouched('regionId', true, false);
-    setFieldValue('cityId', '');
+    // Clear error immediately
+    setFieldError('regionId', undefined);
+    // Set value and trigger validation
+    setFieldValue('regionId', regionId, true);
+    setFieldTouched('regionId', true, true);
+    // Reset dependent field
+    setFieldValue('cityId', '', false);
     setFieldTouched('cityId', false, false);
+    // Clear error for dependent field
+    setFieldError('cityId', undefined);
   };
 
   const handleCitySelect = (cityId: string) => {
-    setFieldValue('cityId', cityId);
-    setFieldTouched('cityId', true, false);
+    // Clear error immediately
+    setFieldError('cityId', undefined);
+    // Set value and trigger validation
+    setFieldValue('cityId', cityId, true);
+    setFieldTouched('cityId', true, true);
   };
 
   return (
@@ -328,7 +346,11 @@ export default function LocationSection() {
             options={countryOptions}
             value={values.countryId || ''}
             onSelect={handleCountrySelect}
-            error={touched.countryId && errors.countryId ? (errors.countryId as string) : undefined}
+            error={
+              touched.countryId && errors.countryId && !values.countryId
+                ? (errors.countryId as string)
+                : undefined
+            }
             required
             disabled={isCountryDisabled}
             isLoading={isCountriesLoading}
@@ -357,7 +379,11 @@ export default function LocationSection() {
             options={regionOptions}
             value={values.regionId || ''}
             onSelect={handleRegionSelect}
-            error={touched.regionId && errors.regionId ? (errors.regionId as string) : undefined}
+            error={
+              touched.regionId && errors.regionId && !values.regionId
+                ? (errors.regionId as string)
+                : undefined
+            }
             required
             disabled={isRegionDisabled}
           />
@@ -380,7 +406,11 @@ export default function LocationSection() {
             options={cityOptions}
             value={values.cityId || ''}
             onSelect={handleCitySelect}
-            error={touched.cityId && errors.cityId ? (errors.cityId as string) : undefined}
+            error={
+              touched.cityId && errors.cityId && !values.cityId
+                ? (errors.cityId as string)
+                : undefined
+            }
             required
             disabled={isCityDisabled}
           />

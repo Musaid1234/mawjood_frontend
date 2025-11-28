@@ -15,8 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
+import { useState } from 'react';
 
 interface FeaturedSectionsSettingsSectionProps {
   value: FeaturedSectionSettings[];
@@ -28,16 +30,16 @@ interface FeaturedSectionsSettingsSectionProps {
 }
 
 const createEmptySection = (): FeaturedSectionSettings => ({
-  id: `section-${Date.now()}`,
+  id: `section-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
   title: '',
   subtitle: '',
   layout: 'grid',
-  cardsPerRow: 3,
+  cardsPerRow: 6,
   items: [],
 });
 
 const createEmptyItem = (): FeaturedSectionCard => ({
-  id: `item-${Date.now()}`,
+  id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
   name: '',
   image: '',
   slug: '',
@@ -52,6 +54,7 @@ export function FeaturedSectionsSettingsSection({
   categoriesLoading,
 }: FeaturedSectionsSettingsSectionProps) {
   const sections = value ?? [];
+  const [imagePreviews, setImagePreviews] = useState<Record<string, string>>({});
 
   const updateSection = (index: number, data: Partial<FeaturedSectionSettings>) => {
     const nextSections = [...sections];
@@ -98,6 +101,33 @@ export function FeaturedSectionsSettingsSection({
       items: items.filter((_, idx) => idx !== itemIndex),
     };
     onChange(nextSections);
+    const key = `${sectionIndex}-${itemIndex}`;
+    const newPreviews = { ...imagePreviews };
+    delete newPreviews[key];
+    setImagePreviews(newPreviews);
+  };
+
+  const handleImageChange = (sectionIndex: number, itemIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const key = `${sectionIndex}-${itemIndex}`;
+        setImagePreviews(prev => ({ ...prev, [key]: reader.result as string }));
+        updateSectionItem(sectionIndex, itemIndex, { image: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeItemImage = (sectionIndex: number, itemIndex: number) => {
+    const key = `${sectionIndex}-${itemIndex}`;
+    setImagePreviews(prev => {
+      const newPreviews = { ...prev };
+      delete newPreviews[key];
+      return newPreviews;
+    });
+    updateSectionItem(sectionIndex, itemIndex, { image: '' });
   };
 
   const handleSave = async () => {
@@ -187,15 +217,6 @@ export function FeaturedSectionsSettingsSection({
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Section ID</label>
-                  <Input
-                    value={section.id ?? ''}
-                    onChange={(event) => updateSection(sectionIndex, { id: event.target.value })}
-                    placeholder="home-services"
-                  />
-                </div>
-
-                <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Section Title</label>
                   <Input
                     value={section.title ?? ''}
@@ -204,7 +225,7 @@ export function FeaturedSectionsSettingsSection({
                   />
                 </div>
 
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Subtitle</label>
                   <Input
                     value={section.subtitle ?? ''}
@@ -215,7 +236,7 @@ export function FeaturedSectionsSettingsSection({
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-medium text-gray-700">Layout</label>
                   <Select
                     value={section.layout ?? 'grid'}
@@ -231,21 +252,6 @@ export function FeaturedSectionsSettingsSection({
                       <SelectItem value="carousel">Carousel</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Cards Per Row</label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={6}
-                    value={section.cardsPerRow ?? 3}
-                    onChange={(event) =>
-                      updateSection(sectionIndex, {
-                        cardsPerRow: Number.parseInt(event.target.value, 10) || 1,
-                      })
-                    }
-                  />
                 </div>
               </div>
 
@@ -290,21 +296,6 @@ export function FeaturedSectionsSettingsSection({
                     </div>
 
                     <div className="grid gap-3 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase text-gray-600">
-                          Item ID
-                        </label>
-                        <Input
-                          value={item.id ?? ''}
-                          onChange={(event) =>
-                            updateSectionItem(sectionIndex, itemIndex, {
-                              id: event.target.value,
-                            })
-                          }
-                          placeholder="cleaning-services"
-                        />
-                      </div>
-
                       <div className="space-y-2">
                         <label className="text-xs font-semibold uppercase text-gray-600">
                           Name
@@ -356,17 +347,46 @@ export function FeaturedSectionsSettingsSection({
 
                       <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-semibold uppercase text-gray-600">
-                          Image URL
+                          Item Image
                         </label>
-                        <Input
-                          value={item.image ?? ''}
-                          onChange={(event) =>
-                            updateSectionItem(sectionIndex, itemIndex, {
-                              image: event.target.value,
-                            })
-                          }
-                          placeholder="https://..."
-                        />
+                        
+                        {(imagePreviews[`${sectionIndex}-${itemIndex}`] || item.image) && (
+                          <div className="relative w-full h-48 rounded-lg overflow-hidden bg-gray-100 border-2 border-gray-300">
+                            <Image
+                              src={imagePreviews[`${sectionIndex}-${itemIndex}`] || item.image || ''}
+                              alt="Item preview"
+                              fill
+                              className="object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeItemImage(sectionIndex, itemIndex)}
+                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+
+                        <label
+                          htmlFor={`item-image-${sectionIndex}-${itemIndex}`}
+                          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#1c4233] transition-colors bg-gray-50"
+                        >
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                            <p className="text-sm text-gray-600">
+                              <span className="font-semibold">Click to upload</span> item image
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 10MB</p>
+                          </div>
+                          <input
+                            id={`item-image-${sectionIndex}-${itemIndex}`}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageChange(sectionIndex, itemIndex, e)}
+                            className="hidden"
+                          />
+                        </label>
                       </div>
 
                       <div className="space-y-2">
