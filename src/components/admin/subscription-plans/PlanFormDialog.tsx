@@ -66,7 +66,7 @@ const PlanFormDialog = ({
 }: PlanFormDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0">
+      <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto p-0">
         <div className="p-6 sm:p-8">
           <header className="flex justify-between items-start mb-6">
             <div>

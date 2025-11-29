@@ -121,6 +121,16 @@ export const blogService = {
     }
   },
 
+  // Admin: Get blog by slug (includes unpublished, draft, and scheduled blogs)
+  async getBySlugAdmin(slug: string): Promise<Blog> {
+    try {
+      const response = await axiosInstance.get<ApiResponse<Blog>>(`/api/blogs/admin/slug/${slug}`);
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
   // Admin: Get all blogs (including unpublished)
   async getAllBlogsAdmin(params?: {
     page?: number;

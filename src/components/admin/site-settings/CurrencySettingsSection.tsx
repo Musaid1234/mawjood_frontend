@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 interface CurrencySettingsSectionProps {
   value: string;
@@ -55,23 +54,10 @@ export function CurrencySettingsSection({
 
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <label htmlFor="currency" className="text-sm font-medium text-gray-700">Currency Code</label>
-          <Input
-            id="currency"
-            type="text"
-            value={currency}
-            onChange={(e) => onChange(e.target.value.toUpperCase())}
-            placeholder="SAR"
-            maxLength={10}
-            className="max-w-xs"
-          />
-          <p className="text-sm text-gray-500">
-            Enter a 3-letter currency code (e.g., SAR, USD, EUR). This will be displayed with all prices on the site.
+          <label className="text-sm font-medium text-gray-700">Select Currency</label>
+          <p className="text-sm text-gray-500 mb-4">
+            Choose the default currency code to be displayed with all prices on the site.
           </p>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">Common Currencies</label>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
             {COMMON_CURRENCIES.map((curr) => (
               <button

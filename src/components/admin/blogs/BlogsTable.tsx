@@ -135,20 +135,6 @@ export function BlogsTable<TData, TValue>({
             className="pl-10"
           />
         </div>
-        <Button
-          variant="outline"
-          className="flex items-center gap-2"
-          disabled={selectedRows.length !== 1 || !(selectedRows[0] as any)?.slug}
-          onClick={() => {
-            const slug = (selectedRows[0] as any)?.slug;
-            if (slug) {
-              window.open(`/blog/${slug}`, '_blank');
-            }
-          }}
-        >
-          <Eye className="w-4 h-4" />
-          View Blog
-        </Button>
       </div>
 
       {/* Table */}

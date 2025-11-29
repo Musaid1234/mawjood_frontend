@@ -76,7 +76,6 @@ export default function AdvertisementsPage() {
     fetchData();
   }, []);
 
-  // Fetch regions when country is selected
   useEffect(() => {
     if (selectedCountryId && (locationType === 'country' || locationType === 'region' || locationType === 'city')) {
       const country = countries.find((c) => c.id === selectedCountryId);
@@ -234,7 +233,7 @@ export default function AdvertisementsPage() {
                         : 'bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-600'
                     }`}
                   >
-                    Category Ad
+                    Sidebar Ad
                   </button>
                   <button
                     type="button"
@@ -245,7 +244,7 @@ export default function AdvertisementsPage() {
                         : 'bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-600'
                     }`}
                   >
-                    Top/Sidebar Ad
+                    Top Banner Ad
                   </button>
                   <button
                     type="button"
@@ -256,34 +255,73 @@ export default function AdvertisementsPage() {
                         : 'bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-600'
                     }`}
                   >
-                    Footer Ad
+                    Footer Banner Ad
                   </button>
                 </div>
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  {adType === 'CATEGORY' && 'This ad will appear on category listing pages'}
-                  {adType === 'TOP' && 'This ad will appear at the top or in the sidebar'}
-                  {adType === 'FOOTER' && 'This ad will appear in the footer section'}
-                </p>
+                <div className="mt-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">
+                    {adType === 'CATEGORY' && '📍 Sidebar Ad (Right Sidebar)'}
+                    {adType === 'TOP' && '📍 Top Banner Ad (Top of Page)'}
+                    {adType === 'FOOTER' && '📍 Footer Banner Ad (Bottom of Page)'}
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    {adType === 'CATEGORY' && 'Displays in the right sidebar on category listing pages. Vertical/square format recommended.'}
+                    {adType === 'TOP' && 'Displays at the top of category pages as a horizontal banner. Supports multiple ads with auto-slide carousel.'}
+                    {adType === 'FOOTER' && 'Displays at the bottom of category pages as a horizontal banner.'}
+                  </p>
+                </div>
               </div>
 
               {/* Banner Image Section */}
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Banner Image
+                  Advertisement Image
                 </h2>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Recommended size around <span className="font-semibold">1278 × 184</span> pixels (wide horizontal banner).
-                </p>
+                <div className="mt-2 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <p className="text-sm font-medium text-yellow-900 dark:text-yellow-200 mb-1">
+                    Recommended Image Sizes:
+                  </p>
+                  <ul className="text-xs text-yellow-800 dark:text-yellow-300 space-y-1 list-disc list-inside">
+                    {adType === 'CATEGORY' && (
+                      <>
+                        <li><span className="font-semibold">Sidebar Ad:</span> 300 × 350 pixels (vertical/square format)</li>
+                        <li>Aspect ratio: ~0.86:1 (portrait/vertical)</li>
+                        <li>Best for: Right sidebar on category pages</li>
+                      </>
+                    )}
+                    {adType === 'TOP' && (
+                      <>
+                        <li><span className="font-semibold">Top Banner:</span> 1278 × 184 pixels (wide horizontal banner)</li>
+                        <li>Aspect ratio: ~6.9:1 (landscape/horizontal)</li>
+                        <li>Best for: Top of category pages with carousel support</li>
+                      </>
+                    )}
+                    {adType === 'FOOTER' && (
+                      <>
+                        <li><span className="font-semibold">Footer Banner:</span> 1278 × 184 pixels (wide horizontal banner)</li>
+                        <li>Aspect ratio: ~6.9:1 (landscape/horizontal)</li>
+                        <li>Best for: Bottom of category pages</li>
+                      </>
+                    )}
+                  </ul>
+                </div>
                 {imagePreview && (
                   <div className="mt-4 relative w-full rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                    <div className="aspect-[1278/184] relative">
+                    <div className={`relative ${
+                      adType === 'CATEGORY' 
+                        ? 'aspect-[300/350] max-w-[300px] mx-auto' 
+                        : 'aspect-[1278/184]'
+                    }`}>
                       <Image
                         src={imagePreview}
                         alt="Advertisement preview"
                         fill
-                        className="object-cover"
+                        className="object-contain"
                       />
                     </div>
+                    <p className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
+                      Preview ({adType === 'CATEGORY' ? 'Sidebar' : adType === 'TOP' ? 'Top Banner' : 'Footer Banner'} format)
+                    </p>
                   </div>
                 )}
                 <label className="mt-4 flex justify-center items-center w-full px-6 py-10 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-[#1c4233] dark:hover:border-[#1c4233] transition-colors">
@@ -305,7 +343,6 @@ export default function AdvertisementsPage() {
                 {errors.image && <p className="mt-2 text-sm text-red-600">{errors.image}</p>}
               </div>
 
-              {/* Category & Location Section */}
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Category & Location
@@ -315,7 +352,6 @@ export default function AdvertisementsPage() {
                 </p>
 
                 <div className="mt-6 space-y-6">
-                  {/* Category Selection */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Category (Optional)

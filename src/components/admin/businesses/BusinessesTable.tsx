@@ -30,10 +30,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, X } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Search, X, Check, ChevronsUpDown } from 'lucide-react';
 import { BulkActionsToolbar } from '@/components/admin/common/BulkActionsToolbar';
 import { Category } from '@/services/category.service';
 import { Country, Region, City } from '@/services/city.service';
+import { cn } from '@/lib/utils';
 
 interface BusinessesTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -88,6 +94,8 @@ export function BusinessesTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [categorySearch, setCategorySearch] = useState('');
+  const [categoryOpen, setCategoryOpen] = useState(false);
 
   const table = useReactTable({
     data,
@@ -185,6 +193,11 @@ export function BusinessesTable<TData, TValue>({
             placeholder="Search by business name, owner, or location..."
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+              }
+            }}
             className="pl-10"
           />
         </div>
@@ -192,23 +205,86 @@ export function BusinessesTable<TData, TValue>({
 
 
         {onCategoryChange && (
-          <Select
-            value={selectedCategory}
-            onValueChange={onCategoryChange}
-            disabled={loadingFilters}
-          >
-            <SelectTrigger className="w-full md:w-[180px]">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={categoryOpen}
+                className="w-full md:w-[180px] justify-between"
+                disabled={loadingFilters}
+              >
+                {selectedCategory === 'all'
+                  ? 'All Categories'
+                  : categories.find((cat) => cat.id === selectedCategory)?.name || 'Select category...'}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[280px] p-0" align="start">
+              <div className="flex items-center border-b px-3">
+                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                <Input
+                  placeholder="Search categories..."
+                  value={categorySearch}
+                  onChange={(e) => setCategorySearch(e.target.value)}
+                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
+                />
+              </div>
+              <div className="max-h-[300px] overflow-y-auto p-1">
+                <div
+                  className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => {
+                    onCategoryChange('all');
+                    setCategoryOpen(false);
+                    setCategorySearch('');
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      selectedCategory === 'all' ? 'opacity-100' : 'opacity-0'
+                    )}
+                  />
+                  All Categories
+                </div>
+                {categories
+                  .filter((category) =>
+                    category.name.toLowerCase().includes(categorySearch.toLowerCase())
+                  )
+                  .map((category) => (
+                    <div
+                      key={category.id}
+                      className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => {
+                        onCategoryChange(category.id);
+                        setCategoryOpen(false);
+                        setCategorySearch('');
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          selectedCategory === category.id ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      {category.name}
+                    </div>
+                  ))}
+                {categories.filter((category) =>
+                  category.name.toLowerCase().includes(categorySearch.toLowerCase())
+                ).length === 0 && (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    No categories found.
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
         )}
 
         {onCountryChange && (

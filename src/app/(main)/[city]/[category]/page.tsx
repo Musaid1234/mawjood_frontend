@@ -517,7 +517,7 @@ export default function CityCategoryPage() {
           )}
           {!topAdLoading && topAdvertisements.length > 0 && (
             <div className="relative overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
-              <div className="relative h-48 md:h-42 lg:h-52">
+              <div className="relative h-48 md:h-48 lg:h-52">
                 {topAdvertisements.map((ad, index) => {
                   const resolvedUrl = getResolvedTargetUrl(ad);
                   return (
@@ -740,12 +740,12 @@ export default function CityCategoryPage() {
               )}
             </div>
 
-            {/* Sidebar Ad - Always shown with consistent width */}
+            {/* Sidebar Ad - Always shown with consistent width (300x350 for vertical/square format) */}
             <div className="lg:w-80 flex-shrink-0">
-              <div className="sticky top-8">
+              <div className="sticky top-18">
                 <SidebarAd 
                   queryKey="sidebar-ad-category" 
-                  height="h-96" 
+                  height="h-[350px]" 
                   adType="CATEGORY"
                   categoryId={category?.id}
                 />
@@ -760,7 +760,7 @@ export default function CityCategoryPage() {
       {!footerAdLoading && footerAdvertisement && (
         <div className="max-w-7xl mx-auto my-12 px-4 sm:px-6 lg:px-8">
           <div className="relative overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
-            <div className="relative h-48 md:h-42 lg:h-52">
+            <div className="relative h-48 md:h-48 lg:h-52">
               {(() => {
                 const ad = footerAdvertisement;
                 const resolvedUrl = getResolvedTargetUrl(ad);

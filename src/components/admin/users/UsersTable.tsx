@@ -154,6 +154,11 @@ export function UsersTable<TData, TValue>({
           <Input
             placeholder="Search by name, email, or phone..."
             onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+              }
+            }}
             className="pl-10"
           />
         </div>

@@ -16,7 +16,7 @@ interface SidebarAdProps {
 
 const PLACEHOLDER_AD_IMAGE = 'https://marketplace.canva.com/EAFJFM2El4s/2/0/1131w/canva-blue-modern-business-flyer-portrait-yINAU4kvioI.jpg';
 
-export default function SidebarAd({ queryKey = 'sidebar-ad', className = '', height = 'h-64', adType = 'CATEGORY', categoryId }: SidebarAdProps) {
+export default function SidebarAd({ queryKey = 'sidebar-ad', className = '', height = 'h-[350px]', adType = 'CATEGORY', categoryId }: SidebarAdProps) {
   const { selectedCity, selectedLocation } = useCityStore();
   const locationFilterId = selectedLocation?.id ?? selectedCity?.id;
   const locationFilterType = selectedLocation?.type ?? 'city';
@@ -61,7 +61,7 @@ export default function SidebarAd({ queryKey = 'sidebar-ad', className = '', hei
   }
 
   return (
-    <div className={`rounded-2xl overflow-hidden border border-gray-200 shadow-sm ${className}`}>
+    <div className={`rounded-2xl overflow-hidden border border-gray-200 shadow-sm w-full max-w-[300px] mx-auto ${className}`}>
       {targetUrl ? (
         <Link
           href={targetUrl}
@@ -69,24 +69,24 @@ export default function SidebarAd({ queryKey = 'sidebar-ad', className = '', hei
           rel="noopener noreferrer"
           className="block w-full"
         >
-          <Image
-            src={imageUrl}
-            alt={ad?.title || 'Advertisement'}
-            width={400}
-            height={400}
-            className={`w-full ${height} object-cover`}
-            style={{ objectFit: 'cover' }}
-          />
+          <div className={`relative w-full ${height}`}>
+            <Image
+              src={imageUrl}
+              alt={ad?.title || 'Advertisement'}
+              fill
+              className="object-contain"
+              sizes="300px"
+            />
+          </div>
         </Link>
       ) : (
-        <div className="w-full bg-gray-50 flex items-center justify-center">
+        <div className={`relative w-full ${height} bg-gray-50 flex items-center justify-center`}>
           <Image
             src={imageUrl}
             alt={ad?.title || 'Advertisement'}
-            width={400}
-            height={400}
-            className={`w-full ${height} object-contain`}
-            style={{ objectFit: 'contain' }}
+            fill
+            className="object-contain"
+            sizes="300px"
           />
         </div>
       )}

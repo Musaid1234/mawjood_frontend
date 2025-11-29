@@ -63,18 +63,30 @@ export const createColumns = (
   {
     accessorKey: 'title',
     header: 'Title',
-    cell: ({ row }) => (
-      <div className="max-w-md">
-        <Link
-          href={`/blog/${row.original.slug}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-gray-900 dark:text-gray-100 line-clamp-2 hover:text-blue-600"
-        >
-          {row.original.title}
-        </Link>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const blog = row.original;
+      const rawStatus = (blog as any).status as 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | undefined;
+      const isPublished = rawStatus === 'PUBLISHED' || (blog.published && !rawStatus);
+      
+      return (
+        <div className="max-w-md">
+          {isPublished ? (
+            <Link
+              href={`/blog/${blog.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-gray-900 dark:text-gray-100 line-clamp-2 hover:text-blue-600"
+            >
+              {blog.title}
+            </Link>
+          ) : (
+            <span className="font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+              {blog.title}
+            </span>
+          )}
+        </div>
+      );
+    },
   },
   {
     accessorKey: 'author',
@@ -121,6 +133,9 @@ export const createColumns = (
     header: 'Actions',
     cell: ({ row }) => {
       const blog = row.original;
+      const rawStatus = (blog as any).status as 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | undefined;
+      const isPublished = rawStatus === 'PUBLISHED' || (blog.published && !rawStatus);
+      
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -131,18 +146,22 @@ export const createColumns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link
-                href={`/blog/${blog.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center"
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            {isPublished && (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href={`/blog/${blog.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center"
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Published
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem onClick={() => onEdit(blog)}>
               <Edit className="mr-2 h-4 w-4" />
               Edit

@@ -136,6 +136,11 @@ export function ReviewsTable<TData, TValue>({
           <Input
             placeholder="Search by user, business, or comment..."
             value={searchValue}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault(); 
+              }
+            }}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-10"
           />
