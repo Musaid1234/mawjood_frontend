@@ -661,38 +661,42 @@ export default function AdvertisementsPage() {
                 </div>
               </div>
 
-              <div className="space-y-6">
-                {/* Start and End dates */}
                 <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Start at (optional)
-                    </label>
-                    <DateTimePicker
-                      value={startsAt}
-                      onChange={(date) => setStartsAt(date)}
-                      disabled={submitting}
-                      className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] dark:focus:border-[#1c4233] dark:focus:ring-[#1c4233] sm:text-sm"
-                    />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      If empty, the banner will start showing immediately.
-                    </p>
+                  {/* Start and End dates */}
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Start at (optional)
+                      </label>
+                      <div className="w-full">
+                        <DateTimePicker
+                          value={startsAt}
+                          onChange={(date) => setStartsAt(date)}
+                          disabled={submitting}
+                          className="w-full [&>button]:truncate [&>button]:text-sm [&>button>span]:truncate [&>button>svg]:flex-shrink-0"
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        If empty, the banner will start showing immediately.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        End at (optional)
+                      </label>
+                      <div className="w-full">
+                        <DateTimePicker
+                          value={endsAt}
+                          onChange={(date) => setEndsAt(date)}
+                          disabled={submitting}
+                          className="w-full [&>button]:truncate [&>button]:text-sm [&>button>span]:truncate [&>button>svg]:flex-shrink-0"
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        If empty, the banner will keep showing until you disable it.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      End at (optional)
-                    </label>
-                    <DateTimePicker
-                      value={endsAt}
-                      onChange={(date) => setEndsAt(date)}
-                      disabled={submitting}
-                      className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] dark:focus:border-[#1c4233] dark:focus:ring-[#1c4233] sm:text-sm"
-                    />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      If empty, the banner will keep showing until you disable it.
-                    </p>
-                  </div>
-                </div>
 
                 {/* Internal Notes */}
                 <div>
