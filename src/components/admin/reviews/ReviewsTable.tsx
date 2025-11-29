@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -40,20 +40,46 @@ interface ReviewsTableProps<TData, TValue> {
   searchValue?: string;
   onBulkExport?: (selectedRows: TData[]) => void;
   onBulkDelete?: (selectedRows: TData[]) => void;
+  loading?: boolean;
 }
 
 export function ReviewsTable<TData, TValue>({
   columns,
   data,
   onSearchChange,
-  searchValue = '',
+  searchValue: externalSearchValue = '',
   onBulkExport,
   onBulkDelete,
+  loading = false,
 }: ReviewsTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [searchValue, setSearchValue] = useState(externalSearchValue);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync with external search value
+  useEffect(() => {
+    setSearchValue(externalSearchValue);
+  }, [externalSearchValue]);
+
+  // Debounce search input
+  useEffect(() => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    debounceTimer.current = setTimeout(() => {
+      onSearchChange(searchValue);
+    }, 300);
+
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [searchValue, onSearchChange]);
 
   const table = useReactTable({
     data,
@@ -136,12 +162,16 @@ export function ReviewsTable<TData, TValue>({
           <Input
             placeholder="Search by user, business, or comment..."
             value={searchValue}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSearchValue(value);
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                e.preventDefault(); 
+                e.preventDefault();
+                e.stopPropagation();
               }
             }}
-            onChange={(e) => onSearchChange(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -169,7 +199,18 @@ export function ReviewsTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {loading ? (
+              // Skeleton loader
+              Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={`skeleton-${index}`} className="border-b">
+                  {columns.map((_, colIndex) => (
+                    <TableCell key={`skeleton-cell-${colIndex}`} className="py-4">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}

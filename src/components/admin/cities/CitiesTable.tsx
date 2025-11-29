@@ -85,7 +85,7 @@ export function CitiesTable<TData, TValue>({
     if (onBulkExport) {
       onBulkExport(selectedRows);
     } else {
-      const headers = ['ID', 'Name', 'Slug', 'Region', 'Created At'];
+      const headers = ['ID', 'Name', 'Slug', 'State', 'Created At'];
       const rows = selectedRows.length > 0 
         ? selectedRows.map((row: any) => [
             row.id,

@@ -85,10 +85,14 @@ export default function UsersPage() {
         if (filters.status && filters.status !== 'all') params.status = filters.status;
 
         const response = await adminService.getAllUsers(params);
-        setUsers(response.data.users || []);
+        // Only update users if we got a response (don't clear on error)
+        if (response?.data?.users) {
+          setUsers(response.data.users);
+        }
       } catch (error: any) {
         console.error('Error fetching users:', error);
         toast.error(error.message || 'Failed to fetch users');
+        // Don't clear users on error - keep showing previous data
       } finally {
         setLoading(false);
       }
@@ -255,6 +259,7 @@ export default function UsersPage() {
           onSearchChange={handleSearchChange}
           onRoleFilter={handleRoleFilter}
           onStatusFilter={handleStatusFilter}
+          loading={loading}
         />
       </div>
 

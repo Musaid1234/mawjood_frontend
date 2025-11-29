@@ -342,7 +342,7 @@ export default function CitiesPage() {
     },
     {
       accessorKey: 'region',
-      header: 'Region',
+      header: 'State',
       cell: ({ row }) => (
         <Badge variant="secondary">
           {row.original.region?.name || 'Unknown'}

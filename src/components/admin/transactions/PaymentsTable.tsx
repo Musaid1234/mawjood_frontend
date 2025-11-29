@@ -77,7 +77,16 @@ export function PaymentsTable<TData, TValue>({
           <Input
             placeholder="Search by business, user, or transaction ID..."
             value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              onSearchChange(value);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
             className="pl-10"
           />
         </div>

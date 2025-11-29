@@ -201,6 +201,7 @@ export default function CategoriesPage() {
         data={categories}
         onSearchChange={setSearchInput}
         searchValue={searchInput}
+        loading={loading}
       />
 
       {/* Add/Edit Dialog */}

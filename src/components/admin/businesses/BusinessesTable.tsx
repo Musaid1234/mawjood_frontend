@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -64,13 +64,14 @@ interface BusinessesTableProps<TData, TValue> {
   onCityChange?: (value: string) => void;
   onClearFilters?: () => void;
   hasActiveFilters?: boolean;
+  loading?: boolean;
 }
 
 export function BusinessesTable<TData, TValue>({
   columns,
   data,
   onSearchChange,
-  searchValue = '',
+  searchValue: externalSearchValue = '',
   onBulkExport,
   onBulkDelete,
   onBulkStatusChange,
@@ -89,6 +90,7 @@ export function BusinessesTable<TData, TValue>({
   onCityChange,
   onClearFilters,
   hasActiveFilters = false,
+  loading = false,
 }: BusinessesTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -96,6 +98,30 @@ export function BusinessesTable<TData, TValue>({
   const [rowSelection, setRowSelection] = useState({});
   const [categorySearch, setCategorySearch] = useState('');
   const [categoryOpen, setCategoryOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState(externalSearchValue);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync with external search value
+  useEffect(() => {
+    setSearchValue(externalSearchValue);
+  }, [externalSearchValue]);
+
+  // Debounce search input
+  useEffect(() => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    debounceTimer.current = setTimeout(() => {
+      onSearchChange(searchValue);
+    }, 300);
+
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [searchValue, onSearchChange]);
 
   const table = useReactTable({
     data,
@@ -192,10 +218,14 @@ export function BusinessesTable<TData, TValue>({
           <Input
             placeholder="Search by business name, owner, or location..."
             value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSearchValue(value);
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
+                e.stopPropagation();
               }
             }}
             className="pl-10"
@@ -395,7 +425,18 @@ export function BusinessesTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {loading ? (
+              // Skeleton loader
+              Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={`skeleton-${index}`} className="border-b">
+                  {columns.map((_, colIndex) => (
+                    <TableCell key={`skeleton-cell-${colIndex}`} className="py-4">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}

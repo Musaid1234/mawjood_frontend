@@ -226,6 +226,7 @@ export default function ReviewsPage() {
           data={reviews}
           onSearchChange={handleSearchChange}
           searchValue={searchInput}
+          loading={loading}
         />
       </div>
 

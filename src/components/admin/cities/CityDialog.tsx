@@ -133,11 +133,11 @@ export function CityDialog({
 
           <div>
             <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Region <span className="text-red-500">*</span>
+              State <span className="text-red-500">*</span>
             </label>
             <Select value={regionId} onValueChange={setRegionId} disabled={isSubmitting}>
               <SelectTrigger className="w-full max-w-xs">
-                <SelectValue placeholder="Select a region" />
+                <SelectValue placeholder="Select a State" />
               </SelectTrigger>
               <SelectContent className="w-full max-w-xs p-0">
                 <div className="px-2 pb-2 pt-2 sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">

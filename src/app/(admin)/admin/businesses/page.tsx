@@ -559,6 +559,7 @@ export default function BusinessesPage() {
           selectedRegion={selectedRegion}
           selectedCity={selectedCity}
           categories={categories}
+          loading={loading}
           countries={countries}
           regions={regions}
           cities={cities}

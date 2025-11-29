@@ -9,6 +9,7 @@ import LoginModal from '@/components/auth/LoginModal';
 import SignupModal from '@/components/auth/SignupModal';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 import GTranslate from '@/components/GTranslate';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const NAV_LINKS = [
   { href: '/about', key: 'about' },
@@ -64,7 +65,6 @@ export default function Navbar() {
   }, [logout]);
 
   const closeMobileMenu = useCallback(() => setIsMenuOpen(false), []);
-  const toggleUserMenu = useCallback(() => setShowUserMenu(prev => !prev), []);
 
   return (
     <>
@@ -117,77 +117,75 @@ export default function Navbar() {
                 </button>
               )}
               {showAuthUI && isAuthenticated && user ? (
-                <div className="relative">
-                  <button
-                    onClick={toggleUserMenu}
-                    className="flex items-center gap-1 md:gap-1.5 lg:gap-2 bg-gray-100 hover:bg-gray-200 px-2 md:px-2.5 lg:px-3 py-1.5 md:py-2 rounded-md transition-colors whitespace-nowrap"
-                  >
-                    <div className="w-7 h-7 md:w-7 md:h-7 lg:w-8 lg:h-8 bg-primary text-white rounded-full flex items-center justify-center text-xs md:text-xs lg:text-sm font-semibold overflow-hidden">
-                      {user.avatar ? (
-                        <Image
-                          src={user.avatar}
-                          alt={`${user.firstName} ${user.lastName}`}
-                          width={32}
-                          height={32}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        `${user.firstName[0]}${user.lastName[0]}`
-                      )}
-                    </div>
-                    <span className="text-xs md:text-xs lg:text-sm font-medium hidden lg:inline">{user.firstName}</span>
-                    <svg className="w-3.5 h-3.5 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-
-                  {showUserMenu && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
-                      <div className="px-4 py-2 border-b border-gray-200">
-                        <p className="text-sm font-semibold text-gray-900">{user.firstName} {user.lastName}</p>
-                        <p className="text-xs text-gray-500">{user.email}</p>
-                        <span className="inline-block mt-1 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
-                          {user.role}
-                        </span>
+                <Popover open={showUserMenu} onOpenChange={setShowUserMenu}>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="flex items-center gap-1 md:gap-1.5 lg:gap-2 bg-gray-100 hover:bg-gray-200 px-2 md:px-2.5 lg:px-3 py-1.5 md:py-2 rounded-md transition-colors whitespace-nowrap"
+                    >
+                      <div className="w-7 h-7 md:w-7 md:h-7 lg:w-8 lg:h-8 bg-primary text-white rounded-full flex items-center justify-center text-xs md:text-xs lg:text-sm font-semibold overflow-hidden">
+                        {user.avatar ? (
+                          <Image
+                            src={user.avatar}
+                            alt={`${user.firstName} ${user.lastName}`}
+                            width={32}
+                            height={32}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          `${user.firstName[0]}${user.lastName[0]}`
+                        )}
                       </div>
-
-                      {isAdmin && (
-                        <Link href="/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                          Admin Dashboard
-                        </Link>
-                      )}
-
-                      {isBusinessOwner && (
-                        <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                          Dashboard
-                        </Link>
-                      )}
-
-                      <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                        My Profile
-                      </Link>
-
-                      {isBusinessOwner && (
-                        <Link href="/dashboard/my-listings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                          My Businesses
-                        </Link>
-                      )}
-
-                      <Link href="/favourites" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                        Favourites
-                      </Link>
-
-                      <div className="border-t border-gray-200 mt-2 pt-2">
-                        <button
-                          onClick={handleLogout}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                        >
-                          Logout
-                        </button>
-                      </div>
+                      <span className="text-xs md:text-xs lg:text-sm font-medium hidden lg:inline">{user.firstName}</span>
+                      <svg className="w-3.5 h-3.5 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-0" align="end">
+                    <div className="px-4 py-2 border-b border-gray-200">
+                      <p className="text-sm font-semibold text-gray-900">{user.firstName} {user.lastName}</p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
+                      <span className="inline-block mt-1 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
+                        {user.role}
+                      </span>
                     </div>
-                  )}
-                </div>
+
+                    {isAdmin && (
+                      <Link href="/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setShowUserMenu(false)}>
+                        Admin Dashboard
+                      </Link>
+                    )}
+
+                    {isBusinessOwner && (
+                      <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setShowUserMenu(false)}>
+                        Dashboard
+                      </Link>
+                    )}
+
+                    <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setShowUserMenu(false)}>
+                      My Profile
+                    </Link>
+
+                    {isBusinessOwner && (
+                      <Link href="/dashboard/my-listings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setShowUserMenu(false)}>
+                        My Businesses
+                      </Link>
+                    )}
+
+                    <Link href="/favourites" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setShowUserMenu(false)}>
+                      Favourites
+                    </Link>
+
+                    <div className="border-t border-gray-200 mt-2 pt-2">
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               ) : showAuthUI ? (
                 <>
                   <button

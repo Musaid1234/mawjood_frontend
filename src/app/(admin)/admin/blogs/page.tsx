@@ -162,6 +162,7 @@ export default function BlogsPage() {
           data={blogs}
           onSearchChange={setSearchInput}
           searchValue={searchInput}
+          loading={loading}
         />
       </div>
 

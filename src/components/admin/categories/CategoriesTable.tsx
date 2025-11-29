@@ -37,6 +37,7 @@ interface CategoriesTableProps<TData, TValue> {
   data: TData[];
   onSearchChange: (value: string) => void;
   searchValue?: string;
+  loading?: boolean;
 }
 
 export function CategoriesTable<TData, TValue>({
@@ -44,6 +45,7 @@ export function CategoriesTable<TData, TValue>({
   data,
   onSearchChange,
   searchValue = '',
+  loading = false,
 }: CategoriesTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);

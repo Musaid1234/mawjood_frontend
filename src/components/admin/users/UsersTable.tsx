@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -42,6 +42,7 @@ interface UsersTableProps<TData, TValue> {
   onBulkExport?: (selectedRows: TData[]) => void;
   onBulkDelete?: (selectedRows: TData[]) => void;
   onBulkStatusChange?: (selectedRows: TData[], status: string) => void;
+  loading?: boolean;
 }
 
 export function UsersTable<TData, TValue>({
@@ -53,11 +54,31 @@ export function UsersTable<TData, TValue>({
   onBulkExport,
   onBulkDelete,
   onBulkStatusChange,
+  loading = false,
 }: UsersTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [searchValue, setSearchValue] = useState('');
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounce search input
+  useEffect(() => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    debounceTimer.current = setTimeout(() => {
+      onSearchChange(searchValue);
+    }, 300);
+
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [searchValue, onSearchChange]);
 
   const table = useReactTable({
     data,
@@ -153,10 +174,15 @@ export function UsersTable<TData, TValue>({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
             placeholder="Search by name, email, or phone..."
-            onChange={(e) => onSearchChange(e.target.value)}
+            value={searchValue}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSearchValue(value);
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
+                e.stopPropagation();
               }
             }}
             className="pl-10"
@@ -210,7 +236,18 @@ export function UsersTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {loading ? (
+              // Skeleton loader
+              Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={`skeleton-${index}`}>
+                  {columns.map((_, colIndex) => (
+                    <TableCell key={`skeleton-cell-${colIndex}`}>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
