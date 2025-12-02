@@ -58,7 +58,7 @@ export default function EditListingPage() {
     mutationFn: (data: any) => businessService.updateBusiness(businessId, data),
     onSuccess: () => {
       toast.success('Business listing updated successfully!');
-      router.push('/my-listings');
+      router.push('/dashboard/my-listings');
     },
     onError: (error: any) => {
       console.error('Update business error:', error);

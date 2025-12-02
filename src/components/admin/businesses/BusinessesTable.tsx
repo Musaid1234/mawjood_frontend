@@ -98,6 +98,12 @@ export function BusinessesTable<TData, TValue>({
   const [rowSelection, setRowSelection] = useState({});
   const [categorySearch, setCategorySearch] = useState('');
   const [categoryOpen, setCategoryOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [countryOpen, setCountryOpen] = useState(false);
+  const [regionSearch, setRegionSearch] = useState('');
+  const [regionOpen, setRegionOpen] = useState(false);
+  const [citySearch, setCitySearch] = useState('');
+  const [cityOpen, setCityOpen] = useState(false);
   const [searchValue, setSearchValue] = useState(externalSearchValue);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -318,76 +324,278 @@ export function BusinessesTable<TData, TValue>({
         )}
 
         {onCountryChange && (
-          <Select
-            value={selectedCountry}
-            onValueChange={onCountryChange}
-            disabled={loadingFilters}
-          >
-            <SelectTrigger className="w-full md:w-[180px]">
-              <SelectValue placeholder="All Countries" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Countries</SelectItem>
-              {countries.map((country) => (
-                <SelectItem key={country.id} value={country.id}>
-                  {country.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={countryOpen} onOpenChange={setCountryOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={countryOpen}
+                className="w-full md:w-[180px] justify-between"
+                disabled={loadingFilters}
+              >
+                {selectedCountry === 'all'
+                  ? 'All Countries'
+                  : countries.find((c) => c.id === selectedCountry)?.name || 'Select country...'}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[280px] p-0" align="start">
+              <div className="flex items-center border-b px-3">
+                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                <Input
+                  placeholder="Search countries..."
+                  value={countrySearch}
+                  onChange={(e) => setCountrySearch(e.target.value)}
+                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
+                />
+              </div>
+              <div className="max-h-[300px] overflow-y-auto p-1">
+                <div
+                  className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => {
+                    onCountryChange('all');
+                    setCountryOpen(false);
+                    setCountrySearch('');
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      selectedCountry === 'all' ? 'opacity-100' : 'opacity-0'
+                    )}
+                  />
+                  All Countries
+                </div>
+                {countries
+                  .filter((country) =>
+                    country.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                    country.slug.toLowerCase().includes(countrySearch.toLowerCase())
+                  )
+                  .map((country) => (
+                    <div
+                      key={country.id}
+                      className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => {
+                        onCountryChange(country.id);
+                        setCountryOpen(false);
+                        setCountrySearch('');
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          selectedCountry === country.id ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      {country.name}
+                    </div>
+                  ))}
+                {countries.filter((country) =>
+                  country.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                  country.slug.toLowerCase().includes(countrySearch.toLowerCase())
+                ).length === 0 && countrySearch && (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    No countries found.
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
         )}
 
         {onRegionChange && (
-          <Select
-            value={selectedRegion}
-            onValueChange={onRegionChange}
-            disabled={loadingFilters || selectedCountry === 'all'}
-          >
-            <SelectTrigger className="w-full md:w-[180px]">
-              <SelectValue placeholder="All States" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All States</SelectItem>
-              {regions
-                .filter((region) => selectedCountry === 'all' || region.countryId === selectedCountry)
-                .map((region) => (
-                  <SelectItem key={region.id} value={region.id}>
-                    {region.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
+          <Popover open={regionOpen} onOpenChange={setRegionOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={regionOpen}
+                className="w-full md:w-[180px] justify-between"
+                disabled={loadingFilters || selectedCountry === 'all'}
+              >
+                {selectedRegion === 'all'
+                  ? 'All States'
+                  : regions.find((r) => r.id === selectedRegion)?.name || 'Select state...'}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[280px] p-0" align="start">
+              <div className="flex items-center border-b px-3">
+                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                <Input
+                  placeholder="Search states/regions..."
+                  value={regionSearch}
+                  onChange={(e) => setRegionSearch(e.target.value)}
+                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
+                />
+              </div>
+              <div className="max-h-[300px] overflow-y-auto p-1">
+                <div
+                  className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => {
+                    onRegionChange('all');
+                    setRegionOpen(false);
+                    setRegionSearch('');
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      selectedRegion === 'all' ? 'opacity-100' : 'opacity-0'
+                    )}
+                  />
+                  All States
+                </div>
+                {regions
+                  .filter((region) => {
+                    const matchesCountry = selectedCountry === 'all' || region.countryId === selectedCountry;
+                    const matchesSearch = region.name.toLowerCase().includes(regionSearch.toLowerCase()) ||
+                      region.slug.toLowerCase().includes(regionSearch.toLowerCase());
+                    return matchesCountry && matchesSearch;
+                  })
+                  .map((region) => (
+                    <div
+                      key={region.id}
+                      className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => {
+                        onRegionChange(region.id);
+                        setRegionOpen(false);
+                        setRegionSearch('');
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          selectedRegion === region.id ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      {region.name}
+                    </div>
+                  ))}
+                {regions.filter((region) => {
+                  const matchesCountry = selectedCountry === 'all' || region.countryId === selectedCountry;
+                  const matchesSearch = region.name.toLowerCase().includes(regionSearch.toLowerCase()) ||
+                    region.slug.toLowerCase().includes(regionSearch.toLowerCase());
+                  return matchesCountry && matchesSearch;
+                }).length === 0 && regionSearch && (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    No states/regions found.
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
         )}
 
         {onCityChange && (
-          <Select
-            value={selectedCity}
-            onValueChange={onCityChange}
-            disabled={loadingFilters || selectedRegion === 'all'}
-          >
-            <SelectTrigger className="w-full md:w-[180px]">
-              <SelectValue placeholder="All Cities" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Cities</SelectItem>
-              {cities
-                .filter((city) => {
+          <Popover open={cityOpen} onOpenChange={setCityOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={cityOpen}
+                className="w-full md:w-[180px] justify-between"
+                disabled={loadingFilters || selectedRegion === 'all'}
+              >
+                {selectedCity === 'all'
+                  ? 'All Cities'
+                  : cities.find((c) => c.id === selectedCity)?.name || 'Select city...'}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[280px] p-0" align="start">
+              <div className="flex items-center border-b px-3">
+                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                <Input
+                  placeholder="Search cities..."
+                  value={citySearch}
+                  onChange={(e) => setCitySearch(e.target.value)}
+                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
+                />
+              </div>
+              <div className="max-h-[300px] overflow-y-auto p-1">
+                <div
+                  className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => {
+                    onCityChange('all');
+                    setCityOpen(false);
+                    setCitySearch('');
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      selectedCity === 'all' ? 'opacity-100' : 'opacity-0'
+                    )}
+                  />
+                  All Cities
+                </div>
+                {cities
+                  .filter((city) => {
+                    // Location filter
+                    if (selectedRegion !== 'all') {
+                      if (city.regionId !== selectedRegion) return false;
+                    } else if (selectedCountry !== 'all') {
+                      const region = regions.find((r) => r.id === city.regionId);
+                      if (region?.countryId !== selectedCountry) return false;
+                    }
+                    // Search filter
+                    const matchesSearch = city.name.toLowerCase().includes(citySearch.toLowerCase()) ||
+                      city.slug.toLowerCase().includes(citySearch.toLowerCase());
+                    return matchesSearch;
+                  })
+                  .map((city) => (
+                    <div
+                      key={city.id}
+                      className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => {
+                        onCityChange(city.id);
+                        setCityOpen(false);
+                        setCitySearch('');
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          selectedCity === city.id ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      {city.name}
+                    </div>
+                  ))}
+                {cities.filter((city) => {
                   if (selectedRegion !== 'all') {
-                    return city.regionId === selectedRegion;
-                  }
-                  if (selectedCountry !== 'all') {
+                    if (city.regionId !== selectedRegion) return false;
+                  } else if (selectedCountry !== 'all') {
                     const region = regions.find((r) => r.id === city.regionId);
-                    return region?.countryId === selectedCountry;
+                    if (region?.countryId !== selectedCountry) return false;
                   }
-                  return true;
-                })
-                .map((city) => (
-                  <SelectItem key={city.id} value={city.id}>
-                    {city.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
+                  const matchesSearch = city.name.toLowerCase().includes(citySearch.toLowerCase()) ||
+                    city.slug.toLowerCase().includes(citySearch.toLowerCase());
+                  return matchesSearch;
+                }).length === 0 && citySearch && (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    No cities found.
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
         )}
 
         {hasActiveFilters && onClearFilters && (

@@ -188,7 +188,7 @@ export default function BusinessListCard({
 
               <div className="flex flex-wrap items-center gap-2">
                 {hasActiveSubscription && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-medium text-purple-700">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
                     <Sparkles className="w-3.5 h-3.5" />
                     Featured
                   </span>

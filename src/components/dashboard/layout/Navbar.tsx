@@ -68,42 +68,42 @@ export default function DashboardNavbar({ onMenuClick }: DashboardNavbarProps) {
 
   return (
     <header className="fixed top-0 right-0 left-0 lg:left-64 h-16 bg-white border-b border-gray-200 z-30">
-      <div className="h-full px-4 sm:px-6 flex items-center justify-between">
-        <div className="flex items-center gap-4 flex-1">
+      <div className="h-full px-3 sm:px-4 md:px-6 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
           {/* Mobile Menu Button */}
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+            className="lg:hidden p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
           >
-            <Menu className="w-6 h-6 text-gray-700" />
+            <Menu className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
           </button>
-          <h2 className="text-base sm:text-lg font-semibold text-gray-800 truncate">
+          <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-800 truncate">
             Welcome back, {user?.firstName || 'User'}!
           </h2>
         </div>
 
         {/* Right side actions */}
-        <div className="flex items-center space-x-2 sm:space-x-4">
-          {/* Add Listing Button */}
+        <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 flex-shrink-0">
+          {/* Add Listing Button - Hidden on sm breakpoint */}
           <Link
             href="/dashboard/add-listing"
-            className="flex items-center space-x-1 sm:space-x-2 bg-primary text-white px-2 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+            className="hidden md:flex items-center space-x-1 sm:space-x-2 bg-primary text-white px-2 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
           >
             <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="font-medium text-sm sm:text-base hidden sm:inline">Add Listing</span>
+            <span className="font-medium text-sm sm:text-base">Add Listing</span>
           </Link>
 
           {/* Notifications */}
           <Popover open={showNotifications} onOpenChange={setShowNotifications}>
             <PopoverTrigger asChild>
               <button
-                className="relative p-2 text-primary hover:bg-gray-100 rounded-lg transition-colors"
+                className="relative p-1.5 sm:p-2 text-primary hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
                 onClick={() => setShowProfileMenu(false)}
               >
-                <Bell className="w-6 h-6" />
+                <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                    {unreadCount}
+                  <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 text-white text-[10px] sm:text-xs font-bold rounded-full flex items-center justify-center">
+                    {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
                 )}
               </button>
@@ -174,10 +174,10 @@ export default function DashboardNavbar({ onMenuClick }: DashboardNavbarProps) {
           <Popover open={showProfileMenu} onOpenChange={setShowProfileMenu}>
             <PopoverTrigger asChild>
               <button
-                className="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center space-x-1.5 sm:space-x-2 md:space-x-3 p-1 sm:p-1.5 md:p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
                 onClick={() => setShowNotifications(false)}
               >
-                <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center overflow-hidden">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-primary rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                   {user?.avatar ? (
                     <Image
                       src={user.avatar}
@@ -187,7 +187,7 @@ export default function DashboardNavbar({ onMenuClick }: DashboardNavbarProps) {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-white font-semibold">
+                    <span className="text-white font-semibold text-sm sm:text-base">
                       {user?.firstName?.[0] || 'U'}
                     </span>
                   )}
@@ -198,7 +198,7 @@ export default function DashboardNavbar({ onMenuClick }: DashboardNavbarProps) {
                   </p>
                   <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
                 </div>
-                <ChevronDown className="w-4 h-4 text-gray-600 hidden sm:block" />
+                <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 hidden sm:block flex-shrink-0" />
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-56 p-0" align="end">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Star, Quote } from 'lucide-react';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
@@ -69,13 +69,33 @@ export default function Reviews() {
   const { data: siteSettings } = useSiteSettings();
   const reviews = siteSettings?.reviews?.length ? (siteSettings.reviews as Review[]) : defaultReviews;
   const [currentSlide, setCurrentSlide] = useState(0);
-  const reviewsPerPage = 4;
+  
+  // Responsive reviews per page
+  const [reviewsPerPage, setReviewsPerPage] = useState(1);
+  
+  // Update reviews per page based on screen size
+  useEffect(() => {
+    const updateReviewsPerPage = () => {
+      if (window.innerWidth >= 1024) {
+        setReviewsPerPage(4); // Desktop: 4 reviews
+      } else if (window.innerWidth >= 768) {
+        setReviewsPerPage(2); // Tablet: 2 reviews
+      } else {
+        setReviewsPerPage(1); // Mobile: 1 review
+      }
+    };
+    
+    updateReviewsPerPage();
+    window.addEventListener('resize', updateReviewsPerPage);
+    return () => window.removeEventListener('resize', updateReviewsPerPage);
+  }, []);
+  
   const totalSlides = reviews.length ? Math.ceil(reviews.length / reviewsPerPage) : 1;
 
   const renderReviewCard = (review: Review) => (
     <div
       key={review.id}
-      className="group relative bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col flex-shrink-0 w-72 md:w-auto"
+      className="group relative bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-full"
     >
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-emerald-500" />
 
@@ -142,6 +162,11 @@ export default function Reviews() {
     return reviews.slice(start, start + reviewsPerPage);
   };
 
+  // Reset to first slide when reviewsPerPage changes
+  useEffect(() => {
+    setCurrentSlide(0);
+  }, [reviewsPerPage]);
+
   return (
     <section className="py-20 bg-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -155,54 +180,66 @@ export default function Reviews() {
           </p>
         </div>
 
-        {/* Reviews Grid */}
-        <div>
-          {/* Mobile horizontal scroll */}
-          <div className="md:hidden mb-8">
-            <div className="flex gap-4 overflow-x-auto pb-4">
-              {reviews.length ? reviews.map((review) => renderReviewCard(review)) : (
-                <div className="text-center text-gray-500 py-10 w-full">
+        {/* Reviews Carousel */}
+        <div className="relative">
+          {/* Carousel Container */}
+          <div className="overflow-hidden">
+            <div 
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{ 
+                transform: `translateX(-${currentSlide * 100}%)`
+              }}
+            >
+              {reviews.length ? (
+                // Create slides based on reviewsPerPage
+                Array.from({ length: totalSlides }).map((_, slideIndex) => {
+                  const slideReviews = reviews.slice(
+                    slideIndex * reviewsPerPage,
+                    slideIndex * reviewsPerPage + reviewsPerPage
+                  );
+                  return (
+                    <div 
+                      key={slideIndex}
+                      className="w-full flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 px-2"
+                    >
+                      {slideReviews.map((review) => renderReviewCard(review))}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="w-full text-center text-gray-500 py-10">
                   No reviews available at the moment.
                 </div>
               )}
             </div>
           </div>
 
-          {/* Desktop slider */}
-          <div className="relative hidden md:block">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {getVisibleReviews().map((review) => renderReviewCard(review))}
-              {!reviews.length && (
-                <div className="col-span-full text-center text-gray-500 py-10">
-                  No reviews available at the moment.
-                </div>
-              )}
-            </div>
-
-            {totalSlides > 1 && (
-              <>
-                <button
-                  onClick={prevSlide}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-3 shadow-lg transition-colors z-10 flex items-center justify-center"
-                  aria-label="Previous reviews"
-                >
-                  <ChevronLeft className="w-6 h-6" />
-                </button>
-                <button
-                  onClick={nextSlide}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-3 shadow-lg transition-colors z-10 flex items-center justify-center"
-                  aria-label="Next reviews"
-                >
-                  <ChevronRight className="w-6 h-6" />
-                </button>
-              </>
-            )}
-          </div>
+          {/* Navigation Buttons */}
+          {reviews.length > 0 && totalSlides > 1 && (
+            <>
+              <button
+                onClick={prevSlide}
+                disabled={currentSlide === 0}
+                className="absolute left-0 sm:-left-4 md:-left-6 top-1/2 -translate-y-1/2 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-gray-800 rounded-full p-2 sm:p-3 shadow-lg transition-colors z-10 flex items-center justify-center"
+                aria-label="Previous reviews"
+              >
+                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+              <button
+                onClick={nextSlide}
+                disabled={currentSlide >= totalSlides - 1}
+                className="absolute right-0 sm:-right-4 md:-right-6 top-1/2 -translate-y-1/2 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-gray-800 rounded-full p-2 sm:p-3 shadow-lg transition-colors z-10 flex items-center justify-center"
+                aria-label="Next reviews"
+              >
+                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+            </>
+          )}
         </div>
 
-        {/* Pagination Dots for desktop slider */}
+        {/* Pagination Dots */}
         {reviews.length > 0 && totalSlides > 1 && (
-          <div className="hidden md:flex justify-center gap-2 mt-8">
+          <div className="flex justify-center gap-2 mt-8">
             {[...Array(totalSlides)].map((_, index) => (
               <button
                 key={index}
@@ -216,8 +253,6 @@ export default function Reviews() {
             ))}
           </div>
         )}
-
-        {/* Mobile helpers omitted to allow natural horizontal scrolling */}
       </div>
     </section>
   );

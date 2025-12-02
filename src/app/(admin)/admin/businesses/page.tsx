@@ -484,7 +484,7 @@ export default function BusinessesPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-[#1c4233] rounded-lg p-4 text-white">
           <p className="text-sm opacity-90">Total Businesses</p>
           <p className="text-3xl font-bold mt-1">{stats.total}</p>
@@ -500,6 +500,10 @@ export default function BusinessesPage() {
         <div className="bg-[#36725a] rounded-lg p-4 text-white">
           <p className="text-sm opacity-90">Suspended</p>
           <p className="text-3xl font-bold mt-1">{stats.suspended}</p>
+        </div>
+        <div className="bg-[#3d7e65] rounded-lg p-4 text-white">
+          <p className="text-sm opacity-90">Rejected</p>
+          <p className="text-3xl font-bold mt-1">{stats.rejected}</p>
         </div>
       </div>
 

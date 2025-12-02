@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,12 @@ export default function AdvertisementsPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Search states for dropdowns
+  const [categorySearch, setCategorySearch] = useState('');
+  const [countrySearch, setCountrySearch] = useState('');
+  const [regionSearch, setRegionSearch] = useState('');
+  const [citySearch, setCitySearch] = useState('');
 
   // Data for dropdowns
   const [categories, setCategories] = useState<Category[]>([]);
@@ -46,6 +52,43 @@ export default function AdvertisementsPage() {
   // Filtered options based on selections
   const [availableRegions, setAvailableRegions] = useState<Region[]>([]);
   const [availableCities, setAvailableCities] = useState<City[]>([]);
+  
+  // Filter options based on search
+  const filteredCategories = useMemo(() => {
+    if (!categorySearch) return categories;
+    const searchLower = categorySearch.toLowerCase();
+    return categories.filter(cat => 
+      cat.name.toLowerCase().includes(searchLower) ||
+      cat.slug.toLowerCase().includes(searchLower)
+    );
+  }, [categories, categorySearch]);
+  
+  const filteredCountries = useMemo(() => {
+    if (!countrySearch) return countries;
+    const searchLower = countrySearch.toLowerCase();
+    return countries.filter(country => 
+      country.name.toLowerCase().includes(searchLower) ||
+      country.slug.toLowerCase().includes(searchLower)
+    );
+  }, [countries, countrySearch]);
+  
+  const filteredRegions = useMemo(() => {
+    if (!regionSearch) return availableRegions;
+    const searchLower = regionSearch.toLowerCase();
+    return availableRegions.filter(region => 
+      region.name.toLowerCase().includes(searchLower) ||
+      region.slug.toLowerCase().includes(searchLower)
+    );
+  }, [availableRegions, regionSearch]);
+  
+  const filteredCities = useMemo(() => {
+    if (!citySearch) return availableCities;
+    const searchLower = citySearch.toLowerCase();
+    return availableCities.filter(city => 
+      city.name.toLowerCase().includes(searchLower) ||
+      city.slug.toLowerCase().includes(searchLower)
+    );
+  }, [availableCities, citySearch]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -357,17 +400,42 @@ export default function AdvertisementsPage() {
                       onValueChange={setCategoryId}
                       disabled={loadingData || submitting}
                     >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a category (optional)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No category (show in all categories)</SelectItem>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+                      <Select
+                        value={categoryId}
+                        onValueChange={(value) => {
+                          setCategoryId(value);
+                          setCategorySearch('');
+                        }}
+                        disabled={loadingData || submitting}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a category (optional)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <div className="p-2 border-b sticky top-0 bg-white dark:bg-slate-800 z-10">
+                            <input
+                              type="text"
+                              placeholder="Search categories..."
+                              value={categorySearch}
+                              onChange={(e) => {
+                                setCategorySearch(e.target.value);
+                                e.stopPropagation();
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1c4233] bg-white dark:bg-slate-700"
+                            />
+                          </div>
+                          <SelectItem value="none">No category (show in all categories)</SelectItem>
+                          {filteredCategories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                          {filteredCategories.length === 0 && categorySearch && (
+                            <div className="px-2 py-1.5 text-sm text-gray-500">No categories found</div>
+                          )}
+                        </SelectContent>
+                      </Select>
                     </Select>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       If no category is selected, the ad will appear in all categories
@@ -438,22 +506,41 @@ export default function AdvertisementsPage() {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Country <span className="text-red-500">*</span>
                       </label>
-                      <Select
-                        value={selectedCountryId}
-                        onValueChange={setSelectedCountryId}
-                        disabled={loadingData || submitting}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select a country" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {countries.map((country) => (
-                            <SelectItem key={country.id} value={country.id}>
-                              {country.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <Select
+                      value={selectedCountryId}
+                      onValueChange={(value) => {
+                        setSelectedCountryId(value);
+                        setCountrySearch('');
+                      }}
+                      disabled={loadingData || submitting}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <div className="p-2 border-b sticky top-0 bg-white dark:bg-slate-800 z-10">
+                          <input
+                            type="text"
+                            placeholder="Search countries..."
+                            value={countrySearch}
+                            onChange={(e) => {
+                              setCountrySearch(e.target.value);
+                              e.stopPropagation();
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1c4233] bg-white dark:bg-slate-700"
+                          />
+                        </div>
+                        {filteredCountries.map((country) => (
+                          <SelectItem key={country.id} value={country.id}>
+                            {country.name}
+                          </SelectItem>
+                        ))}
+                        {filteredCountries.length === 0 && countrySearch && (
+                          <div className="px-2 py-1.5 text-sm text-gray-500">No countries found</div>
+                        )}
+                      </SelectContent>
+                    </Select>
                     </div>
                   )}
 
@@ -468,6 +555,7 @@ export default function AdvertisementsPage() {
                           onValueChange={(value) => {
                             setSelectedCountryId(value);
                             setSelectedRegionId('');
+                            setCountrySearch('');
                           }}
                           disabled={loadingData || submitting}
                         >
@@ -475,11 +563,27 @@ export default function AdvertisementsPage() {
                             <SelectValue placeholder="Select a country first" />
                           </SelectTrigger>
                           <SelectContent>
-                            {countries.map((country) => (
+                            <div className="p-2 border-b sticky top-0 bg-white dark:bg-slate-800 z-10">
+                              <input
+                                type="text"
+                                placeholder="Search countries..."
+                                value={countrySearch}
+                                onChange={(e) => {
+                                  setCountrySearch(e.target.value);
+                                  e.stopPropagation();
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1c4233] bg-white dark:bg-slate-700"
+                              />
+                            </div>
+                            {filteredCountries.map((country) => (
                               <SelectItem key={country.id} value={country.id}>
                                 {country.name}
                               </SelectItem>
                             ))}
+                            {filteredCountries.length === 0 && countrySearch && (
+                              <div className="px-2 py-1.5 text-sm text-gray-500">No countries found</div>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -490,18 +594,37 @@ export default function AdvertisementsPage() {
                           </label>
                           <Select
                             value={selectedRegionId}
-                            onValueChange={setSelectedRegionId}
+                            onValueChange={(value) => {
+                              setSelectedRegionId(value);
+                              setRegionSearch('');
+                            }}
                             disabled={loadingData || submitting || !selectedCountryId}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Select a region/state" />
                             </SelectTrigger>
                             <SelectContent>
-                              {availableRegions.map((region) => (
+                              <div className="p-2 border-b sticky top-0 bg-white dark:bg-slate-800 z-10">
+                                <input
+                                  type="text"
+                                  placeholder="Search regions..."
+                                  value={regionSearch}
+                                  onChange={(e) => {
+                                    setRegionSearch(e.target.value);
+                                    e.stopPropagation();
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1c4233] bg-white dark:bg-slate-700"
+                                />
+                              </div>
+                              {filteredRegions.map((region) => (
                                 <SelectItem key={region.id} value={region.id}>
                                   {region.name}
                                 </SelectItem>
                               ))}
+                              {filteredRegions.length === 0 && regionSearch && (
+                                <div className="px-2 py-1.5 text-sm text-gray-500">No regions found</div>
+                              )}
                             </SelectContent>
                           </Select>
                         </div>
@@ -521,6 +644,7 @@ export default function AdvertisementsPage() {
                             setSelectedCountryId(value);
                             setSelectedRegionId('');
                             setSelectedCityId('');
+                            setCountrySearch('');
                           }}
                           disabled={loadingData || submitting}
                         >
@@ -528,11 +652,27 @@ export default function AdvertisementsPage() {
                             <SelectValue placeholder="Select a country first" />
                           </SelectTrigger>
                           <SelectContent>
-                            {countries.map((country) => (
+                            <div className="p-2 border-b sticky top-0 bg-white dark:bg-slate-800 z-10">
+                              <input
+                                type="text"
+                                placeholder="Search countries..."
+                                value={countrySearch}
+                                onChange={(e) => {
+                                  setCountrySearch(e.target.value);
+                                  e.stopPropagation();
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1c4233] bg-white dark:bg-slate-700"
+                              />
+                            </div>
+                            {filteredCountries.map((country) => (
                               <SelectItem key={country.id} value={country.id}>
                                 {country.name}
                               </SelectItem>
                             ))}
+                            {filteredCountries.length === 0 && countrySearch && (
+                              <div className="px-2 py-1.5 text-sm text-gray-500">No countries found</div>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -546,6 +686,7 @@ export default function AdvertisementsPage() {
                             onValueChange={(value) => {
                               setSelectedRegionId(value);
                               setSelectedCityId('');
+                              setRegionSearch('');
                             }}
                             disabled={loadingData || submitting || !selectedCountryId}
                           >
@@ -553,11 +694,27 @@ export default function AdvertisementsPage() {
                               <SelectValue placeholder="Select a region/state" />
                             </SelectTrigger>
                             <SelectContent>
-                              {availableRegions.map((region) => (
+                              <div className="p-2 border-b sticky top-0 bg-white dark:bg-slate-800 z-10">
+                                <input
+                                  type="text"
+                                  placeholder="Search regions..."
+                                  value={regionSearch}
+                                  onChange={(e) => {
+                                    setRegionSearch(e.target.value);
+                                    e.stopPropagation();
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1c4233] bg-white dark:bg-slate-700"
+                                />
+                              </div>
+                              {filteredRegions.map((region) => (
                                 <SelectItem key={region.id} value={region.id}>
                                   {region.name}
                                 </SelectItem>
                               ))}
+                              {filteredRegions.length === 0 && regionSearch && (
+                                <div className="px-2 py-1.5 text-sm text-gray-500">No regions found</div>
+                              )}
                             </SelectContent>
                           </Select>
                         </div>
@@ -569,18 +726,37 @@ export default function AdvertisementsPage() {
                           </label>
                           <Select
                             value={selectedCityId}
-                            onValueChange={setSelectedCityId}
+                            onValueChange={(value) => {
+                              setSelectedCityId(value);
+                              setCitySearch('');
+                            }}
                             disabled={loadingData || submitting || !selectedRegionId}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Select a city" />
                             </SelectTrigger>
                             <SelectContent>
-                              {availableCities.map((city) => (
+                              <div className="p-2 border-b sticky top-0 bg-white dark:bg-slate-800 z-10">
+                                <input
+                                  type="text"
+                                  placeholder="Search cities..."
+                                  value={citySearch}
+                                  onChange={(e) => {
+                                    setCitySearch(e.target.value);
+                                    e.stopPropagation();
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1c4233] bg-white dark:bg-slate-700"
+                                />
+                              </div>
+                              {filteredCities.map((city) => (
                                 <SelectItem key={city.id} value={city.id}>
                                   {city.name}
                                 </SelectItem>
                               ))}
+                              {filteredCities.length === 0 && citySearch && (
+                                <div className="px-2 py-1.5 text-sm text-gray-500">No cities found</div>
+                              )}
                             </SelectContent>
                           </Select>
                         </div>
@@ -705,7 +881,7 @@ export default function AdvertisementsPage() {
                     onChange={(e) => setNotes(e.target.value)}
                     rows={4}
                     disabled={submitting}
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] dark:focus:border-[#1c4233] dark:focus:ring-[#1c4233] sm:text-sm resize-none"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] dark:focus:border-[#1c4233] dark:focus:ring-[#1c4233] sm:text-sm resize-none p-3"
                     placeholder="Optional notes about this advertisement (visible only in admin)."
                   />
                 </div>

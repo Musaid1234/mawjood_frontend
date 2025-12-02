@@ -126,14 +126,14 @@ export default function CategoriesPage() {
                 {/* Business count */}
                 {category._count?.businesses !== undefined && (
                   <p className="text-xs text-gray-500 mt-1">
-                    {category._count.businesses} {category._count.businesses === 1 ? 'business' : 'businesses'}
+                    {category._count.businesses} {category._count.businesses === 1 ? 'Business' : 'Businesses'}
                   </p>
                 )}
 
                 {/* Subcategories count */}
                 {category.subcategories && category.subcategories.length > 0 && (
                   <p className="text-xs text-gray-500 mt-1">
-                    {category.subcategories.length} {category.subcategories.length === 1 ? 'subcategory' : 'subcategories'}
+                    {category.subcategories.length} {category.subcategories.length === 1 ? 'Subcategory' : 'Subcategories'}
                   </p>
                 )}
               </div>
@@ -148,8 +148,8 @@ export default function CategoriesPage() {
           </div>
         )}
 
-        {/* Pagination */}
-        {totalPages > 1 && (
+        {/* Pagination - only show if more than 20 categories and not searching */}
+        {totalPages > 1 && !searchQuery && total > 20 && (
           <div className="flex justify-center items-center gap-2 mt-8">
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}

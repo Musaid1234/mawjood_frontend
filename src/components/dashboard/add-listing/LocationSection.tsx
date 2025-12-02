@@ -368,12 +368,12 @@ export default function LocationSection() {
               !values.countryId
                 ? 'Select a country first'
                 : availableRegions.length === 0
-                  ? 'No regions found'
+                  ? 'No States found'
                   : 'Select State'
             }
             helperText={
               values.countryId && availableRegions.length === 0
-                ? 'No regions found for selected country'
+                ? 'No states found for selected country'
                 : undefined
             }
             options={regionOptions}

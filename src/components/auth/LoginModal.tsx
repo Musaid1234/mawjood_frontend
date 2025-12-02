@@ -87,8 +87,11 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
         setLoading(true);
         setError('');
         const response = await authService.socialLogin({ provider, token });
-        login(response.data.user, response.data.token, response.data.refreshToken);
-        onClose();
+        await login(response.data.user, response.data.token, response.data.refreshToken);
+        // Small delay to ensure state updates before closing
+        setTimeout(() => {
+          onClose();
+        }, 100);
       } catch (err: any) {
         const providerName = provider === 'google' ? 'Google' : 'Facebook';
         setError(err?.message || `Unable to authenticate with ${providerName}. Please try again.`);

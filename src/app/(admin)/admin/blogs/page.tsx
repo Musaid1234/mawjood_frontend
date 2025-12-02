@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { blogService, Blog } from '@/services/blog.service';
+import { blogService, Blog, BlogCategory } from '@/services/blog.service';
 import { BlogsTable } from '@/components/admin/blogs/BlogsTable';
 import { createColumns } from '@/components/admin/blogs/columns';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +27,10 @@ export default function BlogsPage() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
     blogId: string | null;
@@ -35,6 +40,19 @@ export default function BlogsPage() {
   useEffect(() => {
     fetchBlogs();
   }, [searchInput]);
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const result = await blogService.getCategories();
+        setCategories(result);
+      } catch (error: any) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const fetchBlogs = async () => {
     try {
@@ -57,6 +75,48 @@ export default function BlogsPage() {
       setLoading(false);
     }
   };
+
+  // Filter blogs based on status, date, and category
+  const filteredBlogs = useMemo(() => {
+    let filtered = [...blogs];
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter((blog) => {
+        const blogStatus = (blog as any).status || (blog.published ? 'PUBLISHED' : 'DRAFT');
+        return blogStatus === statusFilter;
+      });
+    }
+
+    // Date filter
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      filtered = filtered.filter((blog) => {
+        const blogDate = new Date(blog.createdAt);
+        switch (dateFilter) {
+          case 'today':
+            return blogDate.toDateString() === now.toDateString();
+          case 'week':
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            return blogDate >= weekAgo;
+          case 'month':
+            const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            return blogDate >= monthAgo;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Category filter
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter((blog) => {
+        return blog.categories?.some((cat) => cat.id === categoryFilter);
+      });
+    }
+
+    return filtered;
+  }, [blogs, statusFilter, dateFilter, categoryFilter]);
 
   const handleEdit = (blog: Blog) => {
     router.push(`/admin/blogs/edit/${blog.id}`);
@@ -127,11 +187,69 @@ export default function BlogsPage() {
         </div>
       </div>
 
+      {/* Filters */}
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Status
+            </label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="PUBLISHED">Published</SelectItem>
+                <SelectItem value="DRAFT">Draft</SelectItem>
+                <SelectItem value="SCHEDULED">Scheduled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Date
+            </label>
+            <Select value={dateFilter} onValueChange={setDateFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Time" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="week">Last 7 Days</SelectItem>
+                <SelectItem value="month">Last 30 Days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Category
+            </label>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
       {/* Blogs Table */}
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-6">
         <BlogsTable
           columns={columns}
-          data={blogs}
+          data={filteredBlogs}
           onSearchChange={setSearchInput}
           searchValue={searchInput}
           loading={loading}

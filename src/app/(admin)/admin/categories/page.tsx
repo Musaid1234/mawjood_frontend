@@ -187,7 +187,35 @@ export default function CategoriesPage() {
 
       <SubcategoryDialog
         open={subDialogOpen}
-        onOpenChange={setSubDialogOpen}
+        onOpenChange={(open) => {
+          setSubDialogOpen(open);
+          if (!open) {
+            // Refetch categories when dialog closes to show updated subcategories
+            const fetchCategories = async () => {
+              try {
+                setLoading(true);
+                const response = await categoryService.fetchCategories(1, 100);
+                let filteredCategories = response.data.categories || [];
+                if (searchInput) {
+                  const searchLower = searchInput.toLowerCase();
+                  filteredCategories = filteredCategories.filter(
+                    (cat) =>
+                      cat.name.toLowerCase().includes(searchLower) ||
+                      cat.slug.toLowerCase().includes(searchLower) ||
+                      (cat.description && cat.description.toLowerCase().includes(searchLower))
+                  );
+                }
+                setCategories(filteredCategories);
+              } catch (error: any) {
+                console.error('Error fetching categories:', error);
+                toast.error(error.message || 'Failed to fetch categories');
+              } finally {
+                setLoading(false);
+              }
+            };
+            fetchCategories();
+          }
+        }}
         category={subcategoryParent}
         onAddSubcategory={handleAddSubcategory}
         onEditSubcategory={handleEditSubcategory}

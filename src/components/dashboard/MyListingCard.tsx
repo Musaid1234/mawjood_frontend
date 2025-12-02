@@ -39,20 +39,34 @@ export default function MyListingCard({ business, onDelete }: MyListingCardProps
               <Building2 className="w-16 h-16 text-gray-400" />
             </div>
           )}
-          {isExpired && (
-            <div className="absolute top-4 left-4">
+          {/* Status Badge */}
+          <div className="absolute top-4 left-4">
+            {business.status === 'PENDING' && (
+              <span className="bg-yellow-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                Pending
+              </span>
+            )}
+            {business.status === 'APPROVED' && business.isVerified && (
+              <span className="bg-green-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                Approved
+              </span>
+            )}
+            {business.status === 'REJECTED' && (
               <span className="bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                Rejected
+              </span>
+            )}
+            {business.status === 'SUSPENDED' && (
+              <span className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                Suspended
+              </span>
+            )}
+            {isExpired && (
+              <span className="bg-gray-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
                 Expired
               </span>
-            </div>
-          )}
-          {business.isVerified && !isExpired && (
-            <div className="absolute top-4 left-4">
-              <span className="bg-green-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                Verified
-              </span>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Content Section */}

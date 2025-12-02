@@ -235,24 +235,6 @@ export function FeaturedSectionsSettingsSection({
                     placeholder="Top-rated services for your home"
                   />
                 </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700">Layout</label>
-                  <Select
-                    value={section.layout ?? 'grid'}
-                    onValueChange={(value) =>
-                      updateSection(sectionIndex, { layout: value as 'grid' | 'carousel' })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select layout" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="grid">Grid</SelectItem>
-                      <SelectItem value="carousel">Carousel</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
               <div className="mt-6 flex items-center justify-between">

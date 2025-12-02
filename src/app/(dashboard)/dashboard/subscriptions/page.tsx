@@ -157,11 +157,22 @@ export default function SubscriptionsPage() {
   };
 
   const getBusinessSubscription = (businessId: string) => {
+    // Only return ACTIVE subscriptions that haven't expired
+    // PENDING subscriptions should not be shown as active
     return subscriptions.find(
       (sub) =>
         sub.businessId === businessId &&
         sub.status === 'ACTIVE' &&
         new Date(sub.endsAt) > new Date()
+    );
+  };
+
+  // Get pending subscriptions for display
+  const getPendingSubscription = (businessId: string) => {
+    return subscriptions.find(
+      (sub) =>
+        sub.businessId === businessId &&
+        sub.status === 'PENDING'
     );
   };
 
@@ -271,33 +282,66 @@ export default function SubscriptionsPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Current Subscriptions</h2>
           <div className="space-y-4">
             {businesses.map((business) => {
-              const subscription = getBusinessSubscription(business.id);
-              if (!subscription) return null;
+              const activeSubscription = getBusinessSubscription(business.id);
+              const pendingSubscription = getPendingSubscription(business.id);
+              
+              // Only show active subscriptions, not pending ones
+              if (!activeSubscription && !pendingSubscription) return null;
 
-              const plan = plans.find((p) => p.id === subscription.planId);
-
-              return (
-                <div
-                  key={business.id}
-                  className="bg-white rounded-lg border border-gray-200 p-4"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <Building2 className="w-5 h-5 text-[#1c4233]" />
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{business.name}</h3>
-                        <p className="text-sm text-gray-600">
-                          {plan?.name || 'Unknown Plan'} • Active until{' '}
-                          {new Date(subscription.endsAt).toLocaleDateString()}
-                        </p>
+              // Show pending subscription with pending status
+              if (pendingSubscription && !activeSubscription) {
+                const plan = plans.find((p) => p.id === pendingSubscription.planId);
+                return (
+                  <div
+                    key={business.id}
+                    className="bg-white rounded-lg border border-yellow-200 p-4"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <Building2 className="w-5 h-5 text-[#1c4233]" />
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{business.name}</h3>
+                          <p className="text-sm text-gray-600">
+                            {plan?.name || 'Unknown Plan'} • Payment pending
+                          </p>
+                        </div>
                       </div>
+                      <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium w-fit">
+                        Pending Payment
+                      </span>
                     </div>
-                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium w-fit">
-                      Active
-                    </span>
                   </div>
-                </div>
-              );
+                );
+              }
+
+              // Show active subscription
+              if (activeSubscription) {
+                const plan = plans.find((p) => p.id === activeSubscription.planId);
+                return (
+                  <div
+                    key={business.id}
+                    className="bg-white rounded-lg border border-gray-200 p-4"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <Building2 className="w-5 h-5 text-[#1c4233]" />
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{business.name}</h3>
+                          <p className="text-sm text-gray-600">
+                            {plan?.name || 'Unknown Plan'} • Active until{' '}
+                            {new Date(activeSubscription.endsAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium w-fit">
+                        Active
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+
+              return null;
             })}
           </div>
         </div>

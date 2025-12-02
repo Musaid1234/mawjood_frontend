@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Blog, BlogCategory, blogService } from '@/services/blog.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import RichTextEditor from '@/components/dashboard/add-listing/RichTextEditor';
 import Image from 'next/image';
 import { Upload, X, Loader, Loader2, Save, Plus, ChevronDown, ChevronUp, CalendarClock } from 'lucide-react';
@@ -405,112 +406,110 @@ export function BlogForm({ blog, onSubmit, isSubmitting }: BlogFormProps) {
             </div>
           )}
 
-          {/* Multi-select dropdown trigger + panel */}
-          <div className="relative w-full">
-            <button
-              type="button"
-              onClick={() => setIsCategoryDropdownOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white hover:border-[#1c4233] transition-colors"
-            >
-              <span className="text-gray-700">
-                {selectedCategories.length
-                  ? `${selectedCategories.length} categor${selectedCategories.length === 1 ? 'y' : 'ies'} selected`
-                  : 'Select categories'}
-              </span>
-              <span className="ml-2 text-gray-500 flex items-center">
-                {isCategoryDropdownOpen ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
-                )}
-              </span>
-            </button>
-
-            {isCategoryDropdownOpen && (
-              <div className="absolute z-30 mt-2 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-80 overflow-hidden">
-                <div className="p-3 border-b border-gray-100">
-                  <Input
-                    value={categorySearch}
-                    onChange={(e) => setCategorySearch(e.target.value)}
-                    placeholder="Search categories..."
-                    disabled={categoriesLoading}
-                    className="h-9"
-                  />
-                </div>
-
-                <div className="max-h-64 overflow-y-auto divide-y">
-                  {categoriesLoading ? (
-                    <div className="flex items-center justify-center py-6 text-gray-500">
-                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                      Loading categories...
-                    </div>
-                  ) : filteredCategories.length === 0 ? (
-                    <div className="py-6 text-center text-gray-500 text-sm">
-                      No categories found. Try a different search or create a new category.
-                    </div>
+          {/* Multi-select dropdown trigger + panel using Popover */}
+          <Popover open={isCategoryDropdownOpen} onOpenChange={setIsCategoryDropdownOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white hover:border-[#1c4233] transition-colors"
+              >
+                <span className="text-gray-700">
+                  {selectedCategories.length
+                    ? `${selectedCategories.length} categor${selectedCategories.length === 1 ? 'y' : 'ies'} selected`
+                    : 'Select categories'}
+                </span>
+                <span className="ml-2 text-gray-500 flex items-center">
+                  {isCategoryDropdownOpen ? (
+                    <ChevronUp className="w-4 h-4" />
                   ) : (
-                    filteredCategories.map((category) => {
-                      const isSelected = selectedCategories.includes(category.id);
-                      return (
-                        <div
-                          key={category.id}
-                          className={`flex items-start gap-3 px-4 py-3 transition-colors ${isSelected ? 'bg-[#1c4233]/5' : 'hover:bg-gray-50'
-                            }`}
-                        >
-                          <label className="flex items-start gap-3 flex-1 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              className="mt-1 w-4 h-4 text-[#1c4233] border-gray-300 rounded focus:ring-[#1c4233]"
-                              checked={isSelected}
-                              onChange={() => toggleCategorySelection(category.id)}
-                            />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900">{category.name}</p>
-                              {category.description && (
-                                <p className="text-xs text-gray-500 mt-1">{category.description}</p>
-                              )}
-                              {typeof category.blogCount === 'number' && (
-                                <p className="text-xs text-gray-400 mt-1">
-                                  {category.blogCount} {category.blogCount === 1 ? 'post' : 'posts'}
-                                </p>
-                              )}
-                            </div>
-                          </label>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditCategory(category);
-                            }}
-                            className="ml-2 p-1.5 text-gray-400 hover:text-[#1c4233] hover:bg-[#1c4233]/10 rounded transition-colors"
-                            title="Edit category"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      );
-                    })
+                    <ChevronDown className="w-4 h-4" />
                   )}
-                </div>
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+              <div className="p-3 border-b border-gray-100">
+                <Input
+                  value={categorySearch}
+                  onChange={(e) => setCategorySearch(e.target.value)}
+                  placeholder="Search categories..."
+                  disabled={categoriesLoading}
+                  className="h-9"
+                />
               </div>
-            )}
 
-            {errors.categories && (
-              <p className="mt-2 text-sm text-red-600">{errors.categories}</p>
-            )}
-          </div>
+              <div className="max-h-64 overflow-y-auto divide-y">
+                {categoriesLoading ? (
+                  <div className="flex items-center justify-center py-6 text-gray-500">
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Loading categories...
+                  </div>
+                ) : filteredCategories.length === 0 ? (
+                  <div className="py-6 text-center text-gray-500 text-sm">
+                    No categories found. Try a different search or create a new category.
+                  </div>
+                ) : (
+                  filteredCategories.map((category) => {
+                    const isSelected = selectedCategories.includes(category.id);
+                    return (
+                      <div
+                        key={category.id}
+                        className={`flex items-start gap-3 px-4 py-3 transition-colors ${isSelected ? 'bg-[#1c4233]/5' : 'hover:bg-gray-50'
+                          }`}
+                      >
+                        <label className="flex items-start gap-3 flex-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="mt-1 w-4 h-4 text-[#1c4233] border-gray-300 rounded focus:ring-[#1c4233]"
+                            checked={isSelected}
+                            onChange={() => toggleCategorySelection(category.id)}
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">{category.name}</p>
+                            {category.description && (
+                              <p className="text-xs text-gray-500 mt-1">{category.description}</p>
+                            )}
+                            {typeof category.blogCount === 'number' && (
+                              <p className="text-xs text-gray-400 mt-1">
+                                {category.blogCount} {category.blogCount === 1 ? 'post' : 'posts'}
+                              </p>
+                            )}
+                          </div>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditCategory(category);
+                          }}
+                          className="ml-2 p-1.5 text-gray-400 hover:text-[#1c4233] hover:bg-[#1c4233]/10 rounded transition-colors"
+                          title="Edit category"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {errors.categories && (
+            <p className="mt-2 text-sm text-red-600">{errors.categories}</p>
+          )}
         </div>
       </div>
 
