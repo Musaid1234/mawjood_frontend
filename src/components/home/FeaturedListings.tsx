@@ -176,15 +176,19 @@ export default function FeaturedListings() {
                         </span>
                     </Link>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                        {business.totalReviews > 0 && business.averageRating > 0 && (
-                            <div className="flex items-center gap-1 bg-yellow-300 text-white px-2 py-1 rounded text-xs font-semibold">
+                        {business.totalReviews > 0 && business.averageRating > 0 ? (
+                            <div className="flex items-center gap-1 bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
                                 <span>{business.averageRating.toFixed(1)}</span>
-                                <Star className="w-3 h-3 fill-current" />
+                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                <span className="ml-1 whitespace-nowrap">
+                                    {business.totalReviews} {business.totalReviews === 1 ? 'Review' : 'Reviews'}
+                                </span>
                             </div>
+                        ) : (
+                            <span className="text-xs text-gray-600 whitespace-nowrap">
+                                {business.totalReviews === 1 ? '1 Review' : `${business.totalReviews || 0} Reviews`}
+                            </span>
                         )}
-                        <span className="text-xs text-gray-600 ml-1 whitespace-nowrap">
-                            {business.totalReviews || 0} Reviews
-                        </span>
                     </div>
                 </div>
             </div>

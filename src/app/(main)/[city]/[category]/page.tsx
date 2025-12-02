@@ -517,7 +517,7 @@ export default function CityCategoryPage() {
           )}
           {!topAdLoading && topAdvertisements.length > 0 && (
             <div className="relative overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
-              <div className="relative h-48 md:h-48 lg:h-52">
+              <div className="relative h-44 md:h-46 lg:h-48">
                 {topAdvertisements.map((ad, index) => {
                   const resolvedUrl = getResolvedTargetUrl(ad);
                   return (

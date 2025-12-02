@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { categoryService, Category } from '@/services/category.service';
 import { CategoriesTable } from '@/components/admin/categories/CategoriesTable';
@@ -24,9 +24,8 @@ import { toast } from 'sonner';
 export default function CategoriesPage() {
   const queryClient = useQueryClient();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogParentId, setDialogParentId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -37,24 +36,6 @@ export default function CategoriesPage() {
     categoryId: string | null;
   }>({ open: false, categoryId: null });
 
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    debounceTimer.current = setTimeout(() => {
-      setDebouncedSearch(searchInput);
-    }, 500);
-
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, [searchInput]);
-
   // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
@@ -64,8 +45,8 @@ export default function CategoriesPage() {
         let filteredCategories = response.data.categories || [];
 
         // Client-side filtering for search
-        if (debouncedSearch) {
-          const searchLower = debouncedSearch.toLowerCase();
+        if (searchInput) {
+          const searchLower = searchInput.toLowerCase();
           filteredCategories = filteredCategories.filter(
             (cat) =>
               cat.name.toLowerCase().includes(searchLower) ||
@@ -84,7 +65,7 @@ export default function CategoriesPage() {
     };
 
     fetchCategories();
-  }, [debouncedSearch]);
+  }, [searchInput]);
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -97,8 +78,8 @@ export default function CategoriesPage() {
       const fetchCategories = async () => {
         const response = await categoryService.fetchCategories(1, 100);
         let filteredCategories = response.data.categories || [];
-        if (debouncedSearch) {
-          const searchLower = debouncedSearch.toLowerCase();
+        if (searchInput) {
+          const searchLower = searchInput.toLowerCase();
           filteredCategories = filteredCategories.filter(
             (cat) =>
               cat.name.toLowerCase().includes(searchLower) ||
@@ -168,14 +149,6 @@ export default function CategoriesPage() {
   };
 
   const columns = createColumns(handleEdit, handleDelete, handleManageSubcategories);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#1c4233]" />
-      </div>
-    );
-  }
 
   return (
     <div className="py-4 space-y-6">

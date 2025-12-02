@@ -22,7 +22,7 @@ export default function SystemOverview({ system }: SystemOverviewProps) {
       bgColor: 'bg-blue-50 dark:bg-blue-950',
     },
     {
-      label: 'Regions',
+      label: 'States',
       value: system.totalRegions,
       icon: Layers,
       color: 'text-[#1c4233]',

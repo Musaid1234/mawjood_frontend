@@ -138,21 +138,6 @@ export function CountryDialog({ open, onOpenChange, country, onSave }: CountryDi
             </p>
           </div>
 
-          <div>
-            <label htmlFor="country-code" className="block text-sm font-medium text-gray-700 mb-1.5">
-              ISO Code
-            </label>
-            <Input
-              id="country-code"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="e.g., SA"
-              maxLength={3}
-              disabled={isSubmitting}
-            />
-            <p className="text-xs text-gray-500 mt-1">Optional two- or three-letter ISO code.</p>
-          </div>
-
           <DialogFooter>
             <Button
               type="button"

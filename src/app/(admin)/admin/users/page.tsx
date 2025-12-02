@@ -21,9 +21,9 @@ import { EditUserModal } from '@/components/admin/users/EditUserModal';
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]); // For stats cards - unfiltered
-  const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filters, setFilters] = useState({
     role: '',
     status: '',
@@ -37,69 +37,49 @@ export default function UsersPage() {
     userId: string | null;
   }>({ open: false, userId: null });
 
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-
-  // Debounce search input
-  useEffect(() => {
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    debounceTimer.current = setTimeout(() => {
-      setDebouncedSearch(searchInput);
-    }, 500);
-
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, [searchInput]);
-
   // Fetch all users for stats (unfiltered) - only on mount and after mutations
   useEffect(() => {
     const fetchAllUsers = async () => {
       try {
+        setStatsLoading(true);
         const response = await adminService.getAllUsers({ page: 1, limit: 1000 });
         setAllUsers(response.data.users || []);
       } catch (error: any) {
         console.error('Error fetching all users:', error);
+      } finally {
+        setStatsLoading(false);
       }
     };
 
     fetchAllUsers();
   }, []); // Only fetch on mount
 
-  // Fetch users when filters or debouncedSearch change
+  // Fetch users when filters or searchInput change
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        setLoading(true);
+        setSearchLoading(true);
         const params: any = {
           page: 1,
           limit: 100,
         };
 
-        if (debouncedSearch) params.search = debouncedSearch;
+        if (searchInput) params.search = searchInput;
         if (filters.role && filters.role !== 'all') params.role = filters.role;
         if (filters.status && filters.status !== 'all') params.status = filters.status;
 
         const response = await adminService.getAllUsers(params);
-        // Only update users if we got a response (don't clear on error)
-        if (response?.data?.users) {
-          setUsers(response.data.users);
-        }
+        setUsers(response.data.users || []);
       } catch (error: any) {
         console.error('Error fetching users:', error);
         toast.error(error.message || 'Failed to fetch users');
-        // Don't clear users on error - keep showing previous data
       } finally {
-        setLoading(false);
+        setSearchLoading(false);
       }
     };
 
     fetchUsers();
-  }, [debouncedSearch, filters.role, filters.status]);
+  }, [searchInput, filters.role, filters.status]);
 
   const handleUpdateRole = async (userId: string, role: string) => {
     try {
@@ -110,7 +90,7 @@ export default function UsersPage() {
       setAllUsers(allUsersResponse.data.users || []);
       // Refetch filtered users
       const params: any = { page: 1, limit: 100 };
-      if (debouncedSearch) params.search = debouncedSearch;
+      if (searchInput) params.search = searchInput;
       if (filters.role && filters.role !== 'all') params.role = filters.role;
       if (filters.status && filters.status !== 'all') params.status = filters.status;
       const response = await adminService.getAllUsers(params);
@@ -130,7 +110,7 @@ export default function UsersPage() {
       setAllUsers(allUsersResponse.data.users || []);
       // Refetch filtered users
       const params: any = { page: 1, limit: 100 };
-      if (debouncedSearch) params.search = debouncedSearch;
+      if (searchInput) params.search = searchInput;
       if (filters.role && filters.role !== 'all') params.role = filters.role;
       if (filters.status && filters.status !== 'all') params.status = filters.status;
       const response = await adminService.getAllUsers(params);
@@ -153,7 +133,7 @@ export default function UsersPage() {
       setAllUsers(allUsersResponse.data.users || []);
       // Refetch filtered users
       const params: any = { page: 1, limit: 100 };
-      if (debouncedSearch) params.search = debouncedSearch;
+      if (searchInput) params.search = searchInput;
       if (filters.role && filters.role !== 'all') params.role = filters.role;
       if (filters.status && filters.status !== 'all') params.status = filters.status;
       const response = await adminService.getAllUsers(params);
@@ -189,7 +169,7 @@ export default function UsersPage() {
     });
     // Refetch filtered users
     const params: any = { page: 1, limit: 100 };
-    if (debouncedSearch) params.search = debouncedSearch;
+    if (searchInput) params.search = searchInput;
     if (filters.role && filters.role !== 'all') params.role = filters.role;
     if (filters.status && filters.status !== 'all') params.status = filters.status;
     adminService.getAllUsers(params).then((response) => {
@@ -207,7 +187,7 @@ export default function UsersPage() {
     handleEditUser
   );
 
-  if (loading && users.length === 0) {
+  if (statsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-[#1c4233]" />
@@ -259,7 +239,7 @@ export default function UsersPage() {
           onSearchChange={handleSearchChange}
           onRoleFilter={handleRoleFilter}
           onStatusFilter={handleStatusFilter}
-          loading={loading}
+          loading={searchLoading}
         />
       </div>
 

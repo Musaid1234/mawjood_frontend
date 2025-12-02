@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { blogService, Blog } from '@/services/blog.service';
@@ -24,37 +24,17 @@ export default function BlogsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [blogs, setBlogs] = useState<Blog[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
     blogId: string | null;
   }>({ open: false, blogId: null });
 
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-
-  // Debounce search input
-  useEffect(() => {
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    debounceTimer.current = setTimeout(() => {
-      setDebouncedSearch(searchInput);
-    }, 500);
-
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, [searchInput]);
-
   // Fetch blogs
   useEffect(() => {
     fetchBlogs();
-  }, [debouncedSearch]);
+  }, [searchInput]);
 
   const fetchBlogs = async () => {
     try {
@@ -64,8 +44,8 @@ export default function BlogsPage() {
         limit: 100,
       };
 
-      if (debouncedSearch) {
-        params.search = debouncedSearch;
+      if (searchInput) {
+        params.search = searchInput;
       }
 
       const response = await blogService.getAllBlogsAdmin(params);
@@ -107,14 +87,6 @@ export default function BlogsPage() {
   };
 
   const columns = createColumns(handleEdit, handleDelete);
-
-  if (loading && blogs.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-[#1c4233]" />
-      </div>
-    );
-  }
 
   return (
     <div className="py-4 space-y-6">

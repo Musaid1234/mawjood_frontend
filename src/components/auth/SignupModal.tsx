@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Eye, EyeOff } from 'lucide-react';
+import { ChevronDown, Eye, EyeOff, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -18,6 +18,7 @@ import {
   type RegisterResponse,
 } from '@/services/auth.service';
 import { useAuthStore } from '@/store/authStore';
+import { countryCodes as allCountryCodes, defaultCountryCode } from '@/data/countryCodes';
 
 interface SignupModalProps {
   isOpen: boolean;
@@ -90,7 +91,10 @@ export default function SignupModal({
   const [error, setError] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [registerAsBusiness, setRegisterAsBusiness] = useState(defaultRole === 'BUSINESS_OWNER');
-  const [countryCode, setCountryCode] = useState('+966');
+  const [countryCode, setCountryCode] = useState(defaultCountryCode);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
+  
   const [googleReady, setGoogleReady] = useState(false);
   const [googleButtonRendered, setGoogleButtonRendered] = useState(false);
   const [facebookReady, setFacebookReady] = useState(false);
@@ -103,6 +107,53 @@ export default function SignupModal({
 
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
+
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
+  const countrySearchInputRef = useRef<HTMLInputElement>(null);
+
+  const countrySearchAliases: Record<string, string[]> = useMemo(
+    () => ({
+      '+966': ['ksa', 'kingdom of saudi arabia', 'saudi'],
+      '+971': ['uae', 'emirates'],
+      '+44': ['uk', 'britain', 'england'],
+      '+1': ['usa', 'united states', 'america', 'canada', 'us'],
+    }),
+    []
+  );
+
+  const filteredCountryCodes = useMemo(() => {
+    const normalizedSearch = countrySearch.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return allCountryCodes;
+    }
+
+    const sanitizedSearch = normalizedSearch.replace(/[^a-z0-9+]/g, '');
+
+    return allCountryCodes.filter((item) => {
+      const normalizedCountry = item.country.toLowerCase();
+      const normalizedCode = item.code.toLowerCase();
+      const countryNoSpaces = normalizedCountry.replace(/\s+/g, '');
+      const acronym =
+        item.country
+          .match(/\b[A-Za-z]/g)
+          ?.join('')
+          .toLowerCase() ?? '';
+      const aliases = countrySearchAliases[item.code] || [];
+
+      return (
+        normalizedCountry.includes(normalizedSearch) ||
+        countryNoSpaces.includes(sanitizedSearch) ||
+        normalizedCode.includes(sanitizedSearch) ||
+        acronym.includes(sanitizedSearch.replace(/[^a-z]/g, '')) ||
+        aliases.some((alias) => alias.toLowerCase().includes(normalizedSearch))
+      );
+    });
+  }, [countrySearch, countrySearchAliases]);
+
+  const selectedCountry = useMemo(
+    () => allCountryCodes.find((item) => item.code === countryCode),
+    [countryCode]
+  );
 
   const formattedPhone = useMemo(() => {
     const trimmed = formData.phone.trim();
@@ -359,8 +410,8 @@ export default function SignupModal({
     const numericPhone = formData.phone.replace(/\D/g, '');
     if (!numericPhone.length) {
       validationErrors.phone = 'Phone number is required.';
-    } else if (numericPhone.length < 6) {
-      validationErrors.phone = 'Enter a valid phone number.';
+    } else if (numericPhone.length < 9 || numericPhone.length > 15) {
+      validationErrors.phone = 'Phone number must be between 9 and 15 digits.';
     }
 
     if (!formData.password.trim()) {
@@ -484,7 +535,9 @@ export default function SignupModal({
     setError('');
     setAgreeToTerms(false);
     setRegisterAsBusiness(defaultRole === 'BUSINESS_OWNER');
-    setCountryCode('+966');
+    setCountryCode(defaultCountryCode);
+    setCountrySearch('');
+    setCountryDropdownOpen(false);
     setFormErrors({});
     setOtpStep(false);
     setOtpValue('');
@@ -492,6 +545,35 @@ export default function SignupModal({
     setPendingEmail('');
     setResendLoading(false);
   }, [defaultRole]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        countryDropdownRef.current &&
+        !countryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setCountryDropdownOpen(false);
+        setCountrySearch('');
+      }
+    };
+
+    if (countryDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [countryDropdownOpen]);
+
+  useEffect(() => {
+    if (countryDropdownOpen) {
+      setCountrySearch('');
+      requestAnimationFrame(() => {
+        countrySearchInputRef.current?.focus();
+      });
+    }
+  }, [countryDropdownOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -508,7 +590,7 @@ export default function SignupModal({
         }
       }}
     >
-      <DialogContent className="sm:max-w-xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-xl w-[calc(100vw-1rem)] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">Create Account</DialogTitle>
           <DialogDescription className="text-center">
@@ -522,7 +604,7 @@ export default function SignupModal({
               <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>
             ) : null}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">First Name *</label>
                 <input
@@ -573,39 +655,70 @@ export default function SignupModal({
 
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">Phone Number *</label>
-              <div className="flex gap-2">
-                <select
-                  className="rounded-lg border border-gray-300 bg-gray-50 px-3 py-3"
-                  value={countryCode}
-                  onChange={(e) => {
-                    setCountryCode(e.target.value);
-                    setFormErrors((prev) => {
-                      if (!prev.phone) return prev;
-                      const { phone, ...rest } = prev;
-                      return rest;
-                    });
-                  }}
-                  disabled={loading}
-                >
-                  <option value="+966">+966</option>
-                  <option value="+1">+1</option>
-                  <option value="+91">+91</option>
-                </select>
+              <div className="flex flex-col gap-2">
+                <div className="relative" ref={countryDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setCountryDropdownOpen((prev) => !prev)}
+                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-3 flex items-center justify-between text-sm font-medium"
+                    disabled={loading}
+                  >
+                    <span>
+                      {selectedCountry ? `${selectedCountry.code} ${selectedCountry.country}` : countryCode}
+                    </span>
+                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                  </button>
+                  {countryDropdownOpen ? (
+                    <div className="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
+                      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100">
+                        <Search className="h-4 w-4 text-gray-400" />
+                        <input
+                          ref={countrySearchInputRef}
+                          type="text"
+                          placeholder="Search country or code"
+                          value={countrySearch}
+                          onChange={(e) => setCountrySearch(e.target.value)}
+                          className="w-full bg-transparent text-sm focus:outline-none"
+                        />
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {filteredCountryCodes.map((item) => (
+                          <button
+                            key={item.code}
+                            type="button"
+                            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                            onClick={() => {
+                              setCountryCode(item.code);
+                              setCountryDropdownOpen(false);
+                              setCountrySearch('');
+                              setFormErrors((prev) => {
+                                if (!prev.phone) return prev;
+                                const { phone, ...rest } = prev;
+                                return rest;
+                              });
+                            }}
+                          >
+                            {item.code} {item.country}
+                          </button>
+                        ))}
+                        {!filteredCountryCodes.length ? (
+                          <p className="px-3 py-2 text-sm text-gray-500">No results found</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
                 <input
                   type="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={(e) => {
-                    // Only allow numeric characters
                     const numericValue = e.target.value.replace(/\D/g, '');
-                    // Limit to 10 digits (9 for Saudi, 10 for others)
-                    const maxLength = countryCode === '+966' ? 9 : 10;
-                    const limitedValue = numericValue.slice(0, maxLength);
+                    const limitedValue = numericValue.slice(0, 15);
                     setFormData((prev) => ({
                       ...prev,
                       phone: limitedValue,
                     }));
-                    // Clear phone error when user types
                     if (formErrors.phone) {
                       setFormErrors((prev) => {
                         const { phone, ...rest } = prev;
@@ -613,11 +726,11 @@ export default function SignupModal({
                       });
                     }
                   }}
-                  placeholder={countryCode === '+966' ? '5XXXXXXXX' : 'Enter phone number'}
-                  maxLength={countryCode === '+966' ? 9 : 10}
+                  placeholder="Enter phone number (9-15 digits)"
+                  maxLength={15}
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  className="flex-1 rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-primary"
                   disabled={loading}
                 />
               </div>

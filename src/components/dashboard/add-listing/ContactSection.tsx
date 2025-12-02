@@ -94,13 +94,13 @@ export default function ContactSection() {
               value={values.phoneCountryCode || '+966'}
               onValueChange={(value) => setFieldValue('phoneCountryCode', value)}
             >
-              <SelectTrigger className="w-auto min-w-[80px] border-0 border-r border-gray-300 rounded-l-lg rounded-r-none h-full focus:ring-0 focus:border-gray-300 bg-transparent [&_svg]:hidden">
+              <SelectTrigger className="w-auto min-w-[120px] border-0 border-r border-gray-300 rounded-l-lg rounded-r-none h-full focus:ring-0 focus:border-gray-300 bg-transparent [&_svg]:hidden">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {countryCodes.map((item) => (
                   <SelectItem key={item.code} value={item.code}>
-                    {item.code}
+                    {item.code} {item.country}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -142,13 +142,13 @@ export default function ContactSection() {
               value={values.whatsappCountryCode || '+966'}
               onValueChange={(value) => setFieldValue('whatsappCountryCode', value)}
             >
-              <SelectTrigger className="w-auto min-w-[80px] border-0 border-r border-gray-300 rounded-l-lg rounded-r-none h-full focus:ring-0 focus:border-gray-300 bg-transparent [&_svg]:hidden">
+              <SelectTrigger className="w-auto min-w-[120px] border-0 border-r border-gray-300 rounded-l-lg rounded-r-none h-full focus:ring-0 focus:border-gray-300 bg-transparent [&_svg]:hidden">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {countryCodes.map((item) => (
                   <SelectItem key={item.code} value={item.code}>
-                    {item.code}
+                    {item.code} {item.country}
                   </SelectItem>
                 ))}
               </SelectContent>

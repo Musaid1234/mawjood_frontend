@@ -333,7 +333,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
 
   return (
     <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md w-[calc(100vw-1rem)]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
             Log in
@@ -447,14 +447,14 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Email or Phone
                     </label>
-                    <input
-                      type="text"
-                      value={identifier}
-                      onChange={(e) => setIdentifier(e.target.value)}
-                      placeholder="Enter email or phone"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      disabled={loading}
-                    />
+                  <input
+                    type="text"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder="Enter email or phone"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    disabled={loading}
+                  />
                   </div>
 
                   <button
@@ -478,7 +478,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                       onChange={(e) => setOtp(e.target.value)}
                       placeholder="Enter 4-digit OTP"
                       maxLength={4}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-center text-2xl tracking-widest"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-center text-2xl tracking-widest"
                       disabled={loading}
                     />
                   </div>
@@ -563,7 +563,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
               type="button"
               onClick={handleFacebookLogin}
               disabled={loading || !facebookAppId}
-              className="flex items-center justify-center gap-3 border border-gray-300 rounded-xs py-2 font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-white"
+              className="flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-3 font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-white"
               style={{ width: '320px', maxWidth: '100%' }}
             >
               <svg

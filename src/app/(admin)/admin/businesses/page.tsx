@@ -33,10 +33,10 @@ type TabType = 'all' | 'pending' | 'suspended' | 'approved' | 'rejected';
 
 export default function BusinessesPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [searchInput, setSearchInput] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -67,27 +67,9 @@ export default function BusinessesPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    debounceTimer.current = setTimeout(() => {
-      setDebouncedSearch(searchInput);
-    }, 500);
-
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, [searchInput]);
-
   useEffect(() => {
     fetchBusinesses();
-  }, [activeTab, debouncedSearch, selectedCategory, selectedCountry, selectedRegion, selectedCity]);
+  }, [activeTab, searchInput, selectedCategory, selectedCountry, selectedRegion, selectedCity]);
 
   const fetchFilterOptions = async () => {
     try {
@@ -207,6 +189,7 @@ export default function BusinessesPage() {
 
   const fetchStats = async () => {
     try {
+      setStatsLoading(true);
       const response = await adminService.getDashboardStats();
       const businessStatus = response.data.businessStatus;
       setStats({
@@ -218,6 +201,8 @@ export default function BusinessesPage() {
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -248,14 +233,14 @@ export default function BusinessesPage() {
 
   const fetchBusinesses = async () => {
     try {
-      setLoading(true);
+      setSearchLoading(true);
       const params: any = {
         page: 1,
         limit: 1000, // Fetch more to allow client-side filtering
       };
 
-      if (debouncedSearch) {
-        params.search = debouncedSearch;
+      if (searchInput) {
+        params.search = searchInput;
       }
 
       let response;
@@ -359,7 +344,7 @@ export default function BusinessesPage() {
       console.error('Error fetching businesses:', error);
       toast.error(error.message || 'Failed to fetch businesses');
     } finally {
-      setLoading(false);
+      setSearchLoading(false);
     }
   };
 
@@ -405,9 +390,6 @@ export default function BusinessesPage() {
     }
   };
 
-  const handleSearchChange = (value: string) => {
-    setSearchInput(value);
-  };
 
   const handleEdit = (businessId: string) => {
     router.push(`/admin/businesses/edit/${businessId}`);
@@ -485,7 +467,7 @@ export default function BusinessesPage() {
     { id: 'rejected', label: 'Rejected' },
   ] as const;
 
-  if (loading && businesses.length === 0) {
+  if (statsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-[#1c4233]" />
@@ -551,7 +533,7 @@ export default function BusinessesPage() {
         <BusinessesTable
           columns={columns}
           data={businesses}
-          onSearchChange={handleSearchChange}
+          onSearchChange={setSearchInput}
           searchValue={searchInput}
           onBulkExport={handleBulkExport}
           selectedCategory={selectedCategory}
@@ -559,7 +541,7 @@ export default function BusinessesPage() {
           selectedRegion={selectedRegion}
           selectedCity={selectedCity}
           categories={categories}
-          loading={loading}
+          loading={searchLoading}
           countries={countries}
           regions={regions}
           cities={cities}

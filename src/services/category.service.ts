@@ -15,6 +15,10 @@ export interface Category {
   createdAt: string;
   updatedAt: string;
   subcategories: Category[];
+  _count?: {
+    subcategories: number;
+    businesses: number;
+  };
 }
 
 export interface CategoryResponse {

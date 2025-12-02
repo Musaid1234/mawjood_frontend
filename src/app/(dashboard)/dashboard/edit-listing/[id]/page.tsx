@@ -58,13 +58,32 @@ export default function EditListingPage() {
     mutationFn: (data: any) => businessService.updateBusiness(businessId, data),
     onSuccess: () => {
       toast.success('Business listing updated successfully!');
-      router.push('/dashboard');
+      router.push('/my-listings');
     },
     onError: (error: any) => {
       console.error('Update business error:', error);
       toast.error(error?.message || 'Failed to update business listing');
     },
   });
+
+  function parsePhoneNumber(phone: string | null | undefined): { countryCode: string; number: string } {
+    if (!phone) return { countryCode: '+966', number: '' };
+    
+    // Common country codes to check
+    const countryCodes = ['+966', '+971', '+965', '+974', '+973', '+968', '+961', '+962', '+20', '+1', '+44', '+91', '+92', '+33', '+49', '+81', '+86', '+61', '+27', '+234'];
+    
+    for (const code of countryCodes) {
+      if (phone.startsWith(code)) {
+        return {
+          countryCode: code,
+          number: phone.substring(code.length),
+        };
+      }
+    }
+    
+    // Default to Saudi Arabia if no code found
+    return { countryCode: '+966', number: phone };
+  }
 
   const handleSubmit = async (values: any) => {
     try {
@@ -79,11 +98,24 @@ export default function EditListingPage() {
         }
       });
 
+      const phoneWithCode = values.phoneCountryCode && values.phone 
+        ? `${values.phoneCountryCode}${values.phone}` 
+        : values.phone;
+      
+      const whatsappWithCode = values.whatsappCountryCode && values.whatsapp 
+        ? `${values.whatsappCountryCode}${values.whatsapp}` 
+        : values.whatsapp;
+
       const submitData = {
         ...values,
+        phone: phoneWithCode,
+        whatsapp: whatsappWithCode || undefined,
         latitude: values.latitude ? parseFloat(values.latitude) : undefined,
         longitude: values.longitude ? parseFloat(values.longitude) : undefined,
         workingHours: Object.keys(filteredWorkingHours).length > 0 ? filteredWorkingHours : undefined,
+        // Remove country code fields from submission
+        phoneCountryCode: undefined,
+        whatsappCountryCode: undefined,
       };
 
       await updateMutation.mutateAsync(submitData);
@@ -115,14 +147,20 @@ export default function EditListingPage() {
 
   const business = businessData;
 
+  // Parse phone numbers to extract country codes
+  const phoneParsed = parsePhoneNumber(business.phone);
+  const whatsappParsed = parsePhoneNumber(business.whatsapp);
+
   // Prepare initial values from business data
   const initialValues = {
     name: business.name || '',
     slug: business.slug || '',
     description: business.description || '',
     email: business.email || '',
-    phone: business.phone || '',
-    whatsapp: business.whatsapp || '',
+    phone: phoneParsed.number,
+    phoneCountryCode: phoneParsed.countryCode,
+    whatsapp: whatsappParsed.number,
+    whatsappCountryCode: whatsappParsed.countryCode,
     website: business.website || '',
     address: business.address || '',
     latitude: business.latitude?.toString() || '',

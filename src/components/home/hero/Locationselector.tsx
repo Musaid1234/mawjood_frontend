@@ -345,7 +345,6 @@ export default function LocationSelector({
                       </svg>
                     )}
                   </div>
-                  {country.code && <div className="text-xs text-gray-500">{country.code}</div>}
                 </div>
               ))
             ) : (

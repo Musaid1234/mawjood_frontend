@@ -37,7 +37,7 @@ export default function BusinessStatusBreakdown({ status }: BusinessStatusBreakd
       icon: XCircle,
       color: 'text-red-600',
       bgColor: 'bg-red-50 dark:bg-red-950',
-      tab: 'all' as const,
+      tab: 'rejected' as const,
     },
     {
       label: 'Suspended',
@@ -58,11 +58,7 @@ export default function BusinessStatusBreakdown({ status }: BusinessStatusBreakd
         <div className="space-y-3">
           {statuses.map((item, index) => {
             const Icon = item.icon;
-            const href =
-              item.tab === 'all'
-                ? '/admin/businesses'
-                : `/admin/businesses?tab=${encodeURIComponent(item.tab)}`;
-
+            const href = `/admin/businesses?tab=${encodeURIComponent(item.tab)}`;
             return (
               <Link key={index} href={href} className="block">
                 <div className="flex items-center justify-between p-3 rounded-lg border hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-colors">

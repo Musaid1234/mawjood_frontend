@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { adminService } from '@/services/admin.service';
 import { ReviewsTable } from '@/components/admin/reviews/ReviewsTable';
 import { createColumns, Review } from '@/components/admin/reviews/columns';
@@ -22,65 +22,57 @@ type TabType = 'all' | 'pending' | 'rejected';
 
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [searchInput, setSearchInput] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [pendingCount, setPendingCount] = useState(0);
+  const [totalReviewsCount, setTotalReviewsCount] = useState(0);
+  const [rejectedCount, setRejectedCount] = useState(0);
   const [actionDialog, setActionDialog] = useState<{
     open: boolean;
     type: 'approve' | 'reject' | null;
     reviewId: string | null;
   }>({ open: false, type: null, reviewId: null });
 
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-
-  // Debounce search input
-  useEffect(() => {
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    debounceTimer.current = setTimeout(() => {
-      setDebouncedSearch(searchInput);
-    }, 500);
-
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, [searchInput]);
-
-  // Fetch reviews when tab, search, or filters change
+  // Fetch reviews when tab or searchInput change
   useEffect(() => {
     fetchReviews();
-  }, [activeTab, debouncedSearch]);
+  }, [activeTab, searchInput]);
 
-  // Fetch pending count for badge
+  // Fetch static stats once on mount
   useEffect(() => {
-    fetchPendingCount();
+    fetchStaticStats();
   }, []);
 
-  const fetchPendingCount = async () => {
+  const fetchStaticStats = async () => {
     try {
-      const response = await adminService.getPendingDeleteRequests({ limit: 1 });
-      setPendingCount(response.data.pagination?.total || 0);
+      setStatsLoading(true);
+      const [pendingResponse, allReviewsResponse, rejectedResponse] = await Promise.all([
+        adminService.getPendingDeleteRequests({ limit: 1 }),
+        adminService.getAllReviews({ limit: 1 }),
+        adminService.getAllReviews({ deleteRequestStatus: 'REJECTED', limit: 1 }),
+      ]);
+      setPendingCount(pendingResponse.data.pagination?.total || 0);
+      setTotalReviewsCount(allReviewsResponse.data.pagination?.total || 0);
+      setRejectedCount(rejectedResponse.data.pagination?.total || 0);
     } catch (error) {
-      console.error('Error fetching pending count:', error);
+      console.error('Error fetching stats:', error);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
   const fetchReviews = async () => {
     try {
-      setLoading(true);
+      setSearchLoading(true);
       const params: any = {
         page: 1,
         limit: 100,
       };
 
-      if (debouncedSearch) {
-        params.search = debouncedSearch;
+      if (searchInput) {
+        params.search = searchInput;
       }
 
       let response;
@@ -98,14 +90,11 @@ export default function ReviewsPage() {
       }
 
       setReviews(response.data.reviews || []);
-      if (activeTab === 'pending') {
-        setPendingCount(response.data.pagination?.total || 0);
-      }
     } catch (error: any) {
       console.error('Error fetching reviews:', error);
       toast.error(error.message || 'Failed to fetch reviews');
     } finally {
-      setLoading(false);
+      setSearchLoading(false);
     }
   };
 
@@ -114,7 +103,7 @@ export default function ReviewsPage() {
       await adminService.approveDeleteRequest(reviewId);
       toast.success('Delete request approved and review deleted successfully');
       fetchReviews();
-      fetchPendingCount();
+      fetchStaticStats();
     } catch (error: any) {
       console.error('Error approving delete request:', error);
       toast.error(error.message || 'Failed to approve delete request');
@@ -129,7 +118,7 @@ export default function ReviewsPage() {
       toast.success('Delete request rejected successfully');
       setActionDialog({ open: false, type: null, reviewId: null });
       fetchReviews();
-      fetchPendingCount();
+      fetchStaticStats();
     } catch (error: any) {
       console.error('Error rejecting delete request:', error);
       toast.error(error.message || 'Failed to reject delete request');
@@ -156,7 +145,7 @@ export default function ReviewsPage() {
     { id: 'rejected', label: 'Rejected Requests' },
   ] as const;
 
-  if (loading && reviews.length === 0) {
+  if (statsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-[#1c4233]" />
@@ -178,7 +167,7 @@ export default function ReviewsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-[#1c4233] rounded-lg p-4 text-white">
           <p className="text-sm opacity-90">Total Reviews</p>
-          <p className="text-3xl font-bold mt-1">{reviews.length}</p>
+          <p className="text-3xl font-bold mt-1">{totalReviewsCount}</p>
         </div>
         <div className="bg-[#245240] rounded-lg p-4 text-white">
           <p className="text-sm opacity-90">Pending Delete Requests</p>
@@ -186,9 +175,7 @@ export default function ReviewsPage() {
         </div>
         <div className="bg-[#2d624d] rounded-lg p-4 text-white">
           <p className="text-sm opacity-90">Rejected Requests</p>
-          <p className="text-3xl font-bold mt-1">
-            {reviews.filter((r) => r.deleteRequestStatus === 'REJECTED').length}
-          </p>
+          <p className="text-3xl font-bold mt-1">{rejectedCount}</p>
         </div>
       </div>
 
@@ -226,7 +213,7 @@ export default function ReviewsPage() {
           data={reviews}
           onSearchChange={handleSearchChange}
           searchValue={searchInput}
-          loading={loading}
+          loading={searchLoading}
         />
       </div>
 

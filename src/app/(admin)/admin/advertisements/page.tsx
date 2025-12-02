@@ -221,7 +221,7 @@ export default function AdvertisementsPage() {
               {/* Ad Type Selection */}
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  Advertisement Type
+                  Advertisement Location
                 </h2>
                 <div className="flex flex-wrap gap-3">
                   <button
@@ -285,22 +285,18 @@ export default function AdvertisementsPage() {
                     {adType === 'CATEGORY' && (
                       <>
                         <li><span className="font-semibold">Sidebar Ad:</span> 300 × 350 pixels (vertical/square format)</li>
-                        <li>Aspect ratio: ~0.86:1 (portrait/vertical)</li>
-                        <li>Best for: Right sidebar on category pages</li>
+
                       </>
                     )}
                     {adType === 'TOP' && (
                       <>
                         <li><span className="font-semibold">Top Banner:</span> 1278 × 184 pixels (wide horizontal banner)</li>
-                        <li>Aspect ratio: ~6.9:1 (landscape/horizontal)</li>
-                        <li>Best for: Top of category pages with carousel support</li>
                       </>
                     )}
                     {adType === 'FOOTER' && (
                       <>
                         <li><span className="font-semibold">Footer Banner:</span> 1278 × 184 pixels (wide horizontal banner)</li>
-                        <li>Aspect ratio: ~6.9:1 (landscape/horizontal)</li>
-                        <li>Best for: Bottom of category pages</li>
+
                       </>
                     )}
                   </ul>

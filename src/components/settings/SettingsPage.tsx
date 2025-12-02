@@ -109,9 +109,12 @@ export default function SettingsPage() {
     },
   });
 
+  const [notificationsPage, setNotificationsPage] = useState(1);
+  const notificationsLimit = 20;
+
   const { data: notificationsData, isLoading: notificationsLoading } = useQuery({
-    queryKey: ['all-notifications'],
-    queryFn: () => notificationService.getNotifications(1, 50),
+    queryKey: ['all-notifications', notificationsPage],
+    queryFn: () => notificationService.getNotifications(notificationsPage, notificationsLimit),
     enabled: selectedTab === 'notifications',
   });
 
@@ -122,6 +125,10 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['all-notifications'] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['unread-count'] });
+      // Reset to page 1 if current page becomes empty
+      if (notificationsData && notificationsData.notifications.length === 1 && notificationsPage > 1) {
+        setNotificationsPage(1);
+      }
     },
     onError: () => {
       toast.error('Failed to delete notification');
@@ -226,7 +233,12 @@ export default function SettingsPage() {
           return (
             <button
               key={tab.id}
-              onClick={() => setSelectedTab(tab.id as any)}
+              onClick={() => {
+                setSelectedTab(tab.id as any);
+                if (tab.id === 'notifications') {
+                  setNotificationsPage(1);
+                }
+              }}
               className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors border-b-2 ${
                 selectedTab === tab.id
                   ? 'border-primary text-primary'
@@ -484,69 +496,99 @@ export default function SettingsPage() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : notificationsData && notificationsData.notifications.length > 0 ? (
-              <div className="space-y-2">
-                {notificationsData.notifications.map((notification: any) => (
-                  <div
-                    key={notification.id}
-                    className={`p-4 rounded-lg border ${
-                      !notification.isRead
-                        ? 'bg-primary/5 border-primary/20'
-                        : 'bg-white border-gray-200'
-                    } hover:shadow-sm transition-shadow`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-gray-900">
-                            {notification.title}
-                          </h3>
+              <>
+                <div className="space-y-2">
+                  {notificationsData.notifications.map((notification: any) => (
+                    <div
+                      key={notification.id}
+                      className={`p-4 rounded-lg border ${
+                        !notification.isRead
+                          ? 'bg-primary/5 border-primary/20'
+                          : 'bg-white border-gray-200'
+                      } hover:shadow-sm transition-shadow`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-gray-900">
+                              {notification.title}
+                            </h3>
+                            {!notification.isRead && (
+                              <div className="w-2 h-2 bg-primary rounded-full"></div>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-700 mb-2">
+                            {notification.message}
+                          </p>
+                          <div className="flex items-center gap-3 text-xs text-gray-500">
+                            <span>
+                              {formatDistanceToNow(new Date(notification.createdAt), {
+                                addSuffix: true,
+                              })}
+                            </span>
+                            {notification.link && (
+                              <Link
+                                href={notification.link}
+                                className="text-primary hover:underline"
+                              >
+                                View details →
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
                           {!notification.isRead && (
-                            <div className="w-2 h-2 bg-primary rounded-full"></div>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-700 mb-2">
-                          {notification.message}
-                        </p>
-                        <div className="flex items-center gap-3 text-xs text-gray-500">
-                          <span>
-                            {formatDistanceToNow(new Date(notification.createdAt), {
-                              addSuffix: true,
-                            })}
-                          </span>
-                          {notification.link && (
-                            <Link
-                              href={notification.link}
-                              className="text-primary hover:underline"
+                            <button
+                              onClick={() => markAsReadMutation.mutate(notification.id)}
+                              disabled={markAsReadMutation.isPending}
+                              className="p-1.5 text-gray-500 hover:text-primary hover:bg-gray-100 rounded transition-colors"
+                              title="Mark as read"
                             >
-                              View details →
-                            </Link>
+                              <CheckCircle2 className="w-4 h-4" />
+                            </button>
                           )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {!notification.isRead && (
                           <button
-                            onClick={() => markAsReadMutation.mutate(notification.id)}
-                            disabled={markAsReadMutation.isPending}
-                            className="p-1.5 text-gray-500 hover:text-primary hover:bg-gray-100 rounded transition-colors"
-                            title="Mark as read"
+                            onClick={() => deleteNotificationMutation.mutate(notification.id)}
+                            disabled={deleteNotificationMutation.isPending}
+                            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="Delete"
                           >
-                            <CheckCircle2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
-                        )}
-                        <button
-                          onClick={() => deleteNotificationMutation.mutate(notification.id)}
-                          disabled={deleteNotificationMutation.isPending}
-                          className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        </div>
                       </div>
                     </div>
+                  ))}
+                </div>
+                {notificationsData.pagination && notificationsData.pagination.totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                    <div className="text-sm text-gray-600">
+                      Showing {(notificationsPage - 1) * notificationsLimit + 1} to{' '}
+                      {Math.min(notificationsPage * notificationsLimit, notificationsData.pagination.total)} of{' '}
+                      {notificationsData.pagination.total} notifications
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setNotificationsPage((prev) => Math.max(1, prev - 1))}
+                        disabled={notificationsPage === 1 || notificationsLoading}
+                        className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+                      <span className="text-sm text-gray-600">
+                        Page {notificationsPage} of {notificationsData.pagination.totalPages}
+                      </span>
+                      <button
+                        onClick={() => setNotificationsPage((prev) => prev + 1)}
+                        disabled={notificationsPage >= notificationsData.pagination.totalPages || notificationsLoading}
+                        className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </div>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-12">
                 <Bell className="w-16 h-16 text-gray-300 mx-auto mb-3" />

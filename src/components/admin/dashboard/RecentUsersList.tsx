@@ -50,12 +50,11 @@ export default function RecentUsersList({ users }: RecentUsersListProps) {
             >
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Link
-                    href={`/admin/users/${user.id}`}
+                  <div
                     className="font-semibold text-gray-900 dark:text-gray-100 hover:text-[#1c4233] transition-colors"
                   >
                     {user.firstName} {user.lastName}
-                  </Link>
+                  </div>
                   <span
                     className={`text-xs px-2 py-1 rounded-full font-medium ${getRoleBadgeColor(
                       user.role

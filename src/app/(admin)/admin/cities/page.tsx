@@ -624,9 +624,6 @@ export default function CitiesPage() {
                             <code className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded inline-block mt-1">
                               {country.slug}
                             </code>
-                            {country.code && (
-                              <p className="text-xs text-gray-500 mt-1">ISO: {country.code}</p>
-                            )}
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>

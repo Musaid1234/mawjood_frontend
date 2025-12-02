@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Briefcase, Youtube } from 'lucide-react';
 import Image from 'next/image';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -16,6 +17,63 @@ interface Service {
 
 interface Props {
   services: Service[];
+}
+
+function ServiceCard({ service, currency }: { service: Service; currency: string }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const description = service.description || '';
+  const shouldShowToggle = description.length > 100; // Show toggle if description is longer than ~100 chars (2 lines)
+
+  return (
+    <div className="p-4 border border-gray-200 rounded-lg hover:border-primary hover:shadow-md transition-all">
+      {/* Service Image */}
+      {service.image && (
+        <div className="relative w-full h-48 rounded-lg overflow-hidden bg-gray-100 mb-3">
+          <Image src={service.image} alt={service.name} fill className="object-cover" />
+        </div>
+      )}
+
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        {service.name}
+      </h3>
+      
+      {description && (
+        <div className="mb-3">
+          <p className={`text-gray-600 text-sm ${!isExpanded && shouldShowToggle ? 'line-clamp-2' : ''}`}>
+            {description}
+          </p>
+          {shouldShowToggle && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-primary hover:text-primary/80 text-sm font-medium mt-1 transition-colors"
+            >
+              {isExpanded ? 'View less' : 'View more'}
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-4 text-sm">
+        {service.price && (
+          <div className="flex items-center gap-1.5 text-green-600 font-semibold">
+            <span>{currency} {service.price}</span>
+          </div>
+        )}
+
+        {service.youtubeUrl && (
+          <a
+            href={service.youtubeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-red-600 hover:text-red-700 transition-colors"
+          >
+            <Youtube className="w-4 h-4" />
+            <span>Watch Video</span>
+          </a>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function ServicesSection({ services }: Props) {
@@ -48,47 +106,7 @@ export default function ServicesSection({ services }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {services.map((service) => (
-          <div
-            key={service.id}
-            className="p-4 border border-gray-200 rounded-lg hover:border-primary hover:shadow-md transition-all"
-          >
-            {/* Service Image */}
-            {service.image && (
-              <div className="relative w-full h-48 rounded-lg overflow-hidden bg-gray-100 mb-3">
-                <Image src={service.image} alt={service.name} fill className="object-cover" />
-              </div>
-            )}
-
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {service.name}
-            </h3>
-            
-            {service.description && (
-              <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                {service.description}
-              </p>
-            )}
-
-            <div className="flex flex-wrap items-center gap-4 text-sm">
-              {service.price && (
-                <div className="flex items-center gap-1.5 text-green-600 font-semibold">
-                  <span>{currency} {service.price}</span>
-                </div>
-              )}
-
-              {service.youtubeUrl && (
-                <a
-                  href={service.youtubeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-red-600 hover:text-red-700 transition-colors"
-                >
-                  <Youtube className="w-4 h-4" />
-                  <span>Watch Video</span>
-                </a>
-              )}
-            </div>
-          </div>
+          <ServiceCard key={service.id} service={service} currency={currency} />
         ))}
       </div>
     </section>

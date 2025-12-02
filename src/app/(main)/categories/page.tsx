@@ -123,10 +123,17 @@ export default function CategoriesPage() {
                   {category.name}
                 </h3>
 
+                {/* Business count */}
+                {category._count?.businesses !== undefined && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {category._count.businesses} {category._count.businesses === 1 ? 'business' : 'businesses'}
+                  </p>
+                )}
+
                 {/* Subcategories count */}
                 {category.subcategories && category.subcategories.length > 0 && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    {category.subcategories.length} subcategories
+                  <p className="text-xs text-gray-500 mt-1">
+                    {category.subcategories.length} {category.subcategories.length === 1 ? 'subcategory' : 'subcategories'}
                   </p>
                 )}
               </div>

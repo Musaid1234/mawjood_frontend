@@ -4,8 +4,9 @@ import { useEditor, EditorContent, Extension } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import ImageExtension from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
 import { useEffect, useRef, useState } from 'react';
-import { ImagePlus, Loader2 } from 'lucide-react';
+import { ImagePlus, Loader2, Link as LinkIcon } from 'lucide-react';
 import axiosInstance from '@/lib/axios';
 import { API_ENDPOINTS } from '@/config/api.config';
 
@@ -41,6 +42,8 @@ export default function RichTextEditor({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imageUploadError, setImageUploadError] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
+  const [showLinkInput, setShowLinkInput] = useState(false);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -58,6 +61,12 @@ export default function RichTextEditor({
       ImageExtension.configure({
         HTMLAttributes: {
           class: 'max-h-80 w-auto rounded-md',
+        },
+      }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-blue-600 underline cursor-pointer',
         },
       }),
       InsertParagraphAfterHeading,
@@ -120,6 +129,52 @@ export default function RichTextEditor({
         fileInputRef.current.value = '';
       }
     }
+  };
+
+  const handleLinkClick = () => {
+    if (!editor) return;
+
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to);
+    
+    // Check if link is already active
+    if (editor.isActive('link')) {
+      const attrs = editor.getAttributes('link');
+      setLinkUrl(attrs.href || '');
+    } else {
+      setLinkUrl(selectedText || '');
+    }
+    
+    setShowLinkInput(true);
+  };
+
+  const handleLinkSubmit = () => {
+    if (!editor || !linkUrl.trim()) return;
+
+    const url = linkUrl.trim().startsWith('http://') || linkUrl.trim().startsWith('https://')
+      ? linkUrl.trim()
+      : `https://${linkUrl.trim()}`;
+
+    // If text is selected, convert it to a link
+    // Otherwise, insert the URL as a link
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to);
+
+    if (selectedText) {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    } else {
+      editor.chain().focus().insertContent(`<a href="${url}">${url}</a>`).run();
+    }
+
+    setLinkUrl('');
+    setShowLinkInput(false);
+  };
+
+  const handleUnlink = () => {
+    if (!editor) return;
+    editor.chain().focus().unsetLink().run();
+    setShowLinkInput(false);
+    setLinkUrl('');
   };
 
   return (
@@ -240,6 +295,28 @@ export default function RichTextEditor({
             onChange={handleImageUpload}
           />
 
+          <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+          <button
+            type="button"
+            onClick={handleLinkClick}
+            className={`p-2 rounded hover:bg-gray-200 ${editor?.isActive('link') ? 'bg-gray-200' : ''}`}
+            title="Insert/Edit Link"
+          >
+            <LinkIcon className="h-4 w-4 text-gray-600" />
+          </button>
+          
+          {editor?.isActive('link') && (
+            <button
+              type="button"
+              onClick={handleUnlink}
+              className="p-2 rounded hover:bg-gray-200"
+              title="Remove Link"
+            >
+              <span className="text-xs text-gray-600">Unlink</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => editor?.chain().focus().undo().run()}
@@ -259,6 +336,50 @@ export default function RichTextEditor({
             ↷
           </button>
         </div>
+
+        {/* Link Input - Inside Editor */}
+        {showLinkInput && (
+          <div className="px-4 py-2 border-b border-gray-200 bg-gray-50">
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleLinkSubmit();
+                  } else if (e.key === 'Escape') {
+                    setShowLinkInput(false);
+                    setLinkUrl('');
+                    editor?.chain().focus().run();
+                  }
+                }}
+                placeholder="Enter URL (e.g., https://example.com)"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent text-sm"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={handleLinkSubmit}
+                className="px-4 py-2 bg-[#1c4233] text-white rounded-lg hover:bg-[#1c4233]/90 text-sm font-medium"
+              >
+                Add
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLinkInput(false);
+                  setLinkUrl('');
+                  editor?.chain().focus().run();
+                }}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Editor Content */}
         <EditorContent editor={editor} />

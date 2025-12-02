@@ -243,7 +243,7 @@ export default function LocationSection() {
       countries.map((country) => ({
         value: country.id,
         label: country.name,
-        description: country.code ? `Code: ${country.code}` : undefined,
+        description: undefined,
       })),
     [countries]
   );
@@ -369,7 +369,7 @@ export default function LocationSection() {
                 ? 'Select a country first'
                 : availableRegions.length === 0
                   ? 'No regions found'
-                  : 'Select Region'
+                  : 'Select State'
             }
             helperText={
               values.countryId && availableRegions.length === 0
@@ -393,14 +393,14 @@ export default function LocationSection() {
             label="City"
             placeholder={
               !values.regionId
-                ? 'Select a region first'
+                ? 'Select a state first'
                 : availableCities.length === 0
                   ? 'No cities found'
                   : 'Select City'
             }
             helperText={
               values.regionId && availableCities.length === 0
-                ? 'No cities found for selected region'
+                ? 'No cities found for selected state'
                 : undefined
             }
             options={cityOptions}

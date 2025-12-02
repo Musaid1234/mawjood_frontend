@@ -8,7 +8,7 @@ import BlogCard from '@/components/blog/BlogCard';
 export default function Blogs() {
   const { data: blogs, isLoading, error } = useQuery<Blog[]>({
     queryKey: ['home-blogs'],
-    queryFn: () => blogService.getBlogs({ limit: 3, page: 1 }),
+    queryFn: () => blogService.getBlogs({ limit: 4, page: 1 }),
     staleTime: 60_000,
   });
 
