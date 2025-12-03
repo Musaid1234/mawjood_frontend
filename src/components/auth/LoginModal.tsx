@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Eye, EyeOff, ChevronDown, Search } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { authService, type SocialProvider } from '@/services/auth.service';
 import { useAuthStore } from '@/store/authStore';
+import { countryCodes as allCountryCodes, defaultCountryCode } from '@/data/countryCodes';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface LoginModalProps {
 }
 
 type LoginMethod = 'password' | 'otp';
+type LoginType = 'email' | 'phone';
 
 type GoogleCredentialResponse = {
   credential?: string;
@@ -67,7 +69,12 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
   const { login } = useAuthStore();
 
   const [method, setMethod] = useState<LoginMethod>('password');
-  const [identifier, setIdentifier] = useState('');
+  const [loginType, setLoginType] = useState<LoginType>('email');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState(defaultCountryCode);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -77,6 +84,62 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
   const [googleReady, setGoogleReady] = useState(false);
   const [googleButtonRendered, setGoogleButtonRendered] = useState(false);
   const [facebookReady, setFacebookReady] = useState(false);
+
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
+  const countrySearchInputRef = useRef<HTMLInputElement>(null);
+
+  // Filter country codes based on search
+  const filteredCountryCodes = useMemo(() => {
+    if (!countrySearch.trim()) {
+      return allCountryCodes;
+    }
+    const normalizedSearch = countrySearch.toLowerCase().trim();
+    return allCountryCodes.filter((item) => {
+      const normalizedCountry = item.country.toLowerCase();
+      const countryNoSpaces = normalizedCountry.replace(/\s+/g, '');
+      const normalizedCode = item.code.toLowerCase();
+      const sanitizedSearch = normalizedSearch.replace(/\s+/g, '');
+
+      const acronym =
+        item.country
+          .match(/\b[A-Za-z]/g)
+          ?.join('')
+          .toLowerCase() ?? '';
+
+      return (
+        normalizedCountry.includes(normalizedSearch) ||
+        countryNoSpaces.includes(sanitizedSearch) ||
+        normalizedCode.includes(sanitizedSearch) ||
+        acronym.includes(sanitizedSearch.replace(/[^a-z]/g, ''))
+      );
+    });
+  }, [countrySearch]);
+
+  const selectedCountry = useMemo(
+    () => allCountryCodes.find((item) => item.code === countryCode),
+    [countryCode]
+  );
+
+  // Close country dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
+        setCountryDropdownOpen(false);
+      }
+    };
+
+    if (countryDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      // Focus search input when dropdown opens
+      setTimeout(() => {
+        countrySearchInputRef.current?.focus();
+      }, 100);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [countryDropdownOpen]);
 
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
@@ -257,14 +320,25 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!identifier || !password) {
-      setError('Please fill all fields');
+    if (loginType === 'email' && !email) {
+      setError('Please enter your email');
+      return;
+    }
+    if (loginType === 'phone' && !phone) {
+      setError('Please enter your phone number');
+      return;
+    }
+    if (!password) {
+      setError('Please enter your password');
       return;
     }
 
     try {
       setLoading(true);
       setError('');
+      const identifier = loginType === 'email' 
+        ? email 
+        : `${countryCode}${phone.replace(/^0+/, '')}`;
       const response = await authService.loginWithPassword({ identifier, password });
       login(response.data.user, response.data.token, response.data.refreshToken);
       onClose();
@@ -276,8 +350,12 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
   };
 
   const handleSendOTP = async () => {
-    if (!identifier) {
-      setError('Please enter email or phone');
+    if (loginType === 'email' && !email) {
+      setError('Please enter your email');
+      return;
+    }
+    if (loginType === 'phone' && !phone) {
+      setError('Please enter your phone number');
       return;
     }
 
@@ -285,11 +363,11 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
       setLoading(true);
       setError('');
 
-      const isEmail = identifier.includes('@');
-      if (isEmail) {
-        await authService.sendEmailOTP(identifier);
+      if (loginType === 'email') {
+        await authService.sendEmailOTP(email);
       } else {
-        await authService.sendPhoneOTP(identifier);
+        const phoneWithCode = `${countryCode}${phone.replace(/^0+/, '')}`;
+        await authService.sendPhoneOTP(phoneWithCode);
       }
 
       setOtpSent(true);
@@ -312,10 +390,15 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
       setLoading(true);
       setError('');
 
-      const isEmail = identifier.includes('@');
-      const response = isEmail
-        ? await authService.verifyEmailOTP({ email: identifier, otp })
-        : await authService.verifyPhoneOTP({ phone: identifier, otp });
+      // For phone OTP, use 1234 as test OTP
+      const otpToUse = loginType === 'phone' ? '1234' : otp;
+
+      const response = loginType === 'email'
+        ? await authService.verifyEmailOTP({ email, otp: otpToUse })
+        : await authService.verifyPhoneOTP({ 
+            phone: `${countryCode}${phone.replace(/^0+/, '')}`, 
+            otp: otpToUse 
+          });
 
       login(response.data.user, response.data.token, response.data.refreshToken);
       onClose();
@@ -327,11 +410,14 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
   };
 
   const resetForm = () => {
-    setIdentifier('');
+    setEmail('');
+    setPhone('');
     setPassword('');
     setOtp('');
     setOtpSent(false);
     setError('');
+    setCountryCode(defaultCountryCode);
+    setLoginType('email');
   };
 
   return (
@@ -393,19 +479,117 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
           {/* Password Login Form */}
           {method === 'password' && (
             <form onSubmit={handlePasswordLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email or Phone
-                </label>
-                <input
-                  type="text"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="Enter email or phone"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  disabled={loading}
-                />
+              {/* Login Type Toggle */}
+              <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setLoginType('email')}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                    loginType === 'email'
+                      ? 'bg-white text-primary shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Email
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLoginType('phone')}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                    loginType === 'phone'
+                      ? 'bg-white text-primary shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Phone
+                </button>
               </div>
+
+              {loginType === 'email' ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    disabled={loading}
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number
+                  </label>
+                  <div className="flex flex-col gap-2">
+                    <div className="relative" ref={countryDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setCountryDropdownOpen((prev) => !prev)}
+                        className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-3 flex items-center justify-between text-sm font-medium"
+                        disabled={loading}
+                      >
+                        <span>
+                          {selectedCountry ? `${selectedCountry.code} ${selectedCountry.country}` : countryCode}
+                        </span>
+                        <ChevronDown className="h-4 w-4 text-gray-500" />
+                      </button>
+                      {countryDropdownOpen && (
+                        <div className="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
+                          <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100">
+                            <Search className="h-4 w-4 text-gray-400" />
+                            <input
+                              ref={countrySearchInputRef}
+                              type="text"
+                              placeholder="Search country or code"
+                              value={countrySearch}
+                              onChange={(e) => setCountrySearch(e.target.value)}
+                              className="w-full bg-transparent text-sm focus:outline-none"
+                            />
+                          </div>
+                          <div className="max-h-48 overflow-y-auto">
+                            {filteredCountryCodes.map((item) => (
+                              <button
+                                key={item.code}
+                                type="button"
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                                onClick={() => {
+                                  setCountryCode(item.code);
+                                  setCountryDropdownOpen(false);
+                                  setCountrySearch('');
+                                }}
+                              >
+                                {item.code} {item.country}
+                              </button>
+                            ))}
+                            {!filteredCountryCodes.length && (
+                              <p className="px-3 py-2 text-sm text-gray-500">No results found</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => {
+                        const numericValue = e.target.value.replace(/\D/g, '');
+                        const limitedValue = numericValue.slice(0, 15);
+                        setPhone(limitedValue);
+                      }}
+                      placeholder="Enter phone number"
+                      maxLength={15}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -446,19 +630,117 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
             <div className="space-y-4">
               {!otpSent ? (
                 <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email or Phone
-                    </label>
-                  <input
-                    type="text"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="Enter email or phone"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    disabled={loading}
-                  />
+                  {/* Login Type Toggle */}
+                  <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+                    <button
+                      type="button"
+                      onClick={() => setLoginType('email')}
+                      className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                        loginType === 'email'
+                          ? 'bg-white text-primary shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Email
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLoginType('phone')}
+                      className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                        loginType === 'phone'
+                          ? 'bg-white text-primary shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Phone
+                    </button>
                   </div>
+
+                  {loginType === 'email' ? (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter your email"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        disabled={loading}
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Phone Number
+                      </label>
+                      <div className="flex flex-col gap-2">
+                        <div className="relative" ref={countryDropdownRef}>
+                          <button
+                            type="button"
+                            onClick={() => setCountryDropdownOpen((prev) => !prev)}
+                            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-3 flex items-center justify-between text-sm font-medium"
+                            disabled={loading}
+                          >
+                            <span>
+                              {selectedCountry ? `${selectedCountry.code} ${selectedCountry.country}` : countryCode}
+                            </span>
+                            <ChevronDown className="h-4 w-4 text-gray-500" />
+                          </button>
+                          {countryDropdownOpen && (
+                            <div className="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
+                              <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100">
+                                <Search className="h-4 w-4 text-gray-400" />
+                                <input
+                                  ref={countrySearchInputRef}
+                                  type="text"
+                                  placeholder="Search country or code"
+                                  value={countrySearch}
+                                  onChange={(e) => setCountrySearch(e.target.value)}
+                                  className="w-full bg-transparent text-sm focus:outline-none"
+                                />
+                              </div>
+                              <div className="max-h-48 overflow-y-auto">
+                                {filteredCountryCodes.map((item) => (
+                                  <button
+                                    key={item.code}
+                                    type="button"
+                                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                                    onClick={() => {
+                                      setCountryCode(item.code);
+                                      setCountryDropdownOpen(false);
+                                      setCountrySearch('');
+                                    }}
+                                  >
+                                    {item.code} {item.country}
+                                  </button>
+                                ))}
+                                {!filteredCountryCodes.length && (
+                                  <p className="px-3 py-2 text-sm text-gray-500">No results found</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          type="tel"
+                          value={phone}
+                          onChange={(e) => {
+                            const numericValue = e.target.value.replace(/\D/g, '');
+                            const limitedValue = numericValue.slice(0, 15);
+                            setPhone(limitedValue);
+                          }}
+                          placeholder="Enter phone number"
+                          maxLength={15}
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   <button
                     type="button"
@@ -479,11 +761,16 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                       type="text"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
-                      placeholder="Enter 4-digit OTP"
+                      placeholder={loginType === 'phone' ? 'Enter OTP (use 1234 for phone)' : 'Enter 4-digit OTP'}
                       maxLength={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-center text-2xl tracking-widest"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-center text-2xl tracking-widest"
                       disabled={loading}
                     />
+                    {loginType === 'phone' && (
+                      <p className="mt-1 text-xs text-gray-500 text-center">
+                        Phone OTP verification uses test code: 1234
+                      </p>
+                    )}
                   </div>
 
                   <button

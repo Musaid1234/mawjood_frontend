@@ -18,6 +18,11 @@ interface RecentUsersListProps {
   }>;
 }
 
+const capitalizeFirstLetter = (str: string | null | undefined): string => {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
 const getRoleBadgeColor = (role: string) => {
   switch (role) {
     case 'ADMIN':
@@ -53,7 +58,7 @@ export default function RecentUsersList({ users }: RecentUsersListProps) {
                   <div
                     className="font-semibold text-gray-900 dark:text-gray-100 hover:text-[#1c4233] transition-colors"
                   >
-                    {user.firstName} {user.lastName}
+                    {capitalizeFirstLetter(user.firstName)} {capitalizeFirstLetter(user.lastName)}
                   </div>
                   <span
                     className={`text-xs px-2 py-1 rounded-full font-medium ${getRoleBadgeColor(

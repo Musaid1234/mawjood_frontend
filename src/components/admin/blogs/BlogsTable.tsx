@@ -153,7 +153,7 @@ export function BlogsTable<TData, TValue>({
       {/* Search */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
           <Input
             placeholder="Search by title or content..."
             value={searchValue}
@@ -167,7 +167,7 @@ export function BlogsTable<TData, TValue>({
                 e.stopPropagation();
               }
             }}
-            className="pl-10"
+            className="pl-12 h-11 text-base border-2 border-gray-300 dark:border-gray-700 focus:border-[#1c4233] dark:focus:border-[#1c4233] transition-colors"
           />
         </div>
       </div>

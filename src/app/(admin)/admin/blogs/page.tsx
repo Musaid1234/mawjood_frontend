@@ -188,14 +188,18 @@ export default function BlogsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="h-1 w-8 bg-[#1c4233] rounded-full"></div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Filters</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
               Status
             </label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full h-11 text-base border-2 border-gray-300 dark:border-gray-700 hover:border-[#1c4233] dark:hover:border-[#1c4233] transition-colors">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
@@ -207,12 +211,12 @@ export default function BlogsPage() {
             </Select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Date
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+              Date Range
             </label>
             <Select value={dateFilter} onValueChange={setDateFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full h-11 text-base border-2 border-gray-300 dark:border-gray-700 hover:border-[#1c4233] dark:hover:border-[#1c4233] transition-colors">
                 <SelectValue placeholder="All Time" />
               </SelectTrigger>
               <SelectContent>
@@ -224,12 +228,12 @@ export default function BlogsPage() {
             </Select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
               Category
             </label>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full h-11 text-base border-2 border-gray-300 dark:border-gray-700 hover:border-[#1c4233] dark:hover:border-[#1c4233] transition-colors">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>

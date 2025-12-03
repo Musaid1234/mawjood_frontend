@@ -1,39 +1,110 @@
 import { useFormikContext } from 'formik';
-import { Phone, Mail, MessageCircle, Globe } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Phone, Mail, MessageCircle, Globe, ChevronDown, Search } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 
-// Country codes with common options
+// Country codes with common options (abbreviated to 3 letters)
 const countryCodes = [
-  { code: '+966', country: 'Saudi Arabia' },
+  { code: '+966', country: 'KSA' },
   { code: '+971', country: 'UAE' },
-  { code: '+965', country: 'Kuwait' },
-  { code: '+974', country: 'Qatar' },
-  { code: '+973', country: 'Bahrain' },
-  { code: '+968', country: 'Oman' },
-  { code: '+961', country: 'Lebanon' },
-  { code: '+962', country: 'Jordan' },
-  { code: '+20', country: 'Egypt' },
-  { code: '+1', country: 'USA/Canada' },
-  { code: '+44', country: 'UK' },
-  { code: '+91', country: 'India' },
-  { code: '+92', country: 'Pakistan' },
-  { code: '+33', country: 'France' },
-  { code: '+49', country: 'Germany' },
-  { code: '+81', country: 'Japan' },
-  { code: '+86', country: 'China' },
-  { code: '+61', country: 'Australia' },
-  { code: '+27', country: 'South Africa' },
-  { code: '+234', country: 'Nigeria' },
+  { code: '+965', country: 'KUW' },
+  { code: '+974', country: 'QAT' },
+  { code: '+973', country: 'BHR' },
+  { code: '+968', country: 'OMN' },
+  { code: '+961', country: 'LBN' },
+  { code: '+962', country: 'JOR' },
+  { code: '+20', country: 'EGY' },
+  { code: '+1', country: 'USA' },
+  { code: '+44', country: 'GBR' },
+  { code: '+91', country: 'IND' },
+  { code: '+92', country: 'PAK' },
+  { code: '+33', country: 'FRA' },
+  { code: '+49', country: 'DEU' },
+  { code: '+81', country: 'JPN' },
+  { code: '+86', country: 'CHN' },
+  { code: '+61', country: 'AUS' },
+  { code: '+27', country: 'ZAF' },
+  { code: '+234', country: 'NGA' },
 ];
 
 export default function ContactSection() {
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } = useFormikContext<any>();
+
+  // State for country code dropdowns
+  const [phoneCountrySearch, setPhoneCountrySearch] = useState('');
+  const [phoneCountryOpen, setPhoneCountryOpen] = useState(false);
+  const [whatsappCountrySearch, setWhatsappCountrySearch] = useState('');
+  const [whatsappCountryOpen, setWhatsappCountryOpen] = useState(false);
+
+  const phoneCountryRef = useRef<HTMLDivElement>(null);
+  const phoneCountrySearchRef = useRef<HTMLInputElement>(null);
+  const whatsappCountryRef = useRef<HTMLDivElement>(null);
+  const whatsappCountrySearchRef = useRef<HTMLInputElement>(null);
+
+  // Filter country codes based on search
+  const filteredPhoneCountries = useMemo(() => {
+    if (!phoneCountrySearch.trim()) {
+      return countryCodes;
+    }
+    const normalizedSearch = phoneCountrySearch.toLowerCase().trim();
+    return countryCodes.filter((item) => {
+      const normalizedCountry = item.country.toLowerCase();
+      const normalizedCode = item.code.toLowerCase();
+      return (
+        normalizedCountry.includes(normalizedSearch) ||
+        normalizedCode.includes(normalizedSearch)
+      );
+    });
+  }, [phoneCountrySearch]);
+
+  const filteredWhatsappCountries = useMemo(() => {
+    if (!whatsappCountrySearch.trim()) {
+      return countryCodes;
+    }
+    const normalizedSearch = whatsappCountrySearch.toLowerCase().trim();
+    return countryCodes.filter((item) => {
+      const normalizedCountry = item.country.toLowerCase();
+      const normalizedCode = item.code.toLowerCase();
+      return (
+        normalizedCountry.includes(normalizedSearch) ||
+        normalizedCode.includes(normalizedSearch)
+      );
+    });
+  }, [whatsappCountrySearch]);
+
+  const selectedPhoneCountry = useMemo(
+    () => countryCodes.find((item) => item.code === (values.phoneCountryCode || '+966')),
+    [values.phoneCountryCode]
+  );
+
+  const selectedWhatsappCountry = useMemo(
+    () => countryCodes.find((item) => item.code === (values.whatsappCountryCode || '+966')),
+    [values.whatsappCountryCode]
+  );
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (phoneCountryRef.current && !phoneCountryRef.current.contains(event.target as Node)) {
+        setPhoneCountryOpen(false);
+      }
+      if (whatsappCountryRef.current && !whatsappCountryRef.current.contains(event.target as Node)) {
+        setWhatsappCountryOpen(false);
+      }
+    };
+
+    if (phoneCountryOpen || whatsappCountryOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      // Focus search input when dropdown opens
+      setTimeout(() => {
+        if (phoneCountryOpen) phoneCountrySearchRef.current?.focus();
+        if (whatsappCountryOpen) whatsappCountrySearchRef.current?.focus();
+      }, 100);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [phoneCountryOpen, whatsappCountryOpen]);
 
   // Handle phone number input - only allow digits with length validation
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,21 +161,52 @@ export default function ContactSection() {
           <div className={`relative flex items-center border rounded-lg focus-within:ring-2 focus-within:ring-[#1c4233] focus-within:border-transparent ${
             touched.phone && errors.phone ? 'border-red-500' : 'border-gray-300'
           }`}>
-            <Select
-              value={values.phoneCountryCode || '+966'}
-              onValueChange={(value) => setFieldValue('phoneCountryCode', value)}
-            >
-              <SelectTrigger className="w-auto min-w-[120px] border-0 border-r border-gray-300 rounded-l-lg rounded-r-none h-full focus:ring-0 focus:border-gray-300 bg-transparent [&_svg]:hidden">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {countryCodes.map((item) => (
-                  <SelectItem key={item.code} value={item.code}>
-                    {item.code} {item.country}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative" ref={phoneCountryRef}>
+              <button
+                type="button"
+                onClick={() => setPhoneCountryOpen((prev) => !prev)}
+                className="w-auto min-w-[100px] px-3 py-3 border-0 border-r border-gray-300 rounded-l-lg rounded-r-none h-full bg-transparent text-sm font-medium flex items-center justify-between hover:bg-gray-50"
+              >
+                <span className="text-xs">
+                  {selectedPhoneCountry ? `${selectedPhoneCountry.code} ${selectedPhoneCountry.country}` : '+966 KSA'}
+                </span>
+                <ChevronDown className="h-4 w-4 text-gray-500 ml-1" />
+              </button>
+              {phoneCountryOpen && (
+                <div className="absolute z-50 mt-1 w-[200px] rounded-lg border border-gray-200 bg-white shadow-lg">
+                  <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100">
+                    <Search className="h-4 w-4 text-gray-400" />
+                    <input
+                      ref={phoneCountrySearchRef}
+                      type="text"
+                      placeholder="Search country or code"
+                      value={phoneCountrySearch}
+                      onChange={(e) => setPhoneCountrySearch(e.target.value)}
+                      className="w-full bg-transparent text-sm focus:outline-none"
+                    />
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {filteredPhoneCountries.map((item) => (
+                      <button
+                        key={item.code}
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                        onClick={() => {
+                          setFieldValue('phoneCountryCode', item.code);
+                          setPhoneCountryOpen(false);
+                          setPhoneCountrySearch('');
+                        }}
+                      >
+                        <span className="text-xs">{item.code} {item.country}</span>
+                      </button>
+                    ))}
+                    {!filteredPhoneCountries.length && (
+                      <p className="px-3 py-2 text-sm text-gray-500">No results found</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <input
               type="tel"
               name="phone"
@@ -138,21 +240,52 @@ export default function ContactSection() {
           <div className={`relative flex items-center border rounded-lg focus-within:ring-2 focus-within:ring-[#1c4233] focus-within:border-transparent ${
             touched.whatsapp && errors.whatsapp ? 'border-red-500' : 'border-gray-300'
           }`}>
-            <Select
-              value={values.whatsappCountryCode || '+966'}
-              onValueChange={(value) => setFieldValue('whatsappCountryCode', value)}
-            >
-              <SelectTrigger className="w-auto min-w-[120px] border-0 border-r border-gray-300 rounded-l-lg rounded-r-none h-full focus:ring-0 focus:border-gray-300 bg-transparent [&_svg]:hidden">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {countryCodes.map((item) => (
-                  <SelectItem key={item.code} value={item.code}>
-                    {item.code} {item.country}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative" ref={whatsappCountryRef}>
+              <button
+                type="button"
+                onClick={() => setWhatsappCountryOpen((prev) => !prev)}
+                className="w-auto min-w-[100px] px-3 py-3 border-0 border-r border-gray-300 rounded-l-lg rounded-r-none h-full bg-transparent text-sm font-medium flex items-center justify-between hover:bg-gray-50"
+              >
+                <span className="text-xs">
+                  {selectedWhatsappCountry ? `${selectedWhatsappCountry.code} ${selectedWhatsappCountry.country}` : '+966 KSA'}
+                </span>
+                <ChevronDown className="h-4 w-4 text-gray-500 ml-1" />
+              </button>
+              {whatsappCountryOpen && (
+                <div className="absolute z-50 mt-1 w-[200px] rounded-lg border border-gray-200 bg-white shadow-lg">
+                  <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100">
+                    <Search className="h-4 w-4 text-gray-400" />
+                    <input
+                      ref={whatsappCountrySearchRef}
+                      type="text"
+                      placeholder="Search country or code"
+                      value={whatsappCountrySearch}
+                      onChange={(e) => setWhatsappCountrySearch(e.target.value)}
+                      className="w-full bg-transparent text-sm focus:outline-none"
+                    />
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {filteredWhatsappCountries.map((item) => (
+                      <button
+                        key={item.code}
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                        onClick={() => {
+                          setFieldValue('whatsappCountryCode', item.code);
+                          setWhatsappCountryOpen(false);
+                          setWhatsappCountrySearch('');
+                        }}
+                      >
+                        <span className="text-xs">{item.code} {item.country}</span>
+                      </button>
+                    ))}
+                    {!filteredWhatsappCountries.length && (
+                      <p className="px-3 py-2 text-sm text-gray-500">No results found</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <input
               type="tel"
               name="whatsapp"
