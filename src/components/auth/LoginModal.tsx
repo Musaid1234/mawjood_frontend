@@ -151,14 +151,11 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
         setError('');
         const response = await authService.socialLogin({ provider, token });
         await login(response.data.user, response.data.token, response.data.refreshToken);
-        // Small delay to ensure state updates before closing
-        setTimeout(() => {
-          onClose();
-        }, 100);
+        // Close modal immediately after successful login
+        onClose();
       } catch (err: any) {
         const providerName = provider === 'google' ? 'Google' : 'Facebook';
         setError(err?.message || `Unable to authenticate with ${providerName}. Please try again.`);
-      } finally {
         setLoading(false);
       }
     },
@@ -422,26 +419,26 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
 
   return (
     <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md w-[calc(100vw-1rem)]">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center">
+      <DialogContent className="sm:max-w-md w-[calc(100vw-0.5rem)] max-w-[calc(100vw-0.5rem)] sm:w-[calc(100vw-1rem)] sm:max-w-md max-h-[98vh] overflow-y-auto p-3 sm:p-6">
+        <DialogHeader className="px-0 sm:px-0">
+          <DialogTitle className="text-xl sm:text-2xl font-bold text-center">
             Log in
           </DialogTitle>
-          <DialogDescription className="text-center">
+          <DialogDescription className="text-center text-xs sm:text-sm">
             Access your Mawjood account instantly
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4 px-0 sm:px-0">
           {/* Method Toggle */}
-          <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+          <div className="flex gap-1.5 sm:gap-2 p-0.5 sm:p-1 bg-gray-100 rounded-lg">
             <button
               type="button"
               onClick={() => {
                 setMethod('password');
                 resetForm();
               }}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                 method === 'password'
                   ? 'bg-white text-primary shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
@@ -455,7 +452,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                 setMethod('otp');
                 resetForm();
               }}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                 method === 'otp'
                   ? 'bg-white text-primary shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
@@ -468,7 +465,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
           {/* Error Message */}
           {error && (
             <div
-              className={`p-3 rounded-lg text-sm ${
+              className={`p-2 sm:p-3 rounded-lg text-xs sm:text-sm ${
                 error.includes('successfully') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
               }`}
             >
@@ -480,11 +477,11 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
           {method === 'password' && (
             <form onSubmit={handlePasswordLogin} className="space-y-4">
               {/* Login Type Toggle */}
-              <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+              <div className="flex gap-1.5 sm:gap-2 p-0.5 sm:p-1 bg-gray-100 rounded-lg">
                 <button
                   type="button"
                   onClick={() => setLoginType('email')}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     loginType === 'email'
                       ? 'bg-white text-primary shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
@@ -495,7 +492,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                 <button
                   type="button"
                   onClick={() => setLoginType('phone')}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     loginType === 'phone'
                       ? 'bg-white text-primary shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
@@ -507,7 +504,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
 
               {loginType === 'email' ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     Email
                   </label>
                   <input
@@ -515,13 +512,13 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     disabled={loading}
                   />
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                     Phone Number
                   </label>
                   <div className="flex flex-col gap-2">
@@ -529,7 +526,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                       <button
                         type="button"
                         onClick={() => setCountryDropdownOpen((prev) => !prev)}
-                        className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-3 flex items-center justify-between text-sm font-medium"
+                        className="w-full rounded-lg border border-gray-300 bg-gray-50 px-2 sm:px-3 py-2 sm:py-3 flex items-center justify-between text-xs sm:text-sm font-medium"
                         disabled={loading}
                       >
                         <span>
@@ -539,23 +536,23 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                       </button>
                       {countryDropdownOpen && (
                         <div className="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
-                          <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100">
-                            <Search className="h-4 w-4 text-gray-400" />
+                          <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 border-b border-gray-100">
+                            <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
                             <input
                               ref={countrySearchInputRef}
                               type="text"
                               placeholder="Search country or code"
                               value={countrySearch}
                               onChange={(e) => setCountrySearch(e.target.value)}
-                              className="w-full bg-transparent text-sm focus:outline-none"
+                              className="w-full bg-transparent text-xs sm:text-sm focus:outline-none"
                             />
                           </div>
-                          <div className="max-h-48 overflow-y-auto">
+                          <div className="max-h-40 sm:max-h-48 overflow-y-auto">
                             {filteredCountryCodes.map((item) => (
                               <button
                                 key={item.code}
                                 type="button"
-                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs sm:text-sm hover:bg-gray-100"
                                 onClick={() => {
                                   setCountryCode(item.code);
                                   setCountryDropdownOpen(false);
@@ -566,7 +563,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                               </button>
                             ))}
                             {!filteredCountryCodes.length && (
-                              <p className="px-3 py-2 text-sm text-gray-500">No results found</p>
+                              <p className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-500">No results found</p>
                             )}
                           </div>
                         </div>
@@ -584,7 +581,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                       maxLength={15}
                       inputMode="numeric"
                       pattern="[0-9]*"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                       disabled={loading}
                     />
                   </div>
@@ -592,7 +589,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                   Password
                 </label>
                 <div className="relative">
@@ -601,16 +598,16 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter password"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent pr-10 sm:pr-10"
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    {showPassword ? <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Eye className="h-4 w-4 sm:h-5 sm:w-5" />}
                   </button>
                 </div>
               </div>
@@ -618,7 +615,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50"
+                className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 sm:py-3 text-sm sm:text-base rounded-lg transition-colors disabled:opacity-50"
               >
                 {loading ? 'Logging in...' : 'Login'}
               </button>
@@ -631,11 +628,11 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
               {!otpSent ? (
                 <>
                   {/* Login Type Toggle */}
-                  <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+                  <div className="flex gap-1.5 sm:gap-2 p-0.5 sm:p-1 bg-gray-100 rounded-lg">
                     <button
                       type="button"
                       onClick={() => setLoginType('email')}
-                      className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                      className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                         loginType === 'email'
                           ? 'bg-white text-primary shadow-sm'
                           : 'text-gray-600 hover:text-gray-900'
@@ -646,7 +643,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                     <button
                       type="button"
                       onClick={() => setLoginType('phone')}
-                      className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                      className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                         loginType === 'phone'
                           ? 'bg-white text-primary shadow-sm'
                           : 'text-gray-600 hover:text-gray-900'
@@ -658,7 +655,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
 
                   {loginType === 'email' ? (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                         Email
                       </label>
                       <input
@@ -666,13 +663,13 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="Enter your email"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                         disabled={loading}
                       />
                     </div>
                   ) : (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                         Phone Number
                       </label>
                       <div className="flex flex-col gap-2">
@@ -680,7 +677,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                           <button
                             type="button"
                             onClick={() => setCountryDropdownOpen((prev) => !prev)}
-                            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-3 flex items-center justify-between text-sm font-medium"
+                            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-2 sm:px-3 py-2 sm:py-3 flex items-center justify-between text-xs sm:text-sm font-medium"
                             disabled={loading}
                           >
                             <span>
@@ -690,23 +687,23 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                           </button>
                           {countryDropdownOpen && (
                             <div className="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
-                              <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100">
-                                <Search className="h-4 w-4 text-gray-400" />
+                              <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 border-b border-gray-100">
+                                <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
                                 <input
                                   ref={countrySearchInputRef}
                                   type="text"
                                   placeholder="Search country or code"
                                   value={countrySearch}
                                   onChange={(e) => setCountrySearch(e.target.value)}
-                                  className="w-full bg-transparent text-sm focus:outline-none"
+                                  className="w-full bg-transparent text-xs sm:text-sm focus:outline-none"
                                 />
                               </div>
-                              <div className="max-h-48 overflow-y-auto">
+                              <div className="max-h-40 sm:max-h-48 overflow-y-auto">
                                 {filteredCountryCodes.map((item) => (
                                   <button
                                     key={item.code}
                                     type="button"
-                                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+                                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs sm:text-sm hover:bg-gray-100"
                                     onClick={() => {
                                       setCountryCode(item.code);
                                       setCountryDropdownOpen(false);
@@ -717,7 +714,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                                   </button>
                                 ))}
                                 {!filteredCountryCodes.length && (
-                                  <p className="px-3 py-2 text-sm text-gray-500">No results found</p>
+                                  <p className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-500">No results found</p>
                                 )}
                               </div>
                             </div>
@@ -735,7 +732,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                           maxLength={15}
                           inputMode="numeric"
                           pattern="[0-9]*"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                           disabled={loading}
                         />
                       </div>
@@ -746,15 +743,15 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                     type="button"
                     onClick={handleSendOTP}
                     disabled={loading}
-                    className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50"
+                    className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 sm:py-3 text-sm sm:text-base rounded-lg transition-colors disabled:opacity-50"
                   >
                     {loading ? 'Sending...' : 'Send OTP'}
                   </button>
                 </>
               ) : (
-                <form onSubmit={handleVerifyOTP} className="space-y-4">
+                <form onSubmit={handleVerifyOTP} className="space-y-3 sm:space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                       Enter OTP
                     </label>
                     <input
@@ -763,7 +760,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                       onChange={(e) => setOtp(e.target.value)}
                       placeholder={loginType === 'phone' ? 'Enter OTP (use 1234 for phone)' : 'Enter 4-digit OTP'}
                       maxLength={4}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-center text-2xl tracking-widest"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-base sm:text-2xl border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-center tracking-widest"
                       disabled={loading}
                     />
                     {loginType === 'phone' && (
@@ -776,7 +773,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50"
+                    className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 sm:py-3 text-sm sm:text-base rounded-lg transition-colors disabled:opacity-50"
                   >
                     {loading ? 'Verifying...' : 'Verify OTP'}
                   </button>
@@ -784,7 +781,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                   <button
                     type="button"
                     onClick={() => setOtpSent(false)}
-                    className="w-full text-primary hover:underline text-sm"
+                    className="w-full text-primary hover:underline text-xs sm:text-sm"
                   >
                     Resend OTP
                   </button>
@@ -794,21 +791,21 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
           )}
 
           {/* Divider */}
-          <div className="relative my-6">
+          <div className="relative my-4 sm:my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-300" />
             </div>
-            <div className="relative flex justify-center text-sm">
+            <div className="relative flex justify-center text-xs sm:text-sm">
               <span className="px-2 bg-white text-gray-500">Or</span>
             </div>
           </div>
 
           {/* Social Login */}
-          <div className="space-y-3 flex flex-col items-center">
+          <div className="space-y-2 sm:space-y-3 flex flex-col items-center">
             <div
               id="google-signin-button"
               className={`flex justify-center ${!googleClientId ? 'opacity-50 cursor-not-allowed' : ''}`}
-              style={{ width: '320px', maxWidth: '100%' }}
+              style={{ width: '100%', maxWidth: '320px' }}
             />
             {!googleButtonRendered && (
               <button
@@ -816,19 +813,22 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                 onClick={() => {
                   if (!googleClientId) {
                     setError('Google login is not configured.');
+                    onClose(); // Close modal
                     return;
                   }
                   if (!window.google?.accounts?.id) {
                     setError('Google sign-in is still loading. Please try again in a moment.');
+                    onClose(); // Close modal
                     return;
                   }
+                  // Close modal when Google prompt is triggered
+                  onClose();
                   window.google.accounts.id.prompt();
                 }}
                 disabled={loading || !googleClientId}
-                className="flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-3 font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-white"
-                style={{ width: '320px', maxWidth: '100%' }}
+                className="flex items-center justify-center gap-2 sm:gap-3 border border-gray-300 rounded-lg py-2.5 sm:py-3 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-white w-full max-w-[320px]"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 533.5 544.3" className="h-5 w-5">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 533.5 544.3" className="h-4 w-4 sm:h-5 sm:w-5">
                   <path
                     fill="#4285f4"
                     d="M533.5 278.4c0-17.4-1.5-34.1-4.3-50.4H272v95.4h147.5c-6.4 34.5-25.9 63.8-55.2 83.5v68h89.1c52.2-48 80.1-118.7 80.1-196.5z"
@@ -846,20 +846,19 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                     d="M272 107.7c39.1-.6 76.7 13.8 105.5 40.9l78.7-78.7C409.1 24.1 346.4-.4 272 0 164.4 0 69 68.1 23.6 171.1l92.6 71.9C138.1 156.6 199.6 107.7 272 107.7z"
                   />
                 </svg>
-                Continue with Google
+                <span className="text-xs sm:text-sm">Continue with Google</span>
               </button>
             )}
             <button
               type="button"
               onClick={handleFacebookLogin}
               disabled={loading || !facebookAppId}
-              className="flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-3 font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-white"
-              style={{ width: '320px', maxWidth: '100%' }}
+              className="flex items-center justify-center gap-2 sm:gap-3 border border-gray-300 rounded-lg py-2.5 sm:py-3 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-white w-full max-w-[320px]"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
-                className="h-5 w-5"
+                className="h-4 w-4 sm:h-5 sm:w-5"
                 aria-hidden="true"
               >
                 <path
@@ -867,13 +866,13 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                   fill="#1877f2"
                 />
               </svg>
-              Continue with Facebook
+              <span className="text-xs sm:text-sm">Continue with Facebook</span>
             </button>
           </div>
 
           {/* Sign Up Link */}
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600">
               Don't have an account?{' '}
               <button onClick={onSwitchToSignup} className="text-primary font-semibold hover:underline">
                 Sign up

@@ -51,8 +51,8 @@ export default function CitiesPage() {
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('all');
-  const [regionSearchValue, setRegionSearchValue] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('all');
+  const [regionSearchValue, setRegionSearchValue] = useState('');
   const [countrySearchValue, setCountrySearchValue] = useState('');
   
   const [cityDialogOpen, setCityDialogOpen] = useState(false);
@@ -82,7 +82,7 @@ export default function CitiesPage() {
 
   useEffect(() => {
     filterCities();
-  }, [cities, searchValue, selectedRegion]);
+  }, [cities, searchValue, selectedRegion, selectedCountry]);
 
   useEffect(() => {
     filterRegions();
@@ -123,6 +123,14 @@ export default function CitiesPage() {
     // Filter by region
     if (selectedRegion && selectedRegion !== 'all') {
       filtered = filtered.filter((city) => city.regionId === selectedRegion);
+    }
+
+    // Filter by country
+    if (selectedCountry && selectedCountry !== 'all') {
+      filtered = filtered.filter((city) => {
+        const region = regions.find((r) => r.id === city.regionId);
+        return region?.countryId === selectedCountry;
+      });
     }
 
     setFilteredCities(filtered);
@@ -350,6 +358,19 @@ export default function CitiesPage() {
       ),
     },
     {
+      accessorKey: 'country',
+      header: 'Country',
+      cell: ({ row }) => {
+        const region = regions.find((r) => r.id === row.original.regionId);
+        const country = region ? countries.find((c) => c.id === region.countryId) : null;
+        return (
+          <Badge variant="outline">
+            {country?.name || 'Unknown'}
+          </Badge>
+        );
+      },
+    },
+    {
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => {
@@ -442,8 +463,11 @@ export default function CitiesPage() {
                 data={filteredCities}
                 onSearchChange={setSearchValue}
                 onRegionFilter={setSelectedRegion}
+                onCountryFilter={setSelectedCountry}
                 searchValue={searchValue}
                 regions={regions}
+                countries={countries}
+                selectedCountry={selectedCountry}
               />
             </CardContent>
           </Card>

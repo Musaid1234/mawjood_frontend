@@ -114,26 +114,38 @@ export const createSubscriptionColumns = (): ColumnDef<BusinessSubscription>[] =
   },
   {
     accessorKey: 'startedAt',
-    header: 'Start Date',
+    header: 'Start Date & Time',
     cell: ({ row }) => {
-      const date = new Date(row.getValue('startedAt'));
+      const dateValue = row.getValue('startedAt');
+      if (!dateValue) return <span className="text-gray-400">N/A</span>;
+      const date = new Date(dateValue as string);
+      if (isNaN(date.getTime())) return <span className="text-gray-400">Invalid Date</span>;
       return (
         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
           <Calendar className="w-4 h-4" />
-          {format(date, 'MMM dd, yyyy')}
+          <div>
+            <div>{format(date, 'MMM dd, yyyy')}</div>
+            <div className="text-xs text-gray-500">{format(date, 'hh:mm a')}</div>
+          </div>
         </div>
       );
     },
   },
   {
     accessorKey: 'endsAt',
-    header: 'End Date',
+    header: 'End Date & Time',
     cell: ({ row }) => {
-      const date = new Date(row.getValue('endsAt'));
+      const dateValue = row.getValue('endsAt');
+      if (!dateValue) return <span className="text-gray-400">N/A</span>;
+      const date = new Date(dateValue as string);
+      if (isNaN(date.getTime())) return <span className="text-gray-400">Invalid Date</span>;
       return (
         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
           <Calendar className="w-4 h-4" />
-          {format(date, 'MMM dd, yyyy')}
+          <div>
+            <div>{format(date, 'MMM dd, yyyy')}</div>
+            <div className="text-xs text-gray-500">{format(date, 'hh:mm a')}</div>
+          </div>
         </div>
       );
     },

@@ -131,14 +131,14 @@ export default function AddListingPage() {
         ? `${values.phoneCountryCode}${values.phone}` 
         : values.phone;
       
-      const whatsappWithCode = values.whatsappCountryCode && values.whatsapp 
+      const whatsappWithCode = (values.whatsappCountryCode && values.whatsapp) 
         ? `${values.whatsappCountryCode}${values.whatsapp}` 
-        : values.whatsapp;
+        : undefined;
 
       const submitData = {
         ...values,
         phone: phoneWithCode,
-        whatsapp: whatsappWithCode || undefined,
+        whatsapp: whatsappWithCode,
         latitude: values.latitude ? parseFloat(values.latitude) : undefined,
         longitude: values.longitude ? parseFloat(values.longitude) : undefined,
         workingHours: Object.keys(filteredWorkingHours).length > 0 ? filteredWorkingHours : undefined,

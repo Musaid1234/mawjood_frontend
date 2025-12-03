@@ -182,10 +182,16 @@ export default function TransactionsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
-                        <span>
-                          {format(new Date(subscription.startedAt), 'MMM dd, yyyy')} -{' '}
-                          {format(new Date(subscription.endsAt), 'MMM dd, yyyy')}
-                        </span>
+                        <div className="flex flex-col">
+                          <span>
+                            Start: {format(new Date(subscription.startedAt), 'MMM dd, yyyy')} at{' '}
+                            {format(new Date(subscription.startedAt), 'hh:mm a')}
+                          </span>
+                          <span>
+                            End: {format(new Date(subscription.endsAt), 'MMM dd, yyyy')} at{' '}
+                            {format(new Date(subscription.endsAt), 'hh:mm a')}
+                          </span>
+                        </div>
                       </div>
                       {subscription.totalAmount && (
                         <div className="flex items-center gap-2">

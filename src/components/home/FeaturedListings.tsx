@@ -179,7 +179,7 @@ export default function FeaturedListings() {
                         {business.totalReviews > 0 && business.averageRating > 0 ? (
                             <div className="flex items-center gap-1 bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">
                                 <span>{business.averageRating.toFixed(1)}</span>
-                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                <Star className="w-3 h-3 fill-white" />
                                 <span className="ml-1 whitespace-nowrap">
                                     {business.totalReviews} {business.totalReviews === 1 ? 'Review' : 'Reviews'}
                                 </span>

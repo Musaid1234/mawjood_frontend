@@ -102,14 +102,18 @@ export default function EditListingPage() {
         ? `${values.phoneCountryCode}${values.phone}` 
         : values.phone;
       
-      const whatsappWithCode = values.whatsappCountryCode && values.whatsapp 
+      // Always include whatsapp field in edit mode - send empty string if cleared to allow removal
+      // If both country code and number are provided, combine them
+      // Otherwise, send empty string to clear the field
+      const whatsappWithCode = (values.whatsappCountryCode && values.whatsapp) 
         ? `${values.whatsappCountryCode}${values.whatsapp}` 
-        : values.whatsapp;
+        : '';
 
       const submitData = {
         ...values,
         phone: phoneWithCode,
-        whatsapp: whatsappWithCode || undefined,
+        // Always include whatsapp field (empty string if cleared) so backend can remove it
+        whatsapp: whatsappWithCode,
         latitude: values.latitude ? parseFloat(values.latitude) : undefined,
         longitude: values.longitude ? parseFloat(values.longitude) : undefined,
         workingHours: Object.keys(filteredWorkingHours).length > 0 ? filteredWorkingHours : undefined,

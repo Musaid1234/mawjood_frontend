@@ -102,6 +102,12 @@ export default function CategoryDialog({
     onSuccess: () => {
       toast.success('Category created successfully!');
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      // Trigger a page refresh by calling window.location.reload or refetch
+      // Since we're using React Query, invalidating should trigger a refetch
+      // But we'll also add a small delay to ensure the backend has processed
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['categories'] });
+      }, 500);
       handleClose();
     },
     onError: (error: any) => {
@@ -116,6 +122,10 @@ export default function CategoryDialog({
     onSuccess: () => {
       toast.success('Category updated successfully!');
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      // Trigger a page refresh by calling window.location.reload or refetch
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['categories'] });
+      }, 500);
       handleClose();
     },
     onError: (error: any) => {
@@ -181,6 +191,9 @@ export default function CategoryDialog({
   const isLoading = createMutation.isPending || updateMutation.isPending;
   const categories = categoriesResponse?.data?.categories || [];
   const parentCategories = categories.filter((cat) => cat.id !== category?.id);
+  
+  // Determine if this is a subcategory (has parentId)
+  const isSubcategory = (isEditMode && category?.parentId) || (!isEditMode && defaultParentId);
 
   useEffect(() => {
     if (!isEditMode && open) {
@@ -196,7 +209,10 @@ export default function CategoryDialog({
       <DialogContent className="sm:max-w-lg w-[95vw] max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader className="pb-3">
           <DialogTitle className="text-xl font-bold text-gray-900">
-            {isEditMode ? 'Edit Category' : 'Add New Category'}
+            {isEditMode 
+              ? (isSubcategory ? 'Edit Sub Category' : 'Edit Category')
+              : (isSubcategory ? 'Add New Sub Category' : 'Add New Category')
+            }
           </DialogTitle>
         </DialogHeader>
 

@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner';
 import { CreditCard, CheckCircle2, Loader2, Building2 } from 'lucide-react';
 import { useCurrency } from '@/hooks/useCurrency';
+import { format } from 'date-fns';
 
 const formatBillingFrequency = (intervalCount: number, interval: string) => {
   if (intervalCount === 1) {
@@ -329,7 +330,8 @@ export default function SubscriptionsPage() {
                           <h3 className="font-semibold text-gray-900">{business.name}</h3>
                           <p className="text-sm text-gray-600">
                             {plan?.name || 'Unknown Plan'} • Active until{' '}
-                            {new Date(activeSubscription.endsAt).toLocaleDateString()}
+                            {format(new Date(activeSubscription.endsAt), 'MMM dd, yyyy')} at{' '}
+                            {format(new Date(activeSubscription.endsAt), 'hh:mm a')}
                           </p>
                         </div>
                       </div>

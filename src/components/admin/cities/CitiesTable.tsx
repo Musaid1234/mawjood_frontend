@@ -30,16 +30,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search } from 'lucide-react';
+import { Search, ChevronDown } from 'lucide-react';
 import { BulkActionsToolbar } from '@/components/admin/common/BulkActionsToolbar';
+import { useMemo, useRef, useEffect } from 'react';
 
 interface CitiesTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   onSearchChange: (value: string) => void;
   onRegionFilter: (value: string) => void;
+  onCountryFilter?: (value: string) => void;
   searchValue?: string;
   regions: Array<{ id: string; name: string }>;
+  countries?: Array<{ id: string; name: string }>;
+  selectedCountry?: string;
   onBulkExport?: (selectedRows: TData[]) => void;
   onBulkDelete?: (selectedRows: TData[]) => void;
 }
@@ -49,15 +53,22 @@ export function CitiesTable<TData, TValue>({
   data,
   onSearchChange,
   onRegionFilter,
+  onCountryFilter,
   searchValue = '',
   regions,
+  countries = [],
+  selectedCountry = 'all',
   onBulkExport,
   onBulkDelete,
 }: CitiesTableProps<TData, TValue>) {
+  const [countrySearch, setCountrySearch] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
+  const countrySearchInputRef = useRef<HTMLInputElement>(null);
 
   const table = useReactTable({
     data,
@@ -80,6 +91,41 @@ export function CitiesTable<TData, TValue>({
 
   const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
   const selectedCount = selectedRows.length;
+
+  // Filter countries based on search
+  const filteredCountries = useMemo(() => {
+    if (!countrySearch.trim()) {
+      return countries;
+    }
+    const searchLower = countrySearch.toLowerCase();
+    return countries.filter((country) =>
+      country.name.toLowerCase().includes(searchLower)
+    );
+  }, [countries, countrySearch]);
+
+  // Close country dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        countryDropdownRef.current &&
+        !countryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setCountryDropdownOpen(false);
+        setCountrySearch('');
+      }
+    };
+
+    if (countryDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      setTimeout(() => {
+        countrySearchInputRef.current?.focus();
+      }, 100);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [countryDropdownOpen]);
 
   const handleExportCSV = () => {
     if (onBulkExport) {
@@ -143,6 +189,72 @@ export function CitiesTable<TData, TValue>({
           />
         </div>
         
+        {onCountryFilter && (
+          <div className="relative" ref={countryDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setCountryDropdownOpen((prev) => !prev)}
+              className="w-full md:w-[200px] rounded-lg border border-gray-300 bg-white px-3 py-2 flex items-center justify-between text-sm font-medium hover:bg-gray-50"
+            >
+              <span>
+                {selectedCountry === 'all'
+                  ? 'All Countries'
+                  : countries.find((c) => c.id === selectedCountry)?.name || 'All Countries'}
+              </span>
+              <ChevronDown className="h-4 w-4 text-gray-500" />
+            </button>
+            {countryDropdownOpen && (
+              <div className="absolute z-50 mt-2 w-full md:w-[200px] rounded-lg border border-gray-200 bg-white shadow-lg">
+                <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100">
+                  <Search className="h-4 w-4 text-gray-400" />
+                  <input
+                    ref={countrySearchInputRef}
+                    type="text"
+                    placeholder="Search country..."
+                    value={countrySearch}
+                    onChange={(e) => setCountrySearch(e.target.value)}
+                    className="w-full bg-transparent text-sm focus:outline-none"
+                  />
+                </div>
+                <div className="max-h-48 overflow-y-auto">
+                  <button
+                    type="button"
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 ${
+                      selectedCountry === 'all' ? 'bg-gray-100 font-medium' : ''
+                    }`}
+                    onClick={() => {
+                      onCountryFilter('all');
+                      setCountryDropdownOpen(false);
+                      setCountrySearch('');
+                    }}
+                  >
+                    All Countries
+                  </button>
+                  {filteredCountries.map((country) => (
+                    <button
+                      key={country.id}
+                      type="button"
+                      className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 ${
+                        selectedCountry === country.id ? 'bg-gray-100 font-medium' : ''
+                      }`}
+                      onClick={() => {
+                        onCountryFilter(country.id);
+                        setCountryDropdownOpen(false);
+                        setCountrySearch('');
+                      }}
+                    >
+                      {country.name}
+                    </button>
+                  ))}
+                  {!filteredCountries.length && (
+                    <p className="px-3 py-2 text-sm text-gray-500">No results found</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <Select onValueChange={onRegionFilter}>
           <SelectTrigger className="w-full md:w-[200px]">
             <SelectValue placeholder="Filter by States" />
