@@ -13,6 +13,9 @@ interface BusinessGrowthChartProps {
 }
 
 export default function BusinessGrowthChart({ data }: BusinessGrowthChartProps) {
+  // Safety check for data
+  const safeData = Array.isArray(data) ? data.filter(item => item && item.month && typeof item.count === 'number') : [];
+
   return (
     <Card>
       <CardHeader>
@@ -22,9 +25,9 @@ export default function BusinessGrowthChart({ data }: BusinessGrowthChartProps) 
         </div>
       </CardHeader>
       <CardContent>
-        {data.length > 0 ? (
+        {safeData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data}>
+            <LineChart data={safeData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis
                 dataKey="month"

@@ -34,7 +34,44 @@ const getRoleBadgeColor = (role: string) => {
   }
 };
 
+// Safe date formatting function
+const formatDateSafely = (dateString: string | null | undefined): string => {
+  if (!dateString) return 'N/A';
+  
+  try {
+    const date = new Date(dateString);
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'N/A';
+    }
+    return formatDistanceToNow(date, { addSuffix: true });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'N/A';
+  }
+};
+
 export default function RecentUsersList({ users }: RecentUsersListProps) {
+  // Safety check for users array
+  if (!users || !Array.isArray(users) || users.length === 0) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-[#1c4233]" />
+            Recent Users
+          </CardTitle>
+          <Link href="/admin/users" className="text-sm text-[#1c4233] hover:underline font-medium">
+            View All →
+          </Link>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-gray-500 py-8">No recent users</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -72,7 +109,7 @@ export default function RecentUsersList({ users }: RecentUsersListProps) {
                 <p className="text-xs text-gray-500 mt-1">📱 {user.phone}</p>
               </div>
               <span className="text-xs text-[#1c4233] font-medium whitespace-nowrap bg-green-50 dark:bg-green-950 px-2 py-1 rounded-md">
-                {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}
+                {formatDateSafely(user.createdAt)}
               </span>
             </div>
           ))}

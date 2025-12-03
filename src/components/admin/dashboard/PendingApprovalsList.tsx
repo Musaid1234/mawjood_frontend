@@ -5,6 +5,23 @@ import { Clock } from 'lucide-react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 
+// Safe date formatting function
+const formatDateSafely = (dateString: string | null | undefined): string => {
+  if (!dateString) return 'N/A';
+  
+  try {
+    const date = new Date(dateString);
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'N/A';
+    }
+    return formatDistanceToNow(date, { addSuffix: true });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'N/A';
+  }
+};
+
 interface PendingApprovalsListProps {
   approvals: Array<{
     id: string;
@@ -79,7 +96,7 @@ export default function PendingApprovalsList({ approvals }: PendingApprovalsList
                 </p>
               </div>
               <span className="text-xs text-amber-600 font-medium whitespace-nowrap bg-amber-50 dark:bg-amber-950 px-2 py-1 rounded-md">
-                {formatDistanceToNow(new Date(approval.createdAt), { addSuffix: true })}
+                {formatDateSafely(approval.createdAt)}
               </span>
             </div>
           ))}
