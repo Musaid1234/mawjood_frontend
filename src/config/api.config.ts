@@ -159,6 +159,15 @@ export const API_ENDPOINTS = {
     DISPLAY: '/api/advertisements/display',
     BASE: '/api/advertisements',
   },
+
+  // CR Verification endpoints
+  CR: {
+    STATUS: '/api/cr/status',
+    VERIFY_BASIC: '/api/cr/verify/basic',
+    VERIFY_FULL: '/api/cr/verify/full',
+    GET_STATUS: '/api/cr/status',
+    CHECK_OWNERSHIP: '/api/cr/ownership',
+  },
 } as const;
 
 // Request configuration defaults

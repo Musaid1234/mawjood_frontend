@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { 
   BasicInfoSection, 
   ContactSection, 
+  CRVerificationSection,
   LocationSection, 
   WorkingHoursSection, 
   ImageUploadSection, 
@@ -202,6 +203,7 @@ export default function AddListingPage() {
 
             <BasicInfoSection />
             <ContactSection />
+            <CRVerificationSection />
             <LocationSection />
             <WorkingHoursSection />
             <ImageUploadSection />
