@@ -15,12 +15,27 @@ import {
 import { format } from 'date-fns';
 import Image from 'next/image';
 
+// Safe date formatting utility
+const formatDateSafely = (dateString: string | null | undefined): string => {
+  if (!dateString) return 'N/A';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'N/A';
+    }
+    return format(date, 'MMM dd, yyyy');
+  } catch (error) {
+    return 'N/A';
+  }
+};
+
 export type Business = {
   id: string;
   name: string;
   slug: string;
   description: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+  isVerified?: boolean;
   createdAt: string;
   logo?: string;
   category: {
@@ -50,6 +65,7 @@ export const createColumns = (
   onReject: (businessId: string) => void,
   onSuspend: (businessId: string) => void,
   onEdit: (businessId: string) => void,
+  onToggleVerified: (businessId: string, isVerified: boolean) => void,
   currentTab: string
 ): ColumnDef<Business>[] => [
     {
@@ -93,8 +109,17 @@ export const createColumns = (
               </div>
             )}
             <div>
-              <div className="font-semibold text-gray-900 dark:text-gray-100">
+              <div className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                 {business.name}
+                {business.isVerified && (
+                  <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                )}
               </div>
               <div
                 className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]"
@@ -192,11 +217,11 @@ export const createColumns = (
       accessorKey: 'createdAt',
       header: 'Created',
       cell: ({ row }) => {
-        const date = new Date(row.getValue('createdAt'));
+        const dateString = row.getValue('createdAt') as string;
         return (
           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <Calendar className="w-4 h-4" />
-            {format(date, 'MMM dd, yyyy')}
+            {formatDateSafely(dateString)}
           </div>
         );
       },
@@ -239,6 +264,15 @@ export const createColumns = (
 
               {business.status === 'APPROVED' && (
                 <>
+                  <DropdownMenuItem
+                    onClick={() => onToggleVerified(business.id, !business.isVerified)}
+                    className={business.isVerified 
+                      ? "text-yellow-600 focus:text-yellow-600 focus:bg-yellow-50"
+                      : "text-green-600 focus:text-green-600 focus:bg-green-50"
+                    }
+                  >
+                    {business.isVerified ? 'Remove Verified Tag' : 'Set as Verified'}
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => onSuspend(business.id)}
                     className="text-orange-600 focus:text-orange-600 focus:bg-orange-50"

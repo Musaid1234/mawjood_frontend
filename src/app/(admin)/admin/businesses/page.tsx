@@ -390,6 +390,17 @@ export default function BusinessesPage() {
     }
   };
 
+  const handleToggleVerified = async (businessId: string, isVerified: boolean) => {
+    try {
+      await adminService.toggleVerifiedStatus(businessId, isVerified);
+      toast.success(isVerified ? 'Business verified successfully' : 'Verified tag removed successfully');
+      fetchBusinesses();
+    } catch (error: any) {
+      console.error('Error toggling verified status:', error);
+      toast.error(error.message || 'Failed to update verified status');
+    }
+  };
+
 
   const handleEdit = (businessId: string) => {
     router.push(`/admin/businesses/edit/${businessId}`);
@@ -452,6 +463,7 @@ export default function BusinessesPage() {
     (businessId) => setActionDialog({ open: true, type: 'reject', businessId }),
     (businessId) => setActionDialog({ open: true, type: 'suspend', businessId }),
     handleEdit,
+    handleToggleVerified,
     activeTab
   );
 

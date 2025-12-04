@@ -138,6 +138,7 @@ export const API_ENDPOINTS = {
     DELETE_USER: (id: string) => `/api/admin/users/${id}`,
     GET_PENDING_BUSINESSES: '/api/admin/businesses/pending',
     SUSPEND_BUSINESS: (id: string) => `/api/admin/businesses/${id}/suspend`,
+    VERIFY_BUSINESS: (id: string) => `/api/admin/businesses/${id}/verify`,
     GET_ALL_REVIEWS: '/api/admin/reviews',
     GET_PENDING_DELETE_REQUESTS: '/api/admin/reviews/pending-delete-requests',
     APPROVE_DELETE_REQUEST: (id: string) => `/api/admin/reviews/${id}/approve-delete`,

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { categoryService, Category } from '@/services/category.service';
 import { businessService, Business } from '@/services/business.service';
-import { cityService, City as CityType, Region as RegionType } from '@/services/city.service';
+import { cityService, City as CityType, Region as RegionType, Country as CountryType } from '@/services/city.service';
 import { advertisementService, Advertisement } from '@/services/advertisement.service';
 import { useCityStore } from '@/store/cityStore';
 import BusinessListCard from '@/components/business/BusinessListCard';
@@ -48,17 +48,20 @@ export default function CityCategoryPage() {
   const {
     cities,
     regions,
+    countries,
     selectedCity,
     selectedLocation,
     fetchCities,
     fetchRegions,
+    fetchCountries,
     setSelectedCity,
     setSelectedLocation,
   } = useCityStore();
 
   const [hydratedCity, setHydratedCity] = useState<CityType | null>(null);
   const [hydratedRegion, setHydratedRegion] = useState<RegionType | null>(null);
-  const [locationType, setLocationType] = useState<'city' | 'region'>('city');
+  const [hydratedCountry, setHydratedCountry] = useState<CountryType | null>(null);
+  const [locationType, setLocationType] = useState<'city' | 'region' | 'country'>('city');
   const [category, setCategory] = useState<Category | null>(null);
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loadingCategory, setLoadingCategory] = useState(true);
@@ -117,10 +120,28 @@ export default function CityCategoryPage() {
   }, [regions.length, fetchRegions]);
 
   useEffect(() => {
+    if (!countries.length) {
+      fetchCountries();
+    }
+  }, [countries.length, fetchCountries]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const resolveLocation = async () => {
       const normalizedSlug = locationSlug.toLowerCase();
+
+      // Check if selectedLocation from store matches the slug and is a country
+      if (selectedLocation?.type === 'country' && selectedLocation.slug.toLowerCase() === normalizedSlug && selectedLocation.id) {
+        if (!cancelled) {
+          setLocationType('country');
+          const country = countries.find((c) => c.id === selectedLocation.id) || null;
+          setHydratedCountry(country);
+          setHydratedCity(null);
+          setHydratedRegion(null);
+        }
+        return;
+      }
 
       const cityMatch =
         cities.find((city) => city.slug.toLowerCase() === normalizedSlug) || null;
@@ -207,10 +228,40 @@ export default function CityCategoryPage() {
         return;
       }
 
+      // Try to match country
+      let countryMatch =
+        countries.find((country) => country.slug.toLowerCase() === normalizedSlug) || null;
+      if (!countryMatch && countries.length === 0) {
+        try {
+          const fetchedCountries = await cityService.fetchCountries();
+          countryMatch =
+            fetchedCountries.find((country) => country.slug.toLowerCase() === normalizedSlug) || null;
+        } catch (err) {
+          console.error('Failed to fetch countries:', err);
+        }
+      }
+
+      if (countryMatch) {
+        if (!cancelled) {
+          setLocationType('country');
+          setHydratedCountry(countryMatch);
+          setHydratedCity(null);
+          setHydratedRegion(null);
+          setSelectedLocation({
+            type: 'country',
+            slug: countryMatch.slug,
+            name: countryMatch.name,
+            id: countryMatch.id,
+          });
+        }
+        return;
+      }
+
       if (!cancelled) {
         setLocationType('city');
         setHydratedCity(null);
         setHydratedRegion(null);
+        setHydratedCountry(null);
       }
     };
 
@@ -223,6 +274,7 @@ export default function CityCategoryPage() {
     locationSlug,
     cities,
     regions,
+    countries,
     selectedCity,
     selectedLocation,
     setSelectedCity,
@@ -264,10 +316,20 @@ export default function CityCategoryPage() {
     if (locationType === 'region') {
       return hydratedRegion?.name || formatSlugToName(locationSlug);
     }
+    if (locationType === 'country') {
+      return hydratedCountry?.name || selectedLocation?.name || formatSlugToName(locationSlug);
+    }
     return formatSlugToName(locationSlug);
-  }, [locationType, effectiveCity, hydratedRegion, locationSlug]);
+  }, [locationType, effectiveCity, hydratedRegion, hydratedCountry, selectedLocation, locationSlug]);
 
   const effectiveLocation = useMemo(() => {
+    // Check selectedLocation from store first (for country selection)
+    if (selectedLocation?.type === 'country' && selectedLocation.id) {
+      return { id: selectedLocation.id, type: 'country' as const };
+    }
+    if (locationType === 'country' && hydratedCountry) {
+      return { id: hydratedCountry.id, type: 'country' as const };
+    }
     if (locationType === 'city' && effectiveCity) {
       return { id: effectiveCity.id, type: 'city' as const };
     }
@@ -275,7 +337,7 @@ export default function CityCategoryPage() {
       return { id: hydratedRegion.id, type: 'region' as const };
     }
     return null;
-  }, [locationType, effectiveCity, hydratedRegion]);
+  }, [locationType, effectiveCity, hydratedRegion, hydratedCountry, selectedLocation]);
   const effectiveLocationId = effectiveLocation?.id;
   const effectiveLocationType = effectiveLocation?.type;
   const canonicalPath = `/${locationSlug}/${categorySlug}`;

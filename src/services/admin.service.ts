@@ -287,6 +287,20 @@ export const adminService = {
   },
 
   /**
+   * Toggle verified status (only for approved businesses)
+   */
+  async toggleVerifiedStatus(businessId: string, isVerified: boolean): Promise<ApiResponse<any>> {
+    try {
+      const response = await axiosInstance.patch(API_ENDPOINTS.ADMIN.VERIFY_BUSINESS(businessId), {
+        isVerified,
+      });
+      return response.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  /**
    * Get all reviews (admin)
    */
   async getAllReviews(params?: {
