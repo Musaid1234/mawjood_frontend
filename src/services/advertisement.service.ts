@@ -7,6 +7,7 @@ export interface Advertisement {
   title: string;
   imageUrl: string;
   targetUrl?: string | null;
+  openInNewTab?: boolean;
   isActive: boolean;
   startsAt?: string | null;
   endsAt?: string | null;
@@ -15,7 +16,7 @@ export interface Advertisement {
   regionId?: string | null;
   cityId?: string | null;
   categoryId?: string | null;
-  adType?: 'CATEGORY' | 'TOP' | 'FOOTER';
+  adType?: 'CATEGORY' | 'TOP' | 'FOOTER' | 'BUSINESS_LISTING' | 'BLOG_LISTING' | 'HOMEPAGE';
   createdAt: string;
   updatedAt: string;
 }
@@ -24,7 +25,7 @@ export interface AdvertisementQuery {
   locationId?: string;
   locationType?: 'city' | 'region' | 'country';
   categoryId?: string;
-  adType?: 'CATEGORY' | 'TOP' | 'FOOTER';
+  adType?: 'CATEGORY' | 'TOP' | 'FOOTER' | 'BUSINESS_LISTING' | 'BLOG_LISTING' | 'HOMEPAGE';
 }
 
 interface ApiResponse<T> {
@@ -103,7 +104,7 @@ export const advertisementService = {
           // If no ad is returned, break to avoid unnecessary calls
           break;
         }
-      } catch (err) {
+      } catch {
         // If we can't fetch more, break
         break;
       }
@@ -122,6 +123,96 @@ export const advertisementService = {
             'Content-Type': 'multipart/form-data',
           },
         }
+      );
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async getAdvertisementById(id: string): Promise<Advertisement> {
+    try {
+      const response = await axiosInstance.get<ApiResponse<Advertisement>>(
+        `${API_ENDPOINTS.ADVERTISEMENTS.BASE}/${id}`
+      );
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async getAllAdvertisements(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    adType?: string;
+    isActive?: string;
+  }): Promise<{
+    advertisements: Advertisement[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }> {
+    try {
+      const queryParams = new URLSearchParams();
+      if (params?.page) queryParams.set('page', params.page.toString());
+      if (params?.limit) queryParams.set('limit', params.limit.toString());
+      if (params?.search) queryParams.set('search', params.search);
+      if (params?.adType && params.adType !== 'all') queryParams.set('adType', params.adType);
+      if (params?.isActive && params.isActive !== 'all') queryParams.set('isActive', params.isActive);
+
+      const response = await axiosInstance.get<ApiResponse<{
+        advertisements: Advertisement[];
+        pagination: {
+          total: number;
+          page: number;
+          limit: number;
+          totalPages: number;
+        };
+      }>>(`${API_ENDPOINTS.ADVERTISEMENTS.BASE}?${queryParams.toString()}`);
+      
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async updateAdvertisement(id: string, formData: FormData): Promise<Advertisement> {
+    try {
+      const response = await axiosInstance.patch<ApiResponse<Advertisement>>(
+        `${API_ENDPOINTS.ADVERTISEMENTS.BASE}/${id}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data.data;
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async deleteAdvertisement(id: string): Promise<void> {
+    try {
+      await axiosInstance.delete(`${API_ENDPOINTS.ADVERTISEMENTS.BASE}/${id}`);
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async toggleAdvertisementStatus(id: string, isActive: boolean): Promise<Advertisement> {
+    try {
+      const formData = new FormData();
+      formData.append('isActive', String(isActive));
+      
+      const response = await axiosInstance.patch<ApiResponse<Advertisement>>(
+        `${API_ENDPOINTS.ADVERTISEMENTS.BASE}/${id}`,
+        formData
       );
       return response.data.data;
     } catch (error) {

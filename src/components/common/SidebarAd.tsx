@@ -10,7 +10,7 @@ interface SidebarAdProps {
   queryKey?: string;
   className?: string;
   height?: string;
-  adType?: 'CATEGORY' | 'TOP' | 'FOOTER';
+  adType?: 'CATEGORY' | 'TOP' | 'FOOTER' | 'BUSINESS_LISTING' | 'BLOG_LISTING' | 'HOMEPAGE';
   categoryId?: string;
 }
 
@@ -65,8 +65,8 @@ export default function SidebarAd({ queryKey = 'sidebar-ad', className = '', hei
       {targetUrl ? (
         <Link
           href={targetUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+          target={ad?.openInNewTab !== false ? '_blank' : '_self'}
+          rel={ad?.openInNewTab !== false ? 'noopener noreferrer' : undefined}
           className="block w-full"
         >
           <div className={`relative w-full ${height}`}>

@@ -276,16 +276,8 @@ export const businessService = {
 
   async getBusinessBySlug(slug: string): Promise<Business> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/businesses/slug/${slug}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
-      if (!data.success) throw new Error(data.message || 'Failed to fetch business');
-
-      return data.data;
+      const response = await axiosInstance.get(`api/businesses/slug/${slug}`);
+      return response.data.data;
     } catch (error) {
       console.error('Error fetching business:', error);
       throw error;
@@ -294,16 +286,8 @@ export const businessService = {
 
   async getBusinessById(id: string): Promise<Business> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/businesses/${id}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
-      if (!data.success) throw new Error(data.message || 'Failed to fetch business');
-
-      return data.data;
+      const response = await axiosInstance.get(`api/businesses/${id}`);
+      return response.data.data;
     } catch (error) {
       console.error('Error fetching business:', error);
       throw error;

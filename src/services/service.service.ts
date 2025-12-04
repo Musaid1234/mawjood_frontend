@@ -6,6 +6,7 @@ export interface Service {
   name: string;
   description?: string;
   price: number;
+  currency?: string;
   duration?: number;
   image?: string;
   youtubeUrl?: string;
@@ -32,6 +33,7 @@ export interface CreateServiceData {
   name: string;
   description?: string;
   price: number;
+  currency?: string;
   duration?: number;
   image?: File;
   youtubeUrl?: string;
@@ -65,6 +67,9 @@ export const serviceService = {
       if (data.description) {
         formData.append('description', data.description);
       }
+      if (data.currency) {
+        formData.append('currency', data.currency);
+      }
       if (data.duration) {
         formData.append('duration', data.duration.toString());
       }
@@ -95,6 +100,9 @@ export const serviceService = {
       
       if (data.description) {
         formData.append('description', data.description);
+      }
+      if (data.currency) {
+        formData.append('currency', data.currency);
       }
       if (data.duration) {
         formData.append('duration', data.duration.toString());

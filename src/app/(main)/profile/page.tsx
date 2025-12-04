@@ -11,7 +11,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/login');
+      router.push('/');
     }
   }, [isAuthenticated, router]);
 

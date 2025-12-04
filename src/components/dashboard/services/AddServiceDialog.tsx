@@ -7,7 +7,6 @@ import { serviceService } from '@/services/service.service';
 import { toast } from 'sonner';
 import { Loader2, Building2, Upload, X } from 'lucide-react';
 import Image from 'next/image';
-import { useCurrency } from '@/hooks/useCurrency';
 import {
   Dialog,
   DialogContent,
@@ -26,12 +25,12 @@ interface AddServiceDialogProps {
 
 export default function AddServiceDialog({ open, onOpenChange, editingService, businessId }: AddServiceDialogProps) {
   const queryClient = useQueryClient();
-  const { currency } = useCurrency();
   const [selectedBusinessId, setSelectedBusinessId] = useState<string>(businessId || '');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
+    currency: 'SAR',
     youtubeUrl: '',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -44,6 +43,7 @@ export default function AddServiceDialog({ open, onOpenChange, editingService, b
         name: editingService.name || '',
         description: editingService.description || '',
         price: editingService.price?.toString() || '',
+        currency: editingService.currency || 'SAR',
         youtubeUrl: editingService.youtubeUrl || '',
       });
       setImagePreview(editingService.image || null);
@@ -55,6 +55,7 @@ export default function AddServiceDialog({ open, onOpenChange, editingService, b
         name: '',
         description: '',
         price: '',
+        currency: 'SAR',
         youtubeUrl: '',
       });
       setImageFile(null);
@@ -104,6 +105,7 @@ export default function AddServiceDialog({ open, onOpenChange, editingService, b
       name: '',
       description: '',
       price: '',
+      currency: 'SAR',
       youtubeUrl: '',
     });
     setImageFile(null);
@@ -148,6 +150,7 @@ export default function AddServiceDialog({ open, onOpenChange, editingService, b
           name: formData.name,
           description: formData.description,
           price: parseFloat(formData.price),
+          currency: formData.currency,
           youtubeUrl: formData.youtubeUrl || undefined,
           image: imageFile || undefined,
         },
@@ -159,6 +162,7 @@ export default function AddServiceDialog({ open, onOpenChange, editingService, b
           name: formData.name,
           description: formData.description,
           price: parseFloat(formData.price),
+          currency: formData.currency,
           youtubeUrl: formData.youtubeUrl || undefined,
           image: imageFile || undefined,
         },
@@ -250,7 +254,7 @@ export default function AddServiceDialog({ open, onOpenChange, editingService, b
             {/* Price */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price ({currency}) <span className="text-red-500">*</span>
+                Price <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -265,20 +269,47 @@ export default function AddServiceDialog({ open, onOpenChange, editingService, b
               />
             </div>
 
-            {/* YouTube URL */}
+            {/* Currency */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                YouTube Video URL
+                Currency <span className="text-red-500">*</span>
               </label>
-              <input
-                type="url"
-                value={formData.youtubeUrl}
-                onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
-                placeholder="https://www.youtube.com/watch?v=..."
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
+              <select
+                value={formData.currency}
+                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed text-sm appearance-none bg-white"
                 disabled={isFormDisabled}
-              />
+                required
+              >
+                <option value="SAR">SAR - Saudi Riyal</option>
+                <option value="USD">USD - US Dollar</option>
+                <option value="EUR">EUR - Euro</option>
+                <option value="GBP">GBP - British Pound</option>
+                <option value="AED">AED - UAE Dirham</option>
+                <option value="KWD">KWD - Kuwaiti Dinar</option>
+                <option value="BHD">BHD - Bahraini Dinar</option>
+                <option value="OMR">OMR - Omani Rial</option>
+                <option value="QAR">QAR - Qatari Riyal</option>
+                <option value="JOD">JOD - Jordanian Dinar</option>
+                <option value="EGP">EGP - Egyptian Pound</option>
+                <option value="TRY">TRY - Turkish Lira</option>
+              </select>
             </div>
+          </div>
+
+          {/* YouTube URL */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              YouTube Video URL
+            </label>
+            <input
+              type="url"
+              value={formData.youtubeUrl}
+              onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c4233] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
+              disabled={isFormDisabled}
+            />
           </div>
 
           {/* Image Upload */}

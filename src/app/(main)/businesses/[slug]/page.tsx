@@ -23,6 +23,7 @@ interface Service {
   name: string;
   description?: string;
   price?: number;
+  currency?: string;
   duration?: number;
 }
 
@@ -204,6 +205,26 @@ export default function BusinessDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {business.status !== 'APPROVED' && (
+        <div className={`py-3 px-4 text-center text-white font-semibold ${
+          business.status === 'PENDING' ? 'bg-yellow-600' :
+          business.status === 'REJECTED' ? 'bg-red-600' :
+          business.status === 'SUSPENDED' ? 'bg-orange-600' :
+          'bg-gray-600'
+        }`}>
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
+            <span className="text-sm uppercase tracking-wide">
+              {business.status === 'PENDING' && '⏳ Business Pending Approval'}
+              {business.status === 'REJECTED' && '❌ Business Rejected'}
+              {business.status === 'SUSPENDED' && '🚫 Business Suspended'}
+            </span>
+            <span className="text-sm opacity-90">
+              • Only visible to you and admins
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Gallery */}
       <BusinessGallery business={business} />
 

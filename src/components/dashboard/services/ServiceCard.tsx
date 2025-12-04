@@ -1,13 +1,13 @@
 import { Trash2, Edit, Youtube } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
-import { useCurrency } from '@/hooks/useCurrency';
 
 interface Service {
   id: string;
   name: string;
   description?: string;
   price: number;
+  currency?: string;
   duration?: number;
   image?: string;
   youtubeUrl?: string;
@@ -22,7 +22,7 @@ interface ServiceCardProps {
 }
 
 export default function ServiceCard({ businessName, businessLogo, service, onDelete, onEdit }: ServiceCardProps) {
-  const { currency } = useCurrency();
+  const serviceCurrency = service.currency || 'SAR';
   
   return (
         <Card className="border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden bg-white py-0">
@@ -75,7 +75,7 @@ export default function ServiceCard({ businessName, businessLogo, service, onDel
             {/* Price & YouTube */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <div className="flex items-center gap-2 bg-emerald-50 px-3 py-2 rounded-xl">
-                <span className="font-semibold text-emerald-700">{currency} {service.price}</span>
+                <span className="font-semibold text-emerald-700">{serviceCurrency} {service.price}</span>
               </div>
               {service.youtubeUrl && (
                 <a

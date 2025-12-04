@@ -33,20 +33,18 @@ export default function AdvertisementBanner() {
 
   // Try to fetch ads from backend
   const { data: ads, isLoading } = useQuery<Advertisement[]>({
-    queryKey: ['advertisements', selectedLocation?.id, selectedCity?.id],
+    queryKey: ['advertisements', 'HOMEPAGE', selectedLocation?.id, selectedCity?.id],
     queryFn: async (): Promise<Advertisement[]> => {
       try {
         const locationId = selectedLocation?.id || selectedCity?.id;
         const locationType = selectedLocation?.type || 'city';
         
-        if (locationId) {
-          const ad = await advertisementService.getDisplayAdvertisement({
-            locationId,
-            locationType: locationType as 'city' | 'region' | 'country',
-          });
-          return ad ? [ad] : [];
-        }
-        return [];
+        const ad = await advertisementService.getDisplayAdvertisement({
+          locationId,
+          locationType: locationType as 'city' | 'region' | 'country',
+          adType: 'HOMEPAGE',
+        });
+        return ad ? [ad] : [];
       } catch (error) {
         console.error('Error fetching advertisements:', error);
         return [];
@@ -81,19 +79,23 @@ export default function AdvertisementBanner() {
     return null;
   }
 
+  const firstAd = adsArray.length > 0 ? adsArray[0] : null;
+
   return (
     <section className="py-8 px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="max-w-7xl mx-auto">
         {displayBanners.length > 0 && (
           <Link
             href={displayBanners[0].targetUrl || '#'}
+            target={firstAd?.openInNewTab !== false ? '_blank' : '_self'}
+            rel={firstAd?.openInNewTab !== false ? 'noopener noreferrer' : undefined}
             className="group block relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 h-40 md:h-48 w-full"
           >
             <Image
               src={displayBanners[0].imageUrl}
               alt={displayBanners[0].title || 'Advertisement'}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              className="object-contain group-hover:scale-105 transition-transform duration-300"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </Link>

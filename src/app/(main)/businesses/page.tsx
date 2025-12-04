@@ -304,7 +304,7 @@ export default function BusinessesPage() {
               {/* Sidebar Ad - Always shown with consistent width */}
               <div className="lg:w-80 flex-shrink-0">
                 <div className="sticky top-18">
-                  <SidebarAd queryKey="sidebar-ad-businesses" height="h-96" />
+                  <SidebarAd queryKey="sidebar-ad-businesses" height="h-96" adType="BUSINESS_LISTING" />
                 </div>
               </div>
             </div>

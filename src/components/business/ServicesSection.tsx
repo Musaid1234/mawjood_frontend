@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { Briefcase, Youtube } from 'lucide-react';
 import Image from 'next/image';
-import { useCurrency } from '@/hooks/useCurrency';
 
 interface Service {
   id: string;
+  currency?: string;
   name: string;
   description?: string;
   price?: number;
@@ -19,10 +19,10 @@ interface Props {
   services: Service[];
 }
 
-function ServiceCard({ service, currency }: { service: Service; currency: string }) {
+function ServiceCard({ service }: { service: Service}) {
   const [isExpanded, setIsExpanded] = useState(false);
   const description = service.description || '';
-  const shouldShowToggle = description.length > 100; // Show toggle if description is longer than ~100 chars (2 lines)
+  const shouldShowToggle = description.length > 100;
 
   return (
     <div className="p-4 border border-gray-200 rounded-lg hover:border-primary hover:shadow-md transition-all">
@@ -56,7 +56,7 @@ function ServiceCard({ service, currency }: { service: Service; currency: string
       <div className="flex flex-wrap items-center gap-4 text-sm">
         {service.price && (
           <div className="flex items-center gap-1.5 text-green-600 font-semibold">
-            <span>{currency} {service.price}</span>
+            <span>{service.currency || 'SAR'} {service.price}</span>
           </div>
         )}
 
@@ -77,8 +77,6 @@ function ServiceCard({ service, currency }: { service: Service; currency: string
 }
 
 export default function ServicesSection({ services }: Props) {
-  const { currency } = useCurrency();
-  
   if (!services || services.length === 0) {
         return (
           <section id="services" className="bg-white rounded-lg shadow-sm p-6 scroll-mt-48">
@@ -106,7 +104,7 @@ export default function ServicesSection({ services }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {services.map((service) => (
-          <ServiceCard key={service.id} service={service} currency={currency} />
+          <ServiceCard key={service.id} service={service} />
         ))}
       </div>
     </section>

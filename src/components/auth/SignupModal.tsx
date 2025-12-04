@@ -445,12 +445,21 @@ export default function SignupModal({
         phone: formattedPhone,
       });
 
-      const nextEmail = response.data?.email || formData.email.trim();
-      setPendingEmail(nextEmail);
+      // Check if OTP was sent to phone or email
+      const isSaudiNumber = formattedPhone.startsWith('+966');
+      
+      if (isSaudiNumber) {
+        setPendingEmail(formattedPhone);
+        toast.success('We sent a verification code to your phone. Enter 1234 to verify your account.');
+      } else {
+        const nextEmail = response.data?.email || formData.email.trim();
+        setPendingEmail(nextEmail);
+        toast.success('We sent a verification code to your email. Enter it below to verify your account.');
+      }
+      
       setOtpStep(true);
       setOtpValue('');
       setOtpError('');
-      toast.success('We sent a verification code to your email. Enter it below to verify your account.');
     } catch (err: any) {
       setError(err?.message || 'Signup failed');
     } finally {
@@ -461,10 +470,11 @@ export default function SignupModal({
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const targetEmail = (pendingEmail || formData.email || '').trim().toLowerCase();
+    const isSaudiNumber = formattedPhone.startsWith('+966');
+    const target = isSaudiNumber ? formattedPhone : (pendingEmail || formData.email || '').trim().toLowerCase();
 
-    if (!targetEmail) {
-      setOtpError('Missing email address. Please restart the sign-up process.');
+    if (!target) {
+      setOtpError('Missing verification target. Please restart the sign-up process.');
       return;
     }
 
@@ -478,10 +488,11 @@ export default function SignupModal({
       setOtpError('');
       setError('');
 
-      const response = await authService.verifyEmailOTP({
-        email: targetEmail,
-        otp: otpValue.trim(),
-      });
+      const response = await authService.verifyEmailOTP(
+        isSaudiNumber
+          ? { phone: target, otp: otpValue.trim() }
+          : { email: target, otp: otpValue.trim() }
+      );
 
       login(response.data.user, response.data.token, response.data.refreshToken);
       toast.success('Account verified successfully!');
@@ -494,16 +505,23 @@ export default function SignupModal({
   };
 
   const handleResendOtp = async () => {
-    const targetEmail = (pendingEmail || formData.email || '').trim();
-    if (!targetEmail) {
+    const isSaudiNumber = formattedPhone.startsWith('+966');
+    const target = isSaudiNumber ? formattedPhone : (pendingEmail || formData.email || '').trim();
+    
+    if (!target) {
       setOtpError('Unable to resend code. Please restart the sign-up process.');
       return;
     }
 
     try {
       setResendLoading(true);
-      await authService.sendEmailOTP(targetEmail);
-      toast.success('A new verification code has been sent to your email.');
+      if (isSaudiNumber) {
+        await authService.sendPhoneOTP(target);
+        toast.success('A new verification code has been sent to your phone.');
+      } else {
+        await authService.sendEmailOTP(target);
+        toast.success('A new verification code has been sent to your email.');
+      }
       setOtpError('');
     } catch (err: any) {
       setOtpError(err?.message || 'Failed to resend the verification code. Please try again.');
@@ -657,17 +675,18 @@ export default function SignupModal({
               <label className="mb-1.5 sm:mb-2 block text-xs sm:text-sm font-medium text-gray-700">Phone Number *</label>
               <div className="flex flex-col gap-2">
                 <div className="relative" ref={countryDropdownRef}>
-                  <button
-                    type="button"
-                    onClick={() => setCountryDropdownOpen((prev) => !prev)}
-                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-2 sm:px-3 py-2 sm:py-3 flex items-center justify-between text-xs sm:text-sm font-medium"
-                    disabled={loading}
-                  >
-                    <span>
-                      {selectedCountry ? `${selectedCountry.code} ${selectedCountry.country}` : countryCode}
-                    </span>
-                    <ChevronDown className="h-4 w-4 text-gray-500" />
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => setCountryDropdownOpen((prev) => !prev)}
+                        className="w-full rounded-lg border border-gray-300 bg-gray-50 px-2 sm:px-3 py-2 sm:py-3 flex items-center justify-between text-xs sm:text-sm font-medium"
+                        disabled={loading}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-lg">{selectedCountry?.flag || '🌍'}</span>
+                          <span>{selectedCountry ? `${selectedCountry.code} ${selectedCountry.country}` : countryCode}</span>
+                        </span>
+                        <ChevronDown className="h-4 w-4 text-gray-500" />
+                      </button>
                   {countryDropdownOpen ? (
                     <div className="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
                       <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 border-b border-gray-100">
@@ -682,11 +701,11 @@ export default function SignupModal({
                         />
                       </div>
                       <div className="max-h-40 sm:max-h-48 overflow-y-auto">
-                        {filteredCountryCodes.map((item) => (
+                        {filteredCountryCodes.map((item, index) => (
                           <button
-                            key={item.code}
+                            key={`${item.code}-${item.country}-${index}`}
                             type="button"
-                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs sm:text-sm hover:bg-gray-100"
+                            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs sm:text-sm hover:bg-gray-100 flex items-center gap-2"
                             onClick={() => {
                               setCountryCode(item.code);
                               setCountryDropdownOpen(false);
@@ -698,7 +717,8 @@ export default function SignupModal({
                               });
                             }}
                           >
-                            {item.code} {item.country}
+                            <span className="text-base">{item.flag}</span>
+                            <span>{item.code} {item.country}</span>
                           </button>
                         ))}
                         {!filteredCountryCodes.length ? (
@@ -903,8 +923,13 @@ export default function SignupModal({
 
             <p className="text-center text-xs sm:text-sm text-gray-600">
               We sent a verification code to{' '}
-              <span className="font-medium text-gray-800 break-all">{pendingEmail || formData.email}</span>.
-              Enter the code below to verify your account.
+              <span className="font-medium text-gray-800 break-all">
+                {formattedPhone.startsWith('+966') ? formattedPhone : (pendingEmail || formData.email)}
+              </span>.
+              {formattedPhone.startsWith('+966') && (
+                <span className="block mt-1 text-xs text-gray-500">(Test OTP: 1234)</span>
+              )}
+              <br />Enter the code below to verify your account.
             </p>
 
             <div>

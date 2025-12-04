@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,14 +11,58 @@ import { advertisementService } from '@/services/advertisement.service';
 import { categoryService, Category } from '@/services/category.service';
 import { cityService, Region, Country, City } from '@/services/city.service';
 import Image from 'next/image';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2, Upload, ArrowLeft } from 'lucide-react';
+import axiosInstance from '@/lib/axios';
+import { API_ENDPOINTS } from '@/config/api.config';
 
 type AdType = 'CATEGORY' | 'TOP' | 'FOOTER' | 'BUSINESS_LISTING' | 'BLOG_LISTING' | 'HOMEPAGE';
 type LocationType = 'city' | 'region' | 'country' | 'global';
 
-export default function AdvertisementsPage() {
-  const router = useRouter();
+interface Advertisement {
+  id: string;
+  title: string;
+  imageUrl: string;
+  targetUrl?: string | null;
+  openInNewTab?: boolean;
+  adType: AdType;
+  isActive: boolean;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  notes?: string | null;
+  countryId?: string | null;
+  regionId?: string | null;
+  cityId?: string | null;
+  categoryId?: string | null;
+  city?: { 
+    id: string; 
+    name: string;
+    region?: {
+      id: string;
+      name: string;
+      country?: {
+        id: string;
+        name: string;
+      };
+    };
+  } | null;
+  region?: { 
+    id: string; 
+    name: string;
+    country?: {
+      id: string;
+      name: string;
+    };
+  } | null;
+  country?: { id: string; name: string } | null;
+  category?: { id: string; name: string } | null;
+}
 
+export default function EditAdvertisementPage() {
+  const router = useRouter();
+  const params = useParams();
+  const adId = params?.id as string;
+
+  const [loading, setLoading] = useState(true);
   const [adType, setAdType] = useState<AdType>('TOP');
   const [title, setTitle] = useState('');
   const [targetUrl, setTargetUrl] = useState('');
@@ -34,6 +78,7 @@ export default function AdvertisementsPage() {
   const [notes, setNotes] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -46,11 +91,9 @@ export default function AdvertisementsPage() {
   // Data for dropdowns
   const [categories, setCategories] = useState<Category[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
-
-  // Filtered options based on selections
   const [availableRegions, setAvailableRegions] = useState<Region[]>([]);
   const [availableCities, setAvailableCities] = useState<City[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
   
   // Filter options based on search
   const filteredCategories = useMemo(() => {
@@ -89,6 +132,69 @@ export default function AdvertisementsPage() {
     );
   }, [availableCities, citySearch]);
 
+  // Fetch advertisement data
+  useEffect(() => {
+    const fetchAdvertisement = async () => {
+      try {
+        setLoading(true);
+        const response = await axiosInstance.get(`${API_ENDPOINTS.ADVERTISEMENTS.BASE}/${adId}`);
+        const ad: Advertisement = response.data.data;
+        
+        // Populate form with existing data
+        setTitle(ad.title);
+        setTargetUrl(ad.targetUrl || '');
+        setOpenInNewTab(ad.openInNewTab !== false);
+        setAdType(ad.adType);
+        setIsActive(ad.isActive);
+        setNotes(ad.notes || '');
+        setExistingImageUrl(ad.imageUrl);
+        
+        if (ad.startsAt) setStartsAt(new Date(ad.startsAt));
+        if (ad.endsAt) setEndsAt(new Date(ad.endsAt));
+        
+        // Set category
+        if (ad.categoryId) {
+          setCategoryId(ad.categoryId);
+        }
+        
+        // Set location
+        if (ad.cityId) {
+          setLocationType('city');
+          setSelectedCityId(ad.cityId);
+          if (ad.city?.region) {
+            setSelectedRegionId(ad.city.region.id);
+            if (ad.city.region.country) {
+              setSelectedCountryId(ad.city.region.country.id);
+            }
+          }
+        } else if (ad.regionId) {
+          setLocationType('region');
+          setSelectedRegionId(ad.regionId);
+          if (ad.region?.country) {
+            setSelectedCountryId(ad.region.country.id);
+          }
+        } else if (ad.countryId) {
+          setLocationType('country');
+          setSelectedCountryId(ad.countryId);
+        } else {
+          setLocationType('global');
+        }
+        
+      } catch (error: any) {
+        console.error('Error fetching advertisement:', error);
+        toast.error('Failed to load advertisement');
+        router.push('/admin/advertisements/list');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (adId) {
+      fetchAdvertisement();
+    }
+  }, [adId, router]);
+
+  // Fetch categories and countries
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -118,6 +224,7 @@ export default function AdvertisementsPage() {
     fetchData();
   }, []);
 
+  // Fetch regions when country is selected
   useEffect(() => {
     if (selectedCountryId && (locationType === 'country' || locationType === 'region' || locationType === 'city')) {
       const country = countries.find((c) => c.id === selectedCountryId);
@@ -131,14 +238,13 @@ export default function AdvertisementsPage() {
     }
   }, [selectedCountryId, countries, locationType]);
 
-  // Fetch all cities and filter by region when region is selected
+  // Fetch cities when region is selected
   useEffect(() => {
     if (selectedRegionId && locationType === 'city') {
       const region = availableRegions.find((r) => r.id === selectedRegionId);
       if (region?.cities) {
         setAvailableCities(region.cities);
       } else {
-        // Fetch all cities and filter by regionId
         cityService.fetchCities().then((allCities) => {
           const filtered = allCities.filter((city) => city.regionId === selectedRegionId);
           setAvailableCities(filtered);
@@ -149,6 +255,7 @@ export default function AdvertisementsPage() {
     }
   }, [selectedRegionId, availableRegions, locationType]);
 
+  // Reset location fields when location type changes
   useEffect(() => {
     if (locationType === 'global') {
       setSelectedCityId('');
@@ -193,11 +300,9 @@ export default function AdvertisementsPage() {
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!title.trim()) newErrors.title = 'Title is required';
-    if (!imageFile) newErrors.image = 'Advertisement image is required';
     if (!targetUrl.trim()) newErrors.targetUrl = 'Redirect URL is required';
     
     // Only validate location for CATEGORY, TOP, and FOOTER ad types
-    // HOMEPAGE, BUSINESS_LISTING, and BLOG_LISTING don't need location targeting
     if (adType === 'CATEGORY' || adType === 'TOP' || adType === 'FOOTER') {
       if (locationType === 'city' && !selectedCityId) {
         newErrors.location = 'Please select a city';
@@ -236,7 +341,6 @@ export default function AdvertisementsPage() {
       }
       
       // Only add category and location for CATEGORY, TOP, and FOOTER ad types
-      // HOMEPAGE, BUSINESS_LISTING, and BLOG_LISTING don't need targeting
       if (adType === 'CATEGORY' || adType === 'TOP' || adType === 'FOOTER') {
         if (categoryId && categoryId !== 'none') {
           formData.append('categoryId', categoryId);
@@ -250,30 +354,40 @@ export default function AdvertisementsPage() {
         } else if (locationType === 'country' && selectedCountryId) {
           formData.append('countryId', selectedCountryId);
         }
-        // If global, don't add any location fields
       }
       
-      formData.append('image', imageFile!);
+      // Only append image if a new one was selected
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
 
-      await advertisementService.createAdvertisement(formData);
-      toast.success('Advertisement created successfully');
-      router.push('/admin');
+      await advertisementService.updateAdvertisement(adId, formData);
+      toast.success('Advertisement updated successfully');
+      router.push('/admin/advertisements/list');
     } catch (error: any) {
-      console.error('Error creating advertisement:', error);
-      toast.error(error?.message || 'Failed to create advertisement');
+      console.error('Error updating advertisement:', error);
+      toast.error(error?.message || 'Failed to update advertisement');
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (loading || loadingData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-[#1c4233]" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-7xl mx-auto bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 sm:p-8 lg:p-12">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create Advertisement</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Edit Advertisement</h1>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Create a new advertisement banner for category pages, top sidebar, or footer
+              Update advertisement details and settings
             </p>
           </div>
           <Button
@@ -282,7 +396,8 @@ export default function AdvertisementsPage() {
             variant="outline"
             className="flex items-center gap-2"
           >
-            View All Advertisements
+            <ArrowLeft className="w-4 h-4" />
+            Back to List
           </Button>
         </div>
 
@@ -401,7 +516,7 @@ export default function AdvertisementsPage() {
                     )}
                   </ul>
                 </div>
-                {imagePreview && (
+                {(imagePreview || existingImageUrl) && (
                   <div className="mt-4 relative w-full rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
                     <div className={`relative ${
                       (adType === 'CATEGORY' || adType === 'BUSINESS_LISTING' || adType === 'BLOG_LISTING')
@@ -409,14 +524,14 @@ export default function AdvertisementsPage() {
                         : 'aspect-[1278/184]'
                     }`}>
                       <Image
-                        src={imagePreview}
+                        src={imagePreview || existingImageUrl || ''}
                         alt="Advertisement preview"
                         fill
                         className="object-contain"
                       />
                     </div>
                     <p className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
-                      Preview ({
+                      {imagePreview ? 'New Image Preview' : 'Current Image'} ({
                         (adType === 'CATEGORY' || adType === 'BUSINESS_LISTING' || adType === 'BLOG_LISTING') 
                           ? 'Sidebar' 
                           : adType === 'HOMEPAGE' 
@@ -432,7 +547,7 @@ export default function AdvertisementsPage() {
                   <div className="text-center">
                     <Upload className="w-10 h-10 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
                     <p className="mt-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Click to upload banner image
+                      {imagePreview || existingImageUrl ? 'Click to change image' : 'Click to upload banner image'}
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">JPG, PNG up to 5MB</p>
                   </div>
@@ -464,45 +579,39 @@ export default function AdvertisementsPage() {
                     </label>
                     <Select
                       value={categoryId}
-                      onValueChange={setCategoryId}
+                      onValueChange={(value) => {
+                        setCategoryId(value);
+                        setCategorySearch('');
+                      }}
                       disabled={loadingData || submitting}
                     >
-                      <Select
-                        value={categoryId}
-                        onValueChange={(value) => {
-                          setCategoryId(value);
-                          setCategorySearch('');
-                        }}
-                        disabled={loadingData || submitting}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select a category (optional)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <div className="p-2 border-b sticky top-0 bg-white dark:bg-slate-800 z-10">
-                            <input
-                              type="text"
-                              placeholder="Search categories..."
-                              value={categorySearch}
-                              onChange={(e) => {
-                                setCategorySearch(e.target.value);
-                                e.stopPropagation();
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1c4233] bg-white dark:bg-slate-700"
-                            />
-                          </div>
-                          <SelectItem value="none">No category (show in all categories)</SelectItem>
-                          {filteredCategories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                          {filteredCategories.length === 0 && categorySearch && (
-                            <div className="px-2 py-1.5 text-sm text-gray-500">No categories found</div>
-                          )}
-                        </SelectContent>
-                      </Select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a category (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <div className="p-2 border-b sticky top-0 bg-white dark:bg-slate-800 z-10">
+                          <input
+                            type="text"
+                            placeholder="Search categories..."
+                            value={categorySearch}
+                            onChange={(e) => {
+                              setCategorySearch(e.target.value);
+                              e.stopPropagation();
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1c4233] bg-white dark:bg-slate-700"
+                          />
+                        </div>
+                        <SelectItem value="none">No category (show in all categories)</SelectItem>
+                        {filteredCategories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                        {filteredCategories.length === 0 && categorySearch && (
+                          <div className="px-2 py-1.5 text-sm text-gray-500">No categories found</div>
+                        )}
+                      </SelectContent>
                     </Select>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       If no category is selected, the ad will appear in all categories
@@ -853,7 +962,7 @@ export default function AdvertisementsPage() {
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g., Special Offer"
                     disabled={submitting}
-                    className={`mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] dark:focus:border-[#1c4233] dark:focus:ring-[#1c4233] sm:text-sm ${
+                    className={`mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] sm:text-sm ${
                       errors.title ? 'border-red-500' : ''
                     }`}
                   />
@@ -871,14 +980,11 @@ export default function AdvertisementsPage() {
                     onChange={(e) => setTargetUrl(e.target.value)}
                     placeholder="https://example.com or /businesses/slug"
                     disabled={submitting}
-                    className={`mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] dark:focus:border-[#1c4233] dark:focus:ring-[#1c4233] sm:text-sm ${
+                    className={`mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] sm:text-sm ${
                       errors.targetUrl ? 'border-red-500' : ''
                     }`}
                   />
                   {errors.targetUrl && <p className="mt-1 text-sm text-red-600">{errors.targetUrl}</p>}
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Where users will be redirected when they click the ad
-                  </p>
                 </div>
 
                 {/* Open in new tab checkbox */}
@@ -898,9 +1004,6 @@ export default function AdvertisementsPage() {
                       Open link in new tab
                     </label>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    If checked, clicking the ad will open the link in a new browser tab
-                  </p>
                 </div>
 
                 {/* Active checkbox */}
@@ -923,42 +1026,28 @@ export default function AdvertisementsPage() {
                 </div>
               </div>
 
-                <div className="space-y-6">
-                  {/* Start and End dates */}
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Start at (optional)
-                      </label>
-                      <div className="w-full">
-                        <DateTimePicker
-                          value={startsAt}
-                          onChange={(date) => setStartsAt(date)}
-                          disabled={submitting}
-                          className="w-full [&>button]:truncate [&>button]:text-sm [&>button>span]:truncate [&>button>svg]:flex-shrink-0"
-                        />
-                      </div>
-                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        If empty, the banner will start showing immediately.
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        End at (optional)
-                      </label>
-                      <div className="w-full">
-                        <DateTimePicker
-                          value={endsAt}
-                          onChange={(date) => setEndsAt(date)}
-                          disabled={submitting}
-                          className="w-full [&>button]:truncate [&>button]:text-sm [&>button>span]:truncate [&>button>svg]:flex-shrink-0"
-                        />
-                      </div>
-                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        If empty, the banner will keep showing until you disable it.
-                      </p>
-                    </div>
-                  </div>
+              <div className="space-y-6">
+                {/* Start and End dates */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Start at (optional)
+                  </label>
+                  <DateTimePicker
+                    value={startsAt}
+                    onChange={(date) => setStartsAt(date)}
+                    disabled={submitting}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    End at (optional)
+                  </label>
+                  <DateTimePicker
+                    value={endsAt}
+                    onChange={(date) => setEndsAt(date)}
+                    disabled={submitting}
+                  />
+                </div>
 
                 {/* Internal Notes */}
                 <div>
@@ -971,7 +1060,7 @@ export default function AdvertisementsPage() {
                     onChange={(e) => setNotes(e.target.value)}
                     rows={4}
                     disabled={submitting}
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] dark:focus:border-[#1c4233] dark:focus:ring-[#1c4233] sm:text-sm resize-none p-3"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 shadow-sm focus:border-[#1c4233] focus:ring-[#1c4233] sm:text-sm resize-none p-3"
                     placeholder="Optional notes about this advertisement (visible only in admin)."
                   />
                 </div>
@@ -980,7 +1069,15 @@ export default function AdvertisementsPage() {
           </div>
 
           {/* Submit Button */}
-          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push('/admin/advertisements/list')}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
             <Button
               type="submit"
               disabled={submitting}
@@ -989,10 +1086,10 @@ export default function AdvertisementsPage() {
               {submitting ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  Creating...
+                  Updating...
                 </>
               ) : (
-                'Create Advertisement'
+                'Update Advertisement'
               )}
             </Button>
           </div>

@@ -19,9 +19,6 @@ interface LoginModalProps {
   onSwitchToSignup: () => void;
 }
 
-type LoginMethod = 'password' | 'otp';
-type LoginType = 'email' | 'phone';
-
 type GoogleCredentialResponse = {
   credential?: string;
 };
@@ -68,8 +65,8 @@ declare global {
 export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginModalProps) {
   const { login } = useAuthStore();
 
-  const [method, setMethod] = useState<LoginMethod>('password');
-  const [loginType, setLoginType] = useState<LoginType>('email');
+  // Main mode: 'otp' or 'password'
+  const [loginMode, setLoginMode] = useState<'otp' | 'password'>('otp');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState(defaultCountryCode);
@@ -87,6 +84,8 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
 
   const countryDropdownRef = useRef<HTMLDivElement>(null);
   const countrySearchInputRef = useRef<HTMLInputElement>(null);
+
+  const isSaudiNumber = countryCode === '+966';
 
   // Filter country codes based on search
   const filteredCountryCodes = useMemo(() => {
@@ -126,11 +125,10 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
       if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
         setCountryDropdownOpen(false);
       }
-    };
+    }
 
     if (countryDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      // Focus search input when dropdown opens
       setTimeout(() => {
         countrySearchInputRef.current?.focus();
       }, 100);
@@ -151,7 +149,6 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
         setError('');
         const response = await authService.socialLogin({ provider, token });
         await login(response.data.user, response.data.token, response.data.refreshToken);
-        // Close modal immediately after successful login
         onClose();
       } catch (err: any) {
         const providerName = provider === 'google' ? 'Google' : 'Facebook';
@@ -214,7 +211,6 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
       return;
     }
     
-    // Small delay to ensure modal is fully rendered
     const timer = setTimeout(() => {
       const container = document.getElementById('google-signin-button');
       const googleId = window.google?.accounts?.id as any;
@@ -239,7 +235,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
       } else {
         setGoogleButtonRendered(false);
       }
-    }, 100); // 100ms delay
+    }, 100);
   
     return () => clearTimeout(timer);
   }, [googleReady, isOpen]);
@@ -317,12 +313,9 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginType === 'email' && !email) {
-      setError('Please enter your email');
-      return;
-    }
-    if (loginType === 'phone' && !phone) {
-      setError('Please enter your phone number');
+    
+    if (!email && !phone) {
+      setError('Please enter your email or phone number');
       return;
     }
     if (!password) {
@@ -333,9 +326,9 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
     try {
       setLoading(true);
       setError('');
-      const identifier = loginType === 'email' 
-        ? email 
-        : `${countryCode}${phone.replace(/^0+/, '')}`;
+      const identifier = phone 
+        ? `${countryCode}${phone.replace(/^0+/, '')}` 
+        : email;
       const response = await authService.loginWithPassword({ identifier, password });
       login(response.data.user, response.data.token, response.data.refreshToken);
       onClose();
@@ -347,28 +340,34 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
   };
 
   const handleSendOTP = async () => {
-    if (loginType === 'email' && !email) {
-      setError('Please enter your email');
-      return;
-    }
-    if (loginType === 'phone' && !phone) {
-      setError('Please enter your phone number');
-      return;
+    if (isSaudiNumber) {
+      // Saudi number: needs phone
+      if (!phone) {
+        setError('Please enter your phone number');
+        return;
+      }
+    } else {
+      // Non-Saudi: needs email
+      if (!email) {
+        setError('Please enter your email');
+        return;
+      }
     }
 
     try {
       setLoading(true);
       setError('');
 
-      if (loginType === 'email') {
-        await authService.sendEmailOTP(email);
-      } else {
+      if (isSaudiNumber) {
         const phoneWithCode = `${countryCode}${phone.replace(/^0+/, '')}`;
         await authService.sendPhoneOTP(phoneWithCode);
+        setError('OTP sent to your phone! (Use 1234 for testing)');
+      } else {
+        await authService.sendEmailOTP(email);
+        setError('OTP sent to your email successfully!');
       }
 
       setOtpSent(true);
-      setError('OTP sent successfully!');
     } catch (err: any) {
       setError(err.message || 'Failed to send OTP');
     } finally {
@@ -387,15 +386,12 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
       setLoading(true);
       setError('');
 
-      // For phone OTP, use 1234 as test OTP
-      const otpToUse = loginType === 'phone' ? '1234' : otp;
-
-      const response = loginType === 'email'
-        ? await authService.verifyEmailOTP({ email, otp: otpToUse })
-        : await authService.verifyPhoneOTP({ 
+      const response = isSaudiNumber
+        ? await authService.verifyPhoneOTP({ 
             phone: `${countryCode}${phone.replace(/^0+/, '')}`, 
-            otp: otpToUse 
-          });
+            otp 
+          })
+        : await authService.verifyEmailOTP({ email, otp });
 
       login(response.data.user, response.data.token, response.data.refreshToken);
       onClose();
@@ -414,7 +410,6 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
     setOtpSent(false);
     setError('');
     setCountryCode(defaultCountryCode);
-    setLoginType('email');
   };
 
   return (
@@ -430,98 +425,27 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
         </DialogHeader>
 
         <div className="space-y-3 sm:space-y-4 px-0 sm:px-0">
-          {/* Method Toggle */}
-          <div className="flex gap-1.5 sm:gap-2 p-0.5 sm:p-1 bg-gray-100 rounded-lg">
-            <button
-              type="button"
-              onClick={() => {
-                setMethod('password');
-                resetForm();
-              }}
-              className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-                method === 'password'
-                  ? 'bg-white text-primary shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Password
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMethod('otp');
-                resetForm();
-              }}
-              className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-                method === 'otp'
-                  ? 'bg-white text-primary shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              OTP
-            </button>
-          </div>
-
           {/* Error Message */}
           {error && (
             <div
               className={`p-2 sm:p-3 rounded-lg text-xs sm:text-sm ${
-                error.includes('successfully') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                error.includes('successfully') || error.includes('sent') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
               }`}
             >
               {error}
             </div>
           )}
 
-          {/* Password Login Form */}
-          {method === 'password' && (
-            <form onSubmit={handlePasswordLogin} className="space-y-4">
-              {/* Login Type Toggle */}
-              <div className="flex gap-1.5 sm:gap-2 p-0.5 sm:p-1 bg-gray-100 rounded-lg">
-                <button
-                  type="button"
-                  onClick={() => setLoginType('email')}
-                  className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-                    loginType === 'email'
-                      ? 'bg-white text-primary shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Email
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLoginType('phone')}
-                  className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-                    loginType === 'phone'
-                      ? 'bg-white text-primary shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Phone
-                </button>
-              </div>
-
-              {loginType === 'email' ? (
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    disabled={loading}
-                  />
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                    Phone Number
-                  </label>
-                  <div className="flex flex-col gap-2">
+          {/* OTP Login (Default) */}
+          {loginMode === 'otp' && (
+            <div className="space-y-4">
+              {!otpSent ? (
+                <>
+                  {/* Country Code Picker */}
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                      Country Code
+                    </label>
                     <div className="relative" ref={countryDropdownRef}>
                       <button
                         type="button"
@@ -529,8 +453,9 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                         className="w-full rounded-lg border border-gray-300 bg-gray-50 px-2 sm:px-3 py-2 sm:py-3 flex items-center justify-between text-xs sm:text-sm font-medium"
                         disabled={loading}
                       >
-                        <span>
-                          {selectedCountry ? `${selectedCountry.code} ${selectedCountry.country}` : countryCode}
+                        <span className="flex items-center gap-2">
+                          <span className="text-lg">{selectedCountry?.flag || '🌍'}</span>
+                          <span>{selectedCountry ? `${selectedCountry.code} ${selectedCountry.country}` : countryCode}</span>
                         </span>
                         <ChevronDown className="h-4 w-4 text-gray-500" />
                       </button>
@@ -548,18 +473,19 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                             />
                           </div>
                           <div className="max-h-40 sm:max-h-48 overflow-y-auto">
-                            {filteredCountryCodes.map((item) => (
+                            {filteredCountryCodes.map((item, index) => (
                               <button
-                                key={item.code}
+                                key={`${item.code}-${item.country}-${index}`}
                                 type="button"
-                                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs sm:text-sm hover:bg-gray-100"
+                                className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs sm:text-sm hover:bg-gray-100 flex items-center gap-2"
                                 onClick={() => {
                                   setCountryCode(item.code);
                                   setCountryDropdownOpen(false);
                                   setCountrySearch('');
                                 }}
                               >
-                                {item.code} {item.country}
+                                <span className="text-base">{item.flag}</span>
+                                <span>{item.code} {item.country}</span>
                               </button>
                             ))}
                             {!filteredCountryCodes.length && (
@@ -569,24 +495,134 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  {/* Phone or Email Input */}
+                  {isSaudiNumber ? (
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => {
+                          const numericValue = e.target.value.replace(/\D/g, '');
+                          const limitedValue = numericValue.slice(0, 15);
+                          setPhone(limitedValue);
+                        }}
+                        placeholder="Enter phone number"
+                        maxLength={15}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        disabled={loading}
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter your email"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        disabled={loading}
+                      />
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleSendOTP}
+                    disabled={loading}
+                    className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 sm:py-3 text-sm sm:text-base rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {loading ? 'Sending...' : 'Send OTP'}
+                  </button>
+
+                  {/* Password Login Link */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginMode('password');
+                      resetForm();
+                    }}
+                    className="w-full text-center text-xs sm:text-sm text-primary hover:underline"
+                  >
+                    Login with password instead
+                  </button>
+                </>
+              ) : (
+                <form onSubmit={handleVerifyOTP} className="space-y-3 sm:space-y-4">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                      Enter OTP
+                    </label>
                     <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => {
-                        const numericValue = e.target.value.replace(/\D/g, '');
-                        const limitedValue = numericValue.slice(0, 15);
-                        setPhone(limitedValue);
-                      }}
-                      placeholder="Enter phone number"
-                      maxLength={15}
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      type="text"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      placeholder={isSaudiNumber ? 'Enter OTP (use 1234)' : 'Enter 4-digit OTP'}
+                      maxLength={4}
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-base sm:text-2xl border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-center tracking-widest"
                       disabled={loading}
                     />
+                    {isSaudiNumber && (
+                      <p className="mt-1 text-xs text-gray-500 text-center">
+                        Phone OTP: 1234
+                      </p>
+                    )}
                   </div>
-                </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 sm:py-3 text-sm sm:text-base rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {loading ? 'Verifying...' : 'Verify OTP'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setOtpSent(false)}
+                    className="w-full text-primary hover:underline text-xs sm:text-sm"
+                  >
+                    Resend OTP
+                  </button>
+                </form>
               )}
+            </div>
+          )}
+
+          {/* Password Login */}
+          {loginMode === 'password' && (
+            <form onSubmit={handlePasswordLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                  Email or Phone
+                </label>
+                <input
+                  type="text"
+                  value={email || phone}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d+$/.test(value) || value === '') {
+                      setPhone(value);
+                      setEmail('');
+                    } else {
+                      setEmail(value);
+                      setPhone('');
+                    }
+                  }}
+                  placeholder="Enter your email or phone"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  disabled={loading}
+                />
+              </div>
 
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
@@ -619,175 +655,19 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
               >
                 {loading ? 'Logging in...' : 'Login'}
               </button>
+
+              {/* Back to OTP Link */}
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginMode('otp');
+                  resetForm();
+                }}
+                className="w-full text-center text-xs sm:text-sm text-primary hover:underline"
+              >
+                Back to OTP login
+              </button>
             </form>
-          )}
-
-          {/* OTP Login Form */}
-          {method === 'otp' && (
-            <div className="space-y-4">
-              {!otpSent ? (
-                <>
-                  {/* Login Type Toggle */}
-                  <div className="flex gap-1.5 sm:gap-2 p-0.5 sm:p-1 bg-gray-100 rounded-lg">
-                    <button
-                      type="button"
-                      onClick={() => setLoginType('email')}
-                      className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-                        loginType === 'email'
-                          ? 'bg-white text-primary shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      Email
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLoginType('phone')}
-                      className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-                        loginType === 'phone'
-                          ? 'bg-white text-primary shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      Phone
-                    </button>
-                  </div>
-
-                  {loginType === 'email' ? (
-                    <div>
-                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Enter your email"
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                        disabled={loading}
-                      />
-                    </div>
-                  ) : (
-                    <div>
-                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                        Phone Number
-                      </label>
-                      <div className="flex flex-col gap-2">
-                        <div className="relative" ref={countryDropdownRef}>
-                          <button
-                            type="button"
-                            onClick={() => setCountryDropdownOpen((prev) => !prev)}
-                            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-2 sm:px-3 py-2 sm:py-3 flex items-center justify-between text-xs sm:text-sm font-medium"
-                            disabled={loading}
-                          >
-                            <span>
-                              {selectedCountry ? `${selectedCountry.code} ${selectedCountry.country}` : countryCode}
-                            </span>
-                            <ChevronDown className="h-4 w-4 text-gray-500" />
-                          </button>
-                          {countryDropdownOpen && (
-                            <div className="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
-                              <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 border-b border-gray-100">
-                                <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
-                                <input
-                                  ref={countrySearchInputRef}
-                                  type="text"
-                                  placeholder="Search country or code"
-                                  value={countrySearch}
-                                  onChange={(e) => setCountrySearch(e.target.value)}
-                                  className="w-full bg-transparent text-xs sm:text-sm focus:outline-none"
-                                />
-                              </div>
-                              <div className="max-h-40 sm:max-h-48 overflow-y-auto">
-                                {filteredCountryCodes.map((item) => (
-                                  <button
-                                    key={item.code}
-                                    type="button"
-                                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-xs sm:text-sm hover:bg-gray-100"
-                                    onClick={() => {
-                                      setCountryCode(item.code);
-                                      setCountryDropdownOpen(false);
-                                      setCountrySearch('');
-                                    }}
-                                  >
-                                    {item.code} {item.country}
-                                  </button>
-                                ))}
-                                {!filteredCountryCodes.length && (
-                                  <p className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-500">No results found</p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <input
-                          type="tel"
-                          value={phone}
-                          onChange={(e) => {
-                            const numericValue = e.target.value.replace(/\D/g, '');
-                            const limitedValue = numericValue.slice(0, 15);
-                            setPhone(limitedValue);
-                          }}
-                          placeholder="Enter phone number"
-                          maxLength={15}
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                          disabled={loading}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={handleSendOTP}
-                    disabled={loading}
-                    className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 sm:py-3 text-sm sm:text-base rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {loading ? 'Sending...' : 'Send OTP'}
-                  </button>
-                </>
-              ) : (
-                <form onSubmit={handleVerifyOTP} className="space-y-3 sm:space-y-4">
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                      Enter OTP
-                    </label>
-                    <input
-                      type="text"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      placeholder={loginType === 'phone' ? 'Enter OTP (use 1234 for phone)' : 'Enter 4-digit OTP'}
-                      maxLength={4}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-base sm:text-2xl border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-center tracking-widest"
-                      disabled={loading}
-                    />
-                    {loginType === 'phone' && (
-                      <p className="mt-1 text-xs text-gray-500 text-center">
-                        Phone OTP verification uses test code: 1234
-                      </p>
-                    )}
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 sm:py-3 text-sm sm:text-base rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {loading ? 'Verifying...' : 'Verify OTP'}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setOtpSent(false)}
-                    className="w-full text-primary hover:underline text-xs sm:text-sm"
-                  >
-                    Resend OTP
-                  </button>
-                </form>
-              )}
-            </div>
           )}
 
           {/* Divider */}
@@ -813,15 +693,14 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                 onClick={() => {
                   if (!googleClientId) {
                     setError('Google login is not configured.');
-                    onClose(); // Close modal
+                    onClose();
                     return;
                   }
                   if (!window.google?.accounts?.id) {
                     setError('Google sign-in is still loading. Please try again in a moment.');
-                    onClose(); // Close modal
+                    onClose();
                     return;
                   }
-                  // Close modal when Google prompt is triggered
                   onClose();
                   window.google.accounts.id.prompt();
                 }}
