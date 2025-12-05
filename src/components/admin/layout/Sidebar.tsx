@@ -74,7 +74,7 @@ const sidebarItems = [
   },
   {
     name: 'Advertisements',
-    href: '/admin/advertisements/list',
+    href: '/admin/advertisements/list ',
     icon:  Megaphone,
   },
 ];

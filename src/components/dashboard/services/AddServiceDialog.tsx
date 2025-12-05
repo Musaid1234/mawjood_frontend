@@ -293,6 +293,7 @@ export default function AddServiceDialog({ open, onOpenChange, editingService, b
                 <option value="JOD">JOD - Jordanian Dinar</option>
                 <option value="EGP">EGP - Egyptian Pound</option>
                 <option value="TRY">TRY - Turkish Lira</option>
+                <option value="INR">INR - Indian Rupee</option>
               </select>
             </div>
           </div>
