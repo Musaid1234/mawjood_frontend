@@ -1,8 +1,8 @@
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useMemo } from 'react';
-import { CheckCircle2, XCircle, Clock, ArrowRight } from 'lucide-react';
+import { useMemo, Suspense } from 'react';
+import { CheckCircle2, XCircle, Clock, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 function mapStatus(respStatus: string | null) {
@@ -51,7 +51,7 @@ function mapStatus(respStatus: string | null) {
   };
 }
 
-export default function PaymentStatusPage() {
+function PaymentStatusContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -139,6 +139,30 @@ export default function PaymentStatusPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+        <div className="text-center">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mb-4">
+            <Loader2 className="h-10 w-10 text-gray-600 animate-spin" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading Payment Status</h1>
+          <p className="text-gray-600">Please wait while we retrieve your payment information...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function PaymentStatusPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <PaymentStatusContent />
+    </Suspense>
   );
 }
 
