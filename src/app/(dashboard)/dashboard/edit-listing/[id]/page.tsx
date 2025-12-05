@@ -141,8 +141,8 @@ export default function EditListingPage() {
       <div className="max-w-7xl mx-auto py-12">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900">Business not found</h2>
-          <Link href="/dashboard" className="text-[#1c4233] hover:underline mt-4 inline-block">
-            Back to Dashboard
+          <Link href="/dashboard/my-listings" className="text-[#1c4233] hover:underline mt-4 inline-block">
+            Back to Listings
           </Link>
         </div>
       </div>

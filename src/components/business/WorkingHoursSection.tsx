@@ -30,7 +30,6 @@ const dayLabels: Record<string, string> = {
 export default function WorkingHoursSection({ workingHours }: Props) {
   const [currentDay, setCurrentDay] = useState<string>('monday');
   const [isOpenNow, setIsOpenNow] = useState<boolean>(false);
-  const [currentClosingLabel, setCurrentClosingLabel] = useState<string | null>(null);
 
   const parseTimeToMinutes = (time: string): number => {
     if (!time) return 0;
@@ -59,14 +58,12 @@ export default function WorkingHoursSection({ workingHours }: Props) {
 
       if (!workingHours) {
         setIsOpenNow(false);
-        setCurrentClosingLabel(null);
         return;
       }
 
       const todayHours = workingHours[todayKey];
       if (!todayHours || todayHours.isClosed) {
         setIsOpenNow(false);
-        setCurrentClosingLabel(null);
         return;
       }
 
@@ -85,7 +82,6 @@ export default function WorkingHoursSection({ workingHours }: Props) {
       }
 
       setIsOpenNow(openNow);
-      setCurrentClosingLabel(formatTime(todayHours.close));
     };
 
     updateStatus();
@@ -128,34 +124,6 @@ export default function WorkingHoursSection({ workingHours }: Props) {
         <h2 className="text-2xl font-bold text-gray-900">Working Hours</h2>
       </div>
 
-            {/* Current Status */}
-            <div className="my-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <div className="flex items-center gap-2">
-          {workingHours[currentDay] && !workingHours[currentDay]?.isClosed && currentClosingLabel ? (
-            <>
-              <div className={`w-2 h-2 rounded-full ${isOpenNow ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-              <span className={`text-sm font-medium ${isOpenNow ? 'text-green-700' : 'text-red-700'}`}>
-                {isOpenNow ? 'Open Now' : 'Closed Now'}
-              </span>
-              {isOpenNow ? (
-                <span className="text-sm text-gray-600 ml-2">
-                  Closes at {currentClosingLabel}
-                </span>
-              ) : (
-                <span className="text-sm text-gray-600 ml-2">
-                  Opens at {formatTime(workingHours[currentDay].open)}
-                </span>
-              )}
-            </>
-          ) : (
-            <>
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <span className="text-sm font-medium text-red-700">Closed Now</span>
-            </>
-          )}
-        </div>
-      </div>
-
       <div className="space-y-2">
         {daysOfWeek.map((day) => {
           const hours = workingHours[day];
@@ -177,8 +145,12 @@ export default function WorkingHoursSection({ workingHours }: Props) {
                 }`}>
                   {dayLabels[day]}
                   {isToday && (
-                    <span className="ml-2 text-xs bg-primary text-white px-2 py-0.5 rounded-full">
-                      Today
+                    <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                      isOpenNow 
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-red-500 text-white'
+                    }`}>
+                      {isOpenNow ? 'Open Now' : 'Closed Now'}
                     </span>
                   )}
                 </span>

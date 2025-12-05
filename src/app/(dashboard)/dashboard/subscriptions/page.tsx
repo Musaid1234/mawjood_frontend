@@ -86,12 +86,13 @@ export default function SubscriptionsPage() {
           : (plan ? parseDecimal(plan.price) : 0);
 
         // Create PayTabs payment page
+        // Note: returnUrl is not passed, backend will use its configured PAYTABS_RETURN_URL
+        // which properly handles the callback and redirects to success/failed/pending pages
         const paymentResponse = await paymentService.createPayment({
           businessId: subscription.businessId,
           amount: amount,
           currency: plan?.currency || currency,
           description: `Subscription payment for ${plan?.name || 'plan'}`,
-          returnUrl: `${window.location.origin}/dashboard/subscriptions`,
         });
 
         // Redirect to PayTabs payment page
