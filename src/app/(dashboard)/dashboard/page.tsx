@@ -61,14 +61,11 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* Views Chart and Recent Activities - Side by Side */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Views Trend Chart - Takes 2/3 width */}
         <div className="lg:col-span-2">
           <ViewsChart data={data?.viewsTrend || []} />
         </div>
 
-        {/* Recent Activities - Takes 1/3 width */}
         <div className="lg:col-span-1">
           <RecentActivities reviews={data?.recentReviews || []} />
         </div>
